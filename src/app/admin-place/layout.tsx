@@ -3,14 +3,18 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminSidebar from '@/components/layout/AdminSidebar'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
+import Link from 'next/link'
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@skillplace.com'
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123'
+interface UserProfile {
+  id: string
+  email: string
+  full_name: string | null
+  role: string
+}
 
 export default function AdminLayout({
   children,
@@ -18,84 +22,68 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const [authenticated, setAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [adminUser, setAdminUser] = useState<UserProfile | null>(null)
 
   useEffect(() => {
-    const isAuth = sessionStorage.getItem('admin_auth')
-    if (isAuth === 'true') {
-      setAuthenticated(true)
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profile && (profile.role === 'admin' || profile.role === 'employee')) {
+        setAdminUser(profile)
+      }
+
+      setLoading(false)
     }
-    setLoading(false)
+
+    checkAuth()
   }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      sessionStorage.setItem('admin_auth', 'true')
-      setAuthenticated(true)
-      setError('')
-    } else {
-      setError('Invalid email or password')
-    }
-  }
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_auth')
-    setAuthenticated(false)
-    setEmail('')
-    setPassword('')
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setAdminUser(null)
+    router.push('/')
   }
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
-  if (!authenticated) {
+  if (!adminUser) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <Card className="w-full max-w-md border-slate-200">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Lock className="h-6 w-6 text-primary" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
+              <Lock className="h-7 w-7 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl">Admin Login</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">Enter your admin credentials</p>
+            <CardTitle className="text-2xl text-slate-900">Admin Access Required</CardTitle>
+            <p className="text-sm text-slate-500 mt-1">
+              You need admin privileges to access this area
+            </p>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@skillplace.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full">Login</Button>
-            </form>
+          <CardContent className="space-y-4">
+            <p className="text-center text-slate-500">
+              Please sign in with an admin account to continue.
+            </p>
+            <Link href="/login">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Sign In</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -103,11 +91,14 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
+    <div className="flex min-h-screen bg-slate-50">
+      <AdminSidebar isAdmin={adminUser.role === 'admin'} />
       <main className="flex-1 p-6 ml-64">
-        <div className="flex justify-end mb-4">
-          <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
+        <div className="flex items-center justify-end gap-4 mb-4">
+          <span className="text-sm text-slate-500">
+            {adminUser.full_name || adminUser.email}
+          </span>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="border-slate-300 hover:bg-slate-50">Logout</Button>
         </div>
         {children}
       </main>

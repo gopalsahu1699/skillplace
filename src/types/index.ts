@@ -4,7 +4,7 @@ export interface Profile {
   full_name: string | null
   phone: string | null
   avatar_url: string | null
-  role: 'student' | 'admin'
+  role: 'student' | 'admin' | 'employee'
   is_active: boolean
   created_at: string
   updated_at: string
@@ -47,6 +47,7 @@ export interface Module {
   course_id: string
   title: string
   description: string | null
+  thumbnail_url: string | null
   order_index: number
   lessons?: Lesson[]
 }
@@ -56,11 +57,51 @@ export interface Lesson {
   module_id: string
   title: string
   description: string | null
+  content_type: 'video' | 'pdf' | 'quiz' | 'text'
   video_url: string | null
   video_duration: number | null
   pdf_url: string | null
+  text_content: string | null
+  duration_minutes: number | null
+  is_downloadable: boolean
   order_index: number
   is_free: boolean
+}
+
+export interface Test {
+  id: string
+  course_id: string
+  lesson_id: string | null
+  title: string
+  description: string | null
+  duration_minutes: number | null
+  passing_score: number
+  max_attempts: number
+  time_limit_minutes: number | null
+  is_active: boolean
+}
+
+export interface TestQuestion {
+  id: string
+  test_id: string
+  question: string
+  question_type: 'mcq' | 'true_false' | 'short_answer'
+  options: string[] | null
+  correct_answer: string
+  explanation: string | null
+  points: number
+  order_index: number
+}
+
+export interface TestAttempt {
+  id: string
+  user_id: string
+  test_id: string
+  answers: Record<string, string> | null
+  score: number | null
+  passed: boolean
+  started_at: string
+  completed_at: string | null
 }
 
 export interface Enrollment {
@@ -74,15 +115,22 @@ export interface Enrollment {
   course?: Course
 }
 
-export interface Test {
+export interface CourseProgress {
   id: string
+  user_id: string
   course_id: string
-  title: string
-  description: string | null
-  duration_minutes: number | null
-  passing_score: number
-  max_attempts: number
-  is_active: boolean
+  lesson_id: string
+  completed: boolean
+  completed_at: string | null
+}
+
+export interface UserNote {
+  id: string
+  user_id: string
+  lesson_id: string
+  content: string
+  created_at: string
+  updated_at: string
 }
 
 export interface Certificate {
@@ -125,7 +173,21 @@ export interface Payment {
   currency: string
   razorpay_order_id: string | null
   razorpay_payment_id: string | null
+  razorpay_signature: string | null
   status: 'pending' | 'completed' | 'failed' | 'refunded'
+  created_at: string
+  updated_at: string
+}
+
+export interface StudentProject {
+  id: string
+  user_id: string
+  course_id: string
+  title: string
+  description: string | null
+  image_url: string | null
+  project_url: string | null
+  is_approved: boolean
   created_at: string
 }
 

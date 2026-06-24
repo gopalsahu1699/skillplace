@@ -1,15 +1,14 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase/client'
 
-const categories = [
-  { name: 'All', slug: 'all' },
-  { name: 'Civil Engineering', slug: 'civil-engineering' },
-  { name: 'Mechanical', slug: 'mechanical' },
-  { name: 'Electrical', slug: 'electrical' },
-  { name: 'Electronics', slug: 'electronics' },
-  { name: 'Soft Skills', slug: 'soft-skills' },
-]
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
 
 interface CourseFilterProps {
   selected: string
@@ -17,6 +16,23 @@ interface CourseFilterProps {
 }
 
 export default function CourseFilter({ selected, onSelect }: CourseFilterProps) {
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+        .eq('is_active', true)
+        .order('order_index')
+
+      if (data) {
+        setCategories([{ id: 'all', name: 'All', slug: 'all' }, ...data])
+      }
+    }
+    fetchCategories()
+  }, [])
+
   return (
     <div className="flex flex-wrap gap-2">
       {categories.map((cat) => (
