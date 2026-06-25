@@ -5,39 +5,92 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Search, BookOpen, Layers, FileText, HelpCircle, ChevronRight, Image } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
-import type { Course, Module, Lesson, Test, Category } from '@/types'
+import { Search, BookOpen, Layers, FileText, HelpCircle, ChevronRight } from 'lucide-react'
+import { getRecords } from '@/lib/admin-api'
 
-interface CourseWithContent extends Course {
-  category?: Category
-  modules: (Module & { lessons: Lesson[] })[]
-  tests: Test[]
+interface DbLesson {
+  id: string
+  module_id: string
+  title: string
+  content: string | null
+  video_url: string | null
+  duration_minutes: number | null
+  order_index: number | null
+  is_free: boolean | null
+  is_active: boolean | null
+  created_at: string | null
+}
+
+interface DbModule {
+  id: string
+  course_id: string
+  title: string
+  description: string | null
+  order_index: number | null
+  is_active: boolean | null
+  created_at: string | null
+  lessons?: DbLesson[]
+}
+
+interface DbTest {
+  id: string
+  course_id: string
+  title: string
+  description: string | null
+  passing_score: number | null
+  time_limit_minutes: number | null
+  is_active: boolean | null
+  created_at: string | null
+}
+
+interface DbCourse {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  short_description: string | null
+  thumbnail_url: string | null
+  price: number
+  discount_price: number | null
+  duration_hours: number | null
+  level: string
+  branch_id: string | null
+  is_featured: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  modules?: DbModule[]
+  tests?: DbTest[]
 }
 
 export default function AdminContentPage() {
-  const [courses, setCourses] = useState<CourseWithContent[]>([])
+  const [courses, setCourses] = useState<DbCourse[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
   const fetchCourses = useCallback(async () => {
-    setLoading(true)
-    const data = await getRecords('courses')
+    try {
+      setLoading(true)
+      const data = await getRecords('courses', undefined, undefined, '*,modules(*,lessons(*)),tests(*)')
 
-    if (data) {
-      const sorted = data.map((c: any) => ({
-        ...c,
-        modules: (c.modules || [])
-          .sort((a: Module, b: Module) => a.order_index - b.order_index)
-          .map((m: Module & { lessons: Lesson[] }) => ({
-            ...m,
-            lessons: (m.lessons || []).sort((a: Lesson, b: Lesson) => a.order_index - b.order_index),
-          })),
-        tests: c.tests || [],
-      }))
-      setCourses(sorted)
+      if (data) {
+        const sorted = data.map((c: DbCourse) => ({
+          ...c,
+          modules: [...(c.modules || [])]
+            .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+            .map((m) => ({
+              ...m,
+              lessons: [...(m.lessons || [])].sort((a, b) => (a.order_index || 0) - (b.order_index || 0)),
+            })),
+          tests: [...(c.tests || [])],
+        }))
+        setCourses(sorted)
+      }
+    } catch {
+      // Error handled silently
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -45,7 +98,7 @@ export default function AdminContentPage() {
   }, [fetchCourses])
 
   const filteredCourses = courses.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
+    (c.title || '').toLowerCase().includes((search || '').toLowerCase())
   )
 
   const totalModules = courses.reduce((sum, c) => sum + (c.modules?.length || 0), 0)
@@ -54,6 +107,14 @@ export default function AdminContentPage() {
     0
   )
   const totalTests = courses.reduce((sum, c) => sum + (c.tests?.length || 0), 0)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -98,9 +159,7 @@ export default function AdminContentPage() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-slate-500">Loading courses...</div>
-        ) : filteredCourses.length === 0 ? (
+        {filteredCourses.length === 0 ? (
           <div className="p-12 text-center">
             <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500">No courses found</p>
@@ -129,11 +188,6 @@ export default function AdminContentPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{course.title}</p>
                     <div className="flex items-center gap-3 mt-1">
-                      {course.category && (
-                        <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-0 text-xs">
-                          {course.category.name}
-                        </Badge>
-                      )}
                       <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-0 text-xs">
                         {course.modules?.length || 0} modules
                       </Badge>

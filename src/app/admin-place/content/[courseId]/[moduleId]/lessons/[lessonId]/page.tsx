@@ -5,53 +5,66 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { ArrowLeft, Save, Trash2 } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
-import VideoUploader from '@/components/admin/VideoUploader'
-import PDFUploader from '@/components/admin/PDFUploader'
-import type { Lesson } from '@/types'
+import { getRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { notify } from '@/lib/notifications'
+
+interface DbLesson {
+  id: string
+  module_id: string
+  title: string
+  content: string | null
+  video_url: string | null
+  duration_minutes: number | null
+  order_index: number | null
+  is_free: boolean | null
+  is_active: boolean | null
+  created_at: string | null
+}
 
 export default function LessonEditorPage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.courseId as string
-  const moduleId = params.moduleId as string
   const lessonId = params.lessonId as string
 
-  const [lesson, setLesson] = useState<Lesson | null>(null)
+  const [lesson, setLesson] = useState<DbLesson | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    content_type: 'video' as Lesson['content_type'],
+    content: '',
     video_url: '',
-    pdf_url: '',
-    text_content: '',
     duration_minutes: 0,
     is_free: false,
-    is_downloadable: true,
+    is_active: true,
   })
 
   const fetchLesson = useCallback(async () => {
-    setLoading(true)
-    const data = await getRecord('lessons', lessonId)
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getRecord('lessons', lessonId)
 
-    if (data) {
-      setLesson(data)
-      setFormData({
-        title: data.title,
-        description: data.description || '',
-        content_type: data.content_type || 'video',
-        video_url: data.video_url || '',
-        pdf_url: data.pdf_url || '',
-        text_content: data.text_content || '',
-        duration_minutes: data.duration_minutes || 0,
-        is_free: data.is_free,
-        is_downloadable: data.is_downloadable,
-      })
+      if (data) {
+        setLesson(data)
+        setFormData({
+          title: data.title || '',
+          content: data.content || '',
+          video_url: data.video_url || '',
+          duration_minutes: data.duration_minutes || 0,
+          is_free: data.is_free || false,
+          is_active: data.is_active !== false,
+        })
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load lesson')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [lessonId])
 
   useEffect(() => {
@@ -60,24 +73,33 @@ export default function LessonEditorPage() {
 
   async function handleSave() {
     setSaving(true)
-    await updateRecord('lessons', lessonId, {
-      title: formData.title,
-      description: formData.description || null,
-      content_type: formData.content_type,
-      video_url: formData.content_type === 'video' ? formData.video_url : null,
-      pdf_url: formData.content_type === 'pdf' ? formData.pdf_url : null,
-      text_content: formData.content_type === 'text' ? formData.text_content : null,
-      duration_minutes: formData.duration_minutes || null,
-      is_free: formData.is_free,
-      is_downloadable: formData.is_downloadable,
-    })
-    setSaving(false)
+    try {
+      await updateRecord('lessons', lessonId, {
+        title: formData.title.trim(),
+        content: formData.content.trim() || null,
+        video_url: formData.video_url.trim() || null,
+        duration_minutes: formData.duration_minutes || null,
+        is_free: formData.is_free,
+        is_active: formData.is_active,
+      })
+      notify.lessonUpdated()
+      fetchLesson()
+    } catch {
+      notify.genericError()
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleDelete() {
-    if (!confirm('Delete this lesson?')) return
-    await deleteRecord('lessons', lessonId)
-    router.push(`/admin-place/content/${courseId}`)
+    try {
+      await deleteRecord('lessons', lessonId)
+      notify.lessonDeleted()
+      setShowDeleteConfirm(false)
+      router.push(`/admin-place/content/${courseId}`)
+    } catch {
+      notify.genericError()
+    }
   }
 
   if (loading) {
@@ -88,10 +110,10 @@ export default function LessonEditorPage() {
     )
   }
 
-  if (!lesson) {
+  if (error || !lesson) {
     return (
       <div className="text-center py-20">
-        <p className="text-slate-500">Lesson not found</p>
+        <p className="text-slate-500">{error || 'Lesson not found'}</p>
         <Link href={`/admin-place/content/${courseId}`}>
           <Button variant="outline" className="mt-4 border-slate-300">Back to Course</Button>
         </Link>
@@ -101,22 +123,37 @@ export default function LessonEditorPage() {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href={`/admin-place/content/${courseId}`} className="text-slate-400 hover:text-slate-600">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-slate-900">Edit Lesson</h1>
-          <p className="text-sm text-slate-500">Module: {moduleId}</p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDelete}
-          className="border-slate-300 hover:bg-red-50 hover:text-red-600"
+      <div className="mb-6">
+        <Link
+          href={`/admin-place/content/${courseId}/lessons`}
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-blue-600 transition-colors mb-3"
         >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+          <ArrowLeft className="h-4 w-4" /> Back to Lessons
+        </Link>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Edit Lesson</h1>
+            <p className="text-sm text-slate-500">{lesson.title}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="border-red-300 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Card className="border-slate-200">
@@ -135,56 +172,25 @@ export default function LessonEditorPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Description</label>
+            <label className="text-sm font-medium text-slate-700">Content</label>
             <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
-              rows={2}
-              placeholder="Optional description"
+              rows={10}
+              placeholder="Write lesson content here"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Content Type</label>
-            <select
-              value={formData.content_type}
-              onChange={(e) => setFormData({ ...formData, content_type: e.target.value as Lesson['content_type'] })}
-              className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
-            >
-              <option value="video">Video</option>
-              <option value="pdf">PDF Notes</option>
-              <option value="text">Text Content</option>
-              <option value="quiz">Quiz</option>
-            </select>
-          </div>
-
-          {formData.content_type === 'video' && (
-            <VideoUploader
+            <label className="text-sm font-medium text-slate-700">Video URL</label>
+            <Input
               value={formData.video_url}
-              onChange={(url) => setFormData({ ...formData, video_url: url })}
+              onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+              className="border-slate-300 mt-1"
+              placeholder="YouTube or video URL (optional)"
             />
-          )}
-
-          {formData.content_type === 'pdf' && (
-            <PDFUploader
-              value={formData.pdf_url}
-              onChange={(url) => setFormData({ ...formData, pdf_url: url })}
-            />
-          )}
-
-          {formData.content_type === 'text' && (
-            <div>
-              <label className="text-sm font-medium text-slate-700">Text Content</label>
-              <textarea
-                value={formData.text_content}
-                onChange={(e) => setFormData({ ...formData, text_content: e.target.value })}
-                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
-                rows={10}
-                placeholder="Write lesson content here (HTML supported)"
-              />
-            </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -210,26 +216,36 @@ export default function LessonEditorPage() {
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
-                  checked={formData.is_downloadable}
-                  onChange={(e) => setFormData({ ...formData, is_downloadable: e.target.checked })}
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="rounded"
                 />
-                Downloadable
+                Active
               </label>
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-            <Link href={`/admin-place/content/${courseId}`}>
-              <Button variant="outline" className="border-slate-300">Cancel</Button>
-            </Link>
-            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 gap-2">
-              <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Lesson</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-slate-900">{lesson.title}</span>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="border-slate-300">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

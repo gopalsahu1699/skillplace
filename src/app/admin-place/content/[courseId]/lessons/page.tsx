@@ -4,50 +4,80 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { ArrowLeft, Plus } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { ArrowLeft, Plus, ChevronUp, ChevronDown, Edit, Trash2 } from 'lucide-react'
+import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
-import LessonCard from '@/components/admin/LessonCard'
-import type { Module, Lesson } from '@/types'
+
+interface DbLesson {
+  id: string
+  module_id: string
+  title: string
+  content: string | null
+  video_url: string | null
+  duration_minutes: number | null
+  order_index: number | null
+  is_free: boolean | null
+  is_active: boolean | null
+  created_at: string | null
+}
+
+interface DbModule {
+  id: string
+  course_id: string
+  title: string
+  description: string | null
+  order_index: number | null
+  is_active: boolean | null
+  created_at: string | null
+  lessons?: DbLesson[]
+}
 
 export default function LessonsPage() {
   const params = useParams()
   const courseId = params.courseId as string
-  const [modules, setModules] = useState<(Module & { lessons: Lesson[] })[]>([])
+  const [modules, setModules] = useState<DbModule[]>([])
   const [selectedModuleId, setSelectedModuleId] = useState<string>('')
-  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [lessons, setLessons] = useState<DbLesson[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
+  const [editingLesson, setEditingLesson] = useState<DbLesson | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null)
+  const [deletingLesson, setDeletingLesson] = useState<DbLesson | null>(null)
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'video' as Lesson['content_type'],
+    content: '',
     video_url: '',
-    pdf_url: '',
-    text_content: '',
     duration_minutes: 0,
     is_free: false,
   })
   const [saving, setSaving] = useState(false)
 
   const fetchModules = useCallback(async () => {
-    setLoading(true)
-    const data = await getRecords('modules', 'course_id', courseId)
+    try {
+      setLoading(true)
+      const data = await getRecords('modules', 'course_id', courseId)
 
-    if (data) {
-      const sorted = data.sort((a: any, b: any) => a.order_index - b.order_index).map((m: any) => ({
-        ...m,
-        lessons: (m.lessons || []).sort((a: Lesson, b: Lesson) => a.order_index - b.order_index),
-      }))
-      setModules(sorted)
-      if (sorted.length > 0 && !selectedModuleId) {
-        setSelectedModuleId(sorted[0].id)
+      if (data) {
+        const sorted = [...data]
+          .sort((a: DbModule, b: DbModule) => (a.order_index || 0) - (b.order_index || 0))
+          .map((m: DbModule) => ({
+            ...m,
+            lessons: [...(m.lessons || [])].sort(
+              (a: DbLesson, b: DbLesson) => (a.order_index || 0) - (b.order_index || 0)
+            ),
+          }))
+        setModules(sorted)
+        if (sorted.length > 0 && !selectedModuleId) {
+          setSelectedModuleId(sorted[0].id)
+        }
       }
+    } catch {
+      // Error handled silently
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [courseId, selectedModuleId])
 
   useEffect(() => {
@@ -55,81 +85,81 @@ export default function LessonsPage() {
   }, [fetchModules])
 
   useEffect(() => {
-    const mod = modules.find(m => m.id === selectedModuleId)
+    const mod = modules.find((m) => m.id === selectedModuleId)
     setLessons(mod?.lessons || [])
   }, [selectedModuleId, modules])
 
   function openCreate() {
     setEditingLesson(null)
-    setFormData({
-      title: '',
-      content_type: 'video',
-      video_url: '',
-      pdf_url: '',
-      text_content: '',
-      duration_minutes: 0,
-      is_free: false,
-    })
+    setFormData({ title: '', content: '', video_url: '', duration_minutes: 0, is_free: false })
     setShowForm(true)
   }
 
-  function openEdit(lesson: Lesson) {
+  function openEdit(lesson: DbLesson) {
     setEditingLesson(lesson)
     setFormData({
       title: lesson.title,
-      content_type: lesson.content_type || 'video',
+      content: lesson.content || '',
       video_url: lesson.video_url || '',
-      pdf_url: lesson.pdf_url || '',
-      text_content: lesson.text_content || '',
       duration_minutes: lesson.duration_minutes || 0,
-      is_free: lesson.is_free,
+      is_free: lesson.is_free || false,
     })
     setShowForm(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!formData.title.trim()) return
     setSaving(true)
 
-    const payload = {
-      title: formData.title,
-      content_type: formData.content_type,
-      video_url: formData.content_type === 'video' ? formData.video_url : null,
-      pdf_url: formData.content_type === 'pdf' ? formData.pdf_url : null,
-      text_content: formData.content_type === 'text' ? formData.text_content : null,
-      duration_minutes: formData.duration_minutes || null,
-      is_free: formData.is_free,
-    }
+    try {
+      const payload = {
+        title: formData.title.trim(),
+        content: formData.content.trim() || null,
+        video_url: formData.video_url.trim() || null,
+        duration_minutes: formData.duration_minutes || null,
+        is_free: formData.is_free,
+      }
 
-    if (editingLesson) {
-      await updateRecord('lessons', editingLesson.id, payload)
-      notify.lessonUpdated()
-    } else {
-      await createRecord('lessons', {
-        ...payload,
-        module_id: selectedModuleId,
-        order_index: lessons.length + 1,
-      })
-      notify.lessonCreated()
-    }
+      if (editingLesson) {
+        await updateRecord('lessons', editingLesson.id, payload)
+        notify.lessonUpdated()
+      } else {
+        await createRecord('lessons', {
+          ...payload,
+          module_id: selectedModuleId,
+          order_index: lessons.length + 1,
+          is_active: true,
+        })
+        notify.lessonCreated()
+      }
 
-    setSaving(false)
-    setShowForm(false)
-    setEditingLesson(null)
-    fetchModules()
+      setShowForm(false)
+      setEditingLesson(null)
+      setFormData({ title: '', content: '', video_url: '', duration_minutes: 0, is_free: false })
+      fetchModules()
+    } catch {
+      notify.genericError()
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleDelete() {
     if (!deletingLesson) return
-    await deleteRecord('lessons', deletingLesson.id)
-    notify.lessonDeleted()
-    setShowDeleteConfirm(false)
-    setDeletingLesson(null)
-    fetchModules()
+    try {
+      await deleteRecord('lessons', deletingLesson.id)
+      notify.lessonDeleted()
+      setShowDeleteConfirm(false)
+      setDeletingLesson(null)
+      fetchModules()
+    } catch {
+      notify.genericError()
+    }
   }
 
   async function handleReorder(lessonId: string, direction: 'up' | 'down') {
-    const idx = lessons.findIndex(l => l.id === lessonId)
+    const idx = lessons.findIndex((l) => l.id === lessonId)
     if (idx === -1) return
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1
     if (swapIdx < 0 || swapIdx >= lessons.length) return
@@ -137,15 +167,22 @@ export default function LessonsPage() {
     const current = lessons[idx]
     const swap = lessons[swapIdx]
 
-    await updateRecord('lessons', current.id, { order_index: swap.order_index })
-    await updateRecord('lessons', swap.id, { order_index: current.order_index })
-    fetchModules()
+    try {
+      await updateRecord('lessons', current.id, { order_index: swap.order_index })
+      await updateRecord('lessons', swap.id, { order_index: current.order_index })
+      fetchModules()
+    } catch {
+      notify.genericError()
+    }
   }
 
   return (
     <div>
       <div className="mb-6">
-        <Link href={`/admin-place/content/${courseId}`} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-blue-600 transition-colors mb-3">
+        <Link
+          href={`/admin-place/content/${courseId}`}
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-blue-600 transition-colors mb-3"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Course
         </Link>
         <div className="flex items-center justify-between">
@@ -179,9 +216,10 @@ export default function LessonsPage() {
           <div className="lg:col-span-1">
             <h3 className="font-semibold text-slate-900 mb-3">Modules</h3>
             <div className="space-y-1">
-              {modules.map(mod => (
+              {modules.map((mod) => (
                 <button
                   key={mod.id}
+                  type="button"
                   onClick={() => setSelectedModuleId(mod.id)}
                   className={`w-full text-left p-3 rounded-xl text-sm transition-colors ${
                     selectedModuleId === mod.id
@@ -209,16 +247,67 @@ export default function LessonsPage() {
             ) : (
               <div className="space-y-2">
                 {lessons.map((lesson, idx) => (
-                  <LessonCard
+                  <div
                     key={lesson.id}
-                    lesson={lesson}
-                    index={idx}
-                    total={lessons.length}
-                    onEdit={() => openEdit(lesson)}
-                    onDelete={() => { setDeletingLesson(lesson); setShowDeleteConfirm(true) }}
-                    onMoveUp={() => handleReorder(lesson.id, 'up')}
-                    onMoveDown={() => handleReorder(lesson.id, 'down')}
-                  />
+                    className="border border-slate-200 rounded-xl p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleReorder(lesson.id, 'up')}
+                          disabled={idx === 0}
+                          className="text-slate-400 hover:text-slate-600 disabled:opacity-30 p-0.5"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReorder(lesson.id, 'down')}
+                          disabled={idx === lessons.length - 1}
+                          className="text-slate-400 hover:text-slate-600 disabled:opacity-30 p-0.5"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-900 text-sm">{lesson.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {lesson.duration_minutes ? (
+                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-0 text-xs">
+                              {lesson.duration_minutes} min
+                            </Badge>
+                          ) : null}
+                          {lesson.is_free ? (
+                            <Badge variant="secondary" className="bg-green-50 text-green-600 border-0 text-xs">
+                              Free
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEdit(lesson)}
+                          className="hover:bg-blue-50 hover:text-blue-600"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDeletingLesson(lesson)
+                            setShowDeleteConfirm(true)
+                          }}
+                          className="hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -246,56 +335,24 @@ export default function LessonsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Content Type</label>
-              <select
-                value={formData.content_type}
-                onChange={(e) => setFormData({ ...formData, content_type: e.target.value as Lesson['content_type'] })}
+              <label className="text-sm font-medium text-slate-700">Content</label>
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="video">Video</option>
-                <option value="pdf">PDF Notes</option>
-                <option value="text">Text Content</option>
-                <option value="quiz">Quiz</option>
-              </select>
+                rows={4}
+                placeholder="Lesson content (optional)"
+              />
             </div>
-
-            {formData.content_type === 'video' && (
-              <div>
-                <label className="text-sm font-medium text-slate-700">Video URL</label>
-                <Input
-                  value={formData.video_url}
-                  onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                  className="border-slate-300"
-                  placeholder="YouTube URL"
-                />
-              </div>
-            )}
-
-            {formData.content_type === 'pdf' && (
-              <div>
-                <label className="text-sm font-medium text-slate-700">PDF URL</label>
-                <Input
-                  value={formData.pdf_url}
-                  onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
-                  className="border-slate-300"
-                  placeholder="URL to PDF document"
-                />
-              </div>
-            )}
-
-            {formData.content_type === 'text' && (
-              <div>
-                <label className="text-sm font-medium text-slate-700">Text Content</label>
-                <textarea
-                  value={formData.text_content}
-                  onChange={(e) => setFormData({ ...formData, text_content: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={6}
-                  placeholder="Write lesson content here"
-                />
-              </div>
-            )}
-
+            <div>
+              <label className="text-sm font-medium text-slate-700">Video URL</label>
+              <Input
+                value={formData.video_url}
+                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                className="border-slate-300"
+                placeholder="YouTube or video URL (optional)"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-slate-700">Duration (minutes)</label>
@@ -319,7 +376,6 @@ export default function LessonsPage() {
                 </label>
               </div>
             </div>
-
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="border-slate-300">
                 Cancel
@@ -337,7 +393,8 @@ export default function LessonsPage() {
           <DialogHeader>
             <DialogTitle>Delete Lesson</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <span className="font-semibold text-slate-900">{deletingLesson?.title}</span>?
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-slate-900">{deletingLesson?.title}</span>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -23,33 +23,74 @@ export default function AdminLayout({
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [adminUser, setAdminUser] = useState<UserProfile | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+
     async function checkAuth() {
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-      if (!user) {
+        if (cancelled) return
+
+        if (authError) {
+          setError('Authentication error: ' + authError.message)
+          setLoading(false)
+          return
+        }
+
+        if (!user) {
+          setLoading(false)
+          return
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (cancelled) return
+
+        if (profileError) {
+          setError('Failed to load profile: ' + profileError.message)
+          setLoading(false)
+          return
+        }
+
+        if (profile && profile.role === 'admin') {
+          setAdminUser(profile)
+        }
+
         setLoading(false)
-        return
+      } catch (err) {
+        if (!cancelled) {
+          setError('Session check failed. Please refresh the page.')
+          setLoading(false)
+        }
       }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (profile && profile.role === 'admin') {
-        setAdminUser(profile)
-      }
-
-      setLoading(false)
     }
 
     checkAuth()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+  useEffect(() => {
+    if (!loading) return
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError('Session check timed out. Please refresh the page.')
+        setLoading(false)
+      }
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [loading])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -61,6 +102,27 @@ export default function AdminLayout({
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <Card className="w-full max-w-md border-slate-200">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50">
+              <Lock className="h-7 w-7 text-red-600" />
+            </div>
+            <CardTitle className="text-2xl text-slate-900">Session Error</CardTitle>
+            <p className="text-sm text-slate-500 mt-1">{error}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Link href="/login">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Sign In</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }

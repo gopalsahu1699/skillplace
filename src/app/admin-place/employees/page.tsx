@@ -57,9 +57,25 @@ export default function AdminEmployeesPage() {
 
   async function fetchEmployees() {
     setLoading(true)
-    const data = await getRecords('employees')
-    if (data) {
-      const sorted = data.sort((a: Employee, b: Employee) => a.name.localeCompare(b.name))
+    const [employeesData, permissionsData] = await Promise.all([
+      getRecords('employees'),
+      getRecords('employee_permissions'),
+    ])
+    
+    if (employeesData) {
+      const permMap = new Map()
+      if (permissionsData) {
+        permissionsData.forEach((p: any) => permMap.set(p.employee_id, p))
+      }
+      
+      const enriched = employeesData.map((emp: any) => ({
+        ...emp,
+        employee_permissions: permMap.get(emp.id) || null,
+      }))
+      
+      const sorted = enriched.sort((a: any, b: any) => 
+        (a.name || '').localeCompare(b.name || '')
+      )
       setEmployees(sorted)
     }
     setLoading(false)
@@ -176,8 +192,9 @@ export default function AdminEmployeesPage() {
   async function savePermissions() {
     if (!permissionsEmployee) return
     try {
-      if (permissionsEmployee.employee_permissions) {
-        await updateRecord('employee_permissions', permissionsEmployee.employee_permissions.id, permData)
+      const existingPerms = permissionsEmployee.employee_permissions
+      if (existingPerms) {
+        await updateRecord('employee_permissions', existingPerms.id, permData)
       } else {
         await createRecord('employee_permissions', {
           employee_id: permissionsEmployee.id,
@@ -218,9 +235,9 @@ export default function AdminEmployeesPage() {
 
   const filteredEmployees = employees.filter(
     (e) =>
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.email.toLowerCase().includes(search.toLowerCase()) ||
-      e.department?.toLowerCase().includes(search.toLowerCase())
+      (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (e.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (e.department || '').toLowerCase().includes(search.toLowerCase())
   )
 
   const roleBadgeColor = (role: string) => {
@@ -550,18 +567,33 @@ export default function AdminEmployeesPage() {
               { key: 'can_manage_leads', label: 'Leads' },
               { key: 'can_manage_employees', label: 'Employees' },
             ] as const).map((perm) => (
-              <label
+              <button
                 key={perm.key}
-                className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => setPermData({ ...permData, [perm.key]: !permData[perm.key] })}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
+                  permData[perm.key]
+                    ? 'border-green-200 bg-green-50/50 hover:bg-green-50'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
               >
-                <input
-                  type="checkbox"
-                  checked={permData[perm.key]}
-                  onChange={(e) => setPermData({ ...permData, [perm.key]: e.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-slate-700">{perm.label}</span>
-              </label>
+                <span className={`text-sm font-medium transition-colors ${
+                  permData[perm.key] ? 'text-slate-700' : 'text-slate-400'
+                }`}>
+                  {perm.label}
+                </span>
+                <span
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    permData[perm.key] ? 'bg-green-600' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      permData[perm.key] ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </span>
+              </button>
             ))}
           </div>
           <DialogFooter>

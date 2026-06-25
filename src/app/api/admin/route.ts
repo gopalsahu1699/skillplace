@@ -16,9 +16,19 @@ export async function GET(request: NextRequest) {
   try {
     let selectStr = '*'
     if (join) {
-      selectStr = join.split(',').map(t => t.trim()).filter(Boolean).map(t =>
-        t.includes('(') ? t : `${t}(*)`
-      ).join(',')
+      const parts: string[] = []
+      let depth = 0
+      let current = ''
+      for (const ch of join) {
+        if (ch === '(') { depth++; current += ch }
+        else if (ch === ')') { depth--; current += ch }
+        else if (ch === ',' && depth === 0) {
+          if (current.trim()) parts.push(current.trim())
+          current = ''
+        } else { current += ch }
+      }
+      if (current.trim()) parts.push(current.trim())
+      selectStr = parts.map(t => t === '*' ? t : t.includes('(') ? t : `${t}(*)`).join(',')
     }
 
     let query: any = adminSupabase.from(table!).select(selectStr)
