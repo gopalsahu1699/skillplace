@@ -117,15 +117,6 @@ export default function Navbar() {
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-blue-600 rounded-full group-hover:w-4/5 transition-all duration-300" />
                 </Link>
               )}
-              {!user && (
-                <Link
-                  href="/admin-login"
-                  className="relative px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors group inline-flex items-center gap-1"
-                >
-                  <Shield className="h-3.5 w-3.5" />
-                  Admin
-                </Link>
-              )}
             </div>
 
             <div className="hidden md:flex items-center gap-3">

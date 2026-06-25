@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Clock, Check, Wifi, Users, MapPin } from 'lucide-react'
+import { Clock, Check, Wifi, Users, MapPin, X, CreditCard, Loader2, GraduationCap } from 'lucide-react'
 import { getRecords } from '@/lib/admin-api'
+import { supabase } from '@/lib/supabase/client'
 
 interface Branch {
   id: string
@@ -29,6 +31,15 @@ interface TrainingProgram {
   branches: { name: string; slug: string } | null
 }
 
+interface Enrollment {
+  id: string
+  user_id: string
+  program_id: string
+  status: string
+  enrolled_at: string
+  training_programs: TrainingProgram | null
+}
+
 const programTypeConfig = {
   online: { label: 'Online', icon: Wifi, color: 'bg-purple-100 text-purple-700' },
   offline: { label: 'Offline', icon: Users, color: 'bg-blue-100 text-blue-700' },
@@ -36,18 +47,62 @@ const programTypeConfig = {
 }
 
 export default function ProgramsPage() {
+  const router = useRouter()
   const [branches, setBranches] = useState<Branch[]>([])
   const [programs, setPrograms] = useState<TrainingProgram[]>([])
   const [selectedBranch, setSelectedBranch] = useState('civil')
   const [loading, setLoading] = useState(true)
+  const [enrollModal, setEnrollModal] = useState<{ open: boolean; program: TrainingProgram | null }>({ open: false, program: null })
+  const [enrollStep, setEnrollStep] = useState<'info' | 'payment' | 'success'>('info')
+  const [enrollLoading, setEnrollLoading] = useState(false)
+  const [enrollForm, setEnrollForm] = useState({ name: '', email: '', phone: '' })
+  const [user, setUser] = useState<any>(null)
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
+  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false)
 
   useEffect(() => {
     fetchBranches()
+    fetchUser()
   }, [])
 
   useEffect(() => {
     fetchPrograms()
   }, [selectedBranch, branches])
+
+  async function fetchUser() {
+    const { data: { user: u } } = await supabase.auth.getUser()
+    setUser(u)
+    if (u) {
+      fetchEnrollments(u.id)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', u.id)
+        .single()
+      if (profile) {
+        setEnrollForm({ name: profile.full_name || '', email: profile.email || '', phone: profile.phone || '' })
+      } else if (u.email) {
+        setEnrollForm(f => ({ ...f, email: u.email || '' }))
+      }
+    }
+  }
+
+  async function fetchEnrollments(userId: string) {
+    setEnrollmentsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('enrollments')
+        .select('*,training_programs(*)')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+      if (error) throw error
+      setEnrollments((data || []).filter((e: Enrollment) => e.training_programs))
+    } catch (err) {
+      console.error('Failed to fetch enrollments:', err)
+      setEnrollments([])
+    }
+    setEnrollmentsLoading(false)
+  }
 
   async function fetchBranches() {
     try {
@@ -88,6 +143,56 @@ export default function ProgramsPage() {
             Choose your branch and program type. Each program is designed by industry experts with placement assistance.
           </p>
         </div>
+
+        {/* My Purchased Programs */}
+        {user && (
+          <div className="mb-10">
+            {enrollmentsLoading ? (
+              <div className="text-center py-8 text-slate-500">Loading your programs...</div>
+            ) : enrollments.length > 0 ? (
+              <>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">My Purchased Programs</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {enrollments.map((enrollment) => {
+                    const program = enrollment.training_programs!
+                    const config = programTypeConfig[program.program_type as keyof typeof programTypeConfig]
+                    const Icon = config?.icon || Wifi
+                    return (
+                      <div key={enrollment.id} className="bg-white rounded-2xl border border-slate-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <Badge className={`${config?.color || 'bg-slate-100 text-slate-600'} border-0`}>
+                              {config?.label || program.program_type}
+                            </Badge>
+                            <Badge className="bg-slate-100 text-slate-600 border-0">
+                              {program.branches?.name}
+                            </Badge>
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-900 mb-2">{program.name}</h3>
+                          <p className="text-sm text-slate-500 mb-4">{program.short_description}</p>
+                          <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                            <Clock className="h-4 w-4" />
+                            Enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                          </div>
+                          <Link href={`/programs/${program.slug}`}>
+                            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                              Go to Program
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
 
         {/* Branch Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mb-10">
