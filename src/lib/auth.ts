@@ -48,7 +48,7 @@ export async function signUp(
     })
 
     try {
-      const session = await createSession(data.user.id)
+      const session = await createSession(data.user.id, undefined, null, data.session?.access_token)
       setSessionCookie(session.sessionToken)
     } catch {
       // Session creation is best-effort during sign up
@@ -67,7 +67,7 @@ export async function signIn(email: string, password: string) {
     try {
       const userAgent =
         typeof navigator !== 'undefined' ? navigator.userAgent : undefined
-      const session = await createSession(data.user.id, userAgent)
+      const session = await createSession(data.user.id, userAgent, null, data.session?.access_token)
       setSessionCookie(session.sessionToken)
     } catch {
       // Session creation is best-effort during sign in

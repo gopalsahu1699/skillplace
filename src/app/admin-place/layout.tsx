@@ -86,11 +86,11 @@ export default function AdminLayout({
         if (profile && profile.role === 'admin') {
           setAdminUser(profile)
         } else {
-          // Fallback: check employees table
+          // Fallback: check employees table by email (more robust than ID)
           const { data: employee } = await supabase
             .from('employees')
             .select('role')
-            .eq('id', user.id)
+            .eq('email', user.email)
             .single()
 
           if (employee?.role === 'admin') {

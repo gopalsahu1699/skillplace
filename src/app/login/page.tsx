@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
-import { supabase } from '@/lib/supabase/client'
+import { supabase, createSession } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 
 export default function LoginPage() {
@@ -38,10 +38,16 @@ export default function LoginPage() {
       return
     }
 
-    // Session is automatically stored in cookies by the Supabase client storage adapter
-
-    // Check user role and redirect accordingly
+    // Store session in Supabase user_sessions table
     if (data.user) {
+      try {
+        const session = await createSession(data.user.id, navigator.userAgent, null, data.session?.access_token)
+        document.cookie = `sp_session=${session.sessionToken}; path=/; max-age=604800; secure; samesite=lax`
+      } catch (e) {
+        console.error('Failed to create session:', e)
+        // Session creation is best-effort
+      }
+
       notify.loginSuccess(data.user.user_metadata?.full_name || data.user.email)
       const { data: profile } = await supabase
         .from('profiles')

@@ -62,10 +62,11 @@ export interface ValidatedSession {
 export async function createSession(
   userId: string,
   userAgent?: string,
-  ip?: string | null
+  ip?: string | null,
+  accessToken?: string
 ): Promise<SessionData> {
   const sessionToken = generateToken()
-  const accessToken = generateToken()
+  const accessTokenGenerated = generateToken()
   const refreshToken = generateToken()
 
   const ua = (userAgent || 'unknown').toLowerCase()
@@ -89,10 +90,11 @@ export async function createSession(
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  const { error } = await supabase.from('user_sessions').insert({
+  // Build session record
+  const sessionRecord = {
     user_id: userId,
     session_token: sessionToken,
-    access_token: accessToken,
+    access_token: accessTokenGenerated,
     refresh_token: refreshToken,
     ip_address: ip,
     user_agent: userAgent,
@@ -101,10 +103,21 @@ export async function createSession(
     os,
     login_method: 'email',
     expires_at: expiresAt.toISOString(),
-  })
+  }
 
-  if (error) throw error
-  return { sessionToken, accessToken, refreshToken, expiresAt }
+  // Use fetch with JWT for RLS policy (auth.uid() = user_id)
+  // Fall back to supabase client (anon key) if no token provided
+  if (accessToken) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const userClient = createClient(supabaseUrl, accessToken)
+    const { error } = await userClient.from('user_sessions').insert(sessionRecord)
+    if (error) throw error
+  } else {
+    const { error } = await supabase.from('user_sessions').insert(sessionRecord)
+    if (error) throw error
+  }
+
+  return { sessionToken, accessToken: accessTokenGenerated, refreshToken, expiresAt }
 }
 
 export async function validateSession(
@@ -112,7 +125,7 @@ export async function validateSession(
 ): Promise<ValidatedSession | null> {
   const { data, error } = await supabase
     .from('user_sessions')
-    .select('*, profiles(*)')
+    .select('*,profiles(*)')
     .eq('session_token', sessionToken)
     .eq('is_active', true)
     .gt('expires_at', new Date().toISOString())
@@ -137,7 +150,7 @@ export async function destroySession(
 ): Promise<boolean> {
   const { error } = await supabase
     .from('user_sessions')
-    .update({ is_active: false, logout_at: new Date().toISOString() })
+    .delete()
     .eq('session_token', sessionToken)
   return !error
 }

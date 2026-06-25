@@ -33,7 +33,17 @@ export default function Navbar() {
           .select('role, full_name, avatar_url')
           .eq('id', authUser.id)
           .single()
-        if (profile?.role === 'admin') setIsAdmin(true)
+        if (profile?.role === 'admin') {
+          setIsAdmin(true)
+        } else {
+          // Fallback: check employees table
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('role')
+            .eq('email', authUser.email)
+            .single()
+          if (employee?.role === 'admin') setIsAdmin(true)
+        }
 
         const [individualRes, publicRes] = await Promise.all([
           supabase
@@ -60,6 +70,18 @@ export default function Navbar() {
   }, [])
 
   async function handleLogout() {
+    // Destroy session in Supabase
+    const match = document.cookie.match(/(?:^|;\s*)sp_session=([^;]*)/)
+    const sessionToken = match ? match[1] : undefined
+    if (sessionToken) {
+      try {
+        const { destroySession } = await import('@/lib/supabase/client')
+        await destroySession(sessionToken)
+      } catch {
+        // Best-effort cleanup
+      }
+      document.cookie = 'sp_session=; path=/; max-age=0'
+    }
     await supabase.auth.signOut()
     notify.logoutSuccess()
     window.location.href = '/'
