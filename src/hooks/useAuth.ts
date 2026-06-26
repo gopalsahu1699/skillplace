@@ -1,11 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import {
-  validateSession,
-  destroySession,
-  ValidatedSession,
-} from '@/lib/supabase/client'
+import { revokeSession, ValidatedSession } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 
 function getSessionCookie(): string | undefined {
@@ -33,12 +29,14 @@ export function useAuth() {
     }
 
     try {
-      const validated = await validateSession(sessionToken)
-      if (!validated) {
+      // Use API route to validate session (keeps service key server-side)
+      const res = await fetch(`/api/session/validate?token=${sessionToken}`)
+      if (res.ok) {
+        const data = await res.json()
+        setSessionData(data)
+      } else {
         clearSessionCookie()
         setSessionData(null)
-      } else {
-        setSessionData(validated)
       }
     } catch {
       clearSessionCookie()
@@ -70,7 +68,7 @@ export function useAuth() {
 export async function destroyCurrentSession(): Promise<boolean> {
   const sessionToken = getSessionCookie()
   if (!sessionToken) return false
-  const result = await destroySession(sessionToken)
+  const result = await revokeSession(sessionToken)
   clearSessionCookie()
   return result
 }

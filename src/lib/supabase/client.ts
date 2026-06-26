@@ -90,7 +90,6 @@ export async function createSession(
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  // Build session record
   const sessionRecord = {
     user_id: userId,
     session_token: sessionToken,
@@ -105,7 +104,6 @@ export async function createSession(
     expires_at: expiresAt.toISOString(),
   }
 
-  // Get the client to use (JWT-authenticated if token provided, else anon)
   let client = supabase
   if (accessToken) {
     const { createClient } = await import('@supabase/supabase-js')
@@ -116,15 +114,14 @@ export async function createSession(
     })
   }
 
-  // Auto-create profile if user doesn't have one (handles new users without profile)
-  const { data: existingProfile } = await client
+  const { data: existingProfile } = await supabase
     .from('profiles')
     .select('id')
     .eq('id', userId)
     .single()
 
   if (!existingProfile) {
-    await client.from('profiles').insert({
+    await supabase.from('profiles').insert({
       id: userId,
       email: '',
       full_name: null,
@@ -134,9 +131,24 @@ export async function createSession(
     })
   }
 
-  // Insert session record
   const { error } = await client.from('user_sessions').insert(sessionRecord)
   if (error) throw error
+
+  const { data: newSession } = await client
+    .from('user_sessions')
+    .select('id')
+    .eq('session_token', sessionToken)
+    .single()
+
+  if (newSession) {
+    await client.from('user_activity').insert({
+      user_id: userId,
+      session_id: newSession.id,
+      action: 'login',
+      ip_address: ip,
+      user_agent: userAgent,
+    }).then(() => {}, () => {})
+  }
 
   return { sessionToken, accessToken: accessTokenGenerated, refreshToken, expiresAt }
 }
@@ -144,18 +156,47 @@ export async function createSession(
 export async function validateSession(
   sessionToken: string
 ): Promise<ValidatedSession | null> {
+  const { data: revoked } = await supabase
+    .from('revoked_tokens')
+    .select('id')
+    .eq('token', sessionToken)
+    .maybeSingle()
+
+  if (revoked) return null
+
   const { data, error } = await supabase
     .from('user_sessions')
     .select('*')
     .eq('session_token', sessionToken)
     .eq('is_active', true)
+    .eq('is_revoked', false)
     .gt('expires_at', new Date().toISOString())
-    .single()
+    .maybeSingle()
 
   if (error || !data) return null
 
-  // Fetch profile separately (no FK join available)
-  // Use .maybeSingle() to avoid error when profile doesn't exist
+  const lastActive = new Date(data.last_active_at || data.created_at)
+  const inactiveMinutes = (Date.now() - lastActive.getTime()) / (1000 * 60)
+
+  if (inactiveMinutes > 30) {
+    await revokeSession(sessionToken, 'inactive_30min')
+    return null
+  }
+
+  await supabase
+    .from('user_sessions')
+    .update({ last_active_at: new Date().toISOString() })
+    .eq('session_token', sessionToken)
+
+  await supabase
+    .from('user_activity')
+    .insert({
+      user_id: data.user_id,
+      session_id: data.id,
+      action: 'session_validate',
+      ip_address: data.ip_address,
+    }).then(() => {}, () => {})
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -176,23 +217,74 @@ export async function updateSessionActivity(
   return !error
 }
 
-export async function destroySession(
-  sessionToken: string
+export async function revokeSession(
+  sessionToken: string,
+  reason: string = 'logout'
 ): Promise<boolean> {
+  const { data: session } = await supabase
+    .from('user_sessions')
+    .select('user_id')
+    .eq('session_token', sessionToken)
+    .single()
+
   const { error } = await supabase
     .from('user_sessions')
-    .delete()
+    .update({
+      is_active: false,
+      is_revoked: true,
+      revoked_at: new Date().toISOString(),
+      revoke_reason: reason,
+    })
     .eq('session_token', sessionToken)
+
+  if (!error && session) {
+    await supabase.from('revoked_tokens').insert({
+      token: sessionToken,
+      user_id: session.user_id,
+      reason,
+    }).then(() => {}, () => {})
+
+    await supabase.from('user_activity').insert({
+      user_id: session.user_id,
+      action: 'logout',
+      resource: sessionToken,
+    }).then(() => {}, () => {})
+  }
+
   return !error
 }
 
-export async function destroyAllUserSessions(
-  userId: string
+export async function revokeAllSessions(
+  userId: string,
+  reason: string = 'logout_all'
 ): Promise<boolean> {
-  const { error } = await supabase
+  const { data: sessions } = await supabase
     .from('user_sessions')
-    .update({ is_active: false, logout_at: new Date().toISOString() })
+    .select('session_token, user_id')
     .eq('user_id', userId)
     .eq('is_active', true)
+
+  const { error } = await supabase
+    .from('user_sessions')
+    .update({
+      is_active: false,
+      is_revoked: true,
+      revoked_at: new Date().toISOString(),
+      revoke_reason: reason,
+    })
+    .eq('user_id', userId)
+    .eq('is_active', true)
+
+  if (sessions && sessions.length > 0) {
+    await supabase.from('revoked_tokens').insert(
+      sessions.map(s => ({ token: s.session_token, user_id: s.user_id, reason }))
+    ).then(() => {}, () => {})
+
+    await supabase.from('user_activity').insert({
+      user_id: userId,
+      action: 'logout_all',
+    }).then(() => {}, () => {})
+  }
+
   return !error
 }

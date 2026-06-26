@@ -19,7 +19,6 @@ async function getBranchesWithCourses() {
     .order('name', { ascending: true })
 
   if (branchError) {
-    console.error('Error fetching branches:', branchError)
     return []
   }
 
@@ -30,7 +29,6 @@ async function getBranchesWithCourses() {
     .order('created_at', { ascending: true })
 
   if (courseError) {
-    console.error('Error fetching courses:', courseError)
     return branches || []
   }
 

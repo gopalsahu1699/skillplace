@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Check, Clock, Wifi, Users, MapPin, BookOpen } from 'lucide-react'
-import { getRecords } from '@/lib/admin-api'
+import { supabase } from '@/lib/supabase/client'
 
 interface ProgramDetail {
   id: string
@@ -42,34 +42,65 @@ export default function ProgramDetailPage() {
   const slug = params.slug as string
   const [program, setProgram] = useState<ProgramDetail | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
+  const [user, setUser] = useState<any>(null)
+  const [enrollment, setEnrollment] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    fetchUser()
     fetchProgram()
   }, [slug])
+
+  async function fetchUser() {
+    const { data: { user: u } } = await supabase.auth.getUser()
+    setUser(u)
+  }
 
   async function fetchProgram() {
     setLoading(true)
     setError(null)
     try {
-      const programs = await getRecords('training_programs', 'slug', slug, 'branches(*)')
-      if (!programs || programs.length === 0) { setLoading(false); return }
-      const prog = programs[0]
-      setProgram(prog)
+      // Public read - use anon client (no auth required for viewing program details)
+      const { data: programs } = await supabase
+        .from('training_programs')
+        .select('*,branches(*)')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single()
 
-      try {
-        const programCourses = await getRecords('program_courses', 'program_id', prog.id, 'courses(*)')
-        setCourses((programCourses || []).map((pc: any) => pc.courses).filter(Boolean))
-      } catch (e) {
-        console.error('Failed to fetch courses:', e)
-        setCourses([])
-      }
-    } catch (err) {
-      console.error('Failed to fetch program:', err)
+      if (!programs) { setLoading(false); return }
+      setProgram(programs)
+
+      // Fetch courses (public)
+      const { data: programCourses } = await supabase
+        .from('program_courses')
+        .select('courses(*)')
+        .eq('program_id', programs.id)
+        .order('sort_order', { ascending: true })
+
+      setCourses((programCourses || []).map((pc: any) => pc.courses).filter(Boolean))
+    } catch {
       setError('Failed to load program. Please try again.')
     }
     setLoading(false)
+  }
+
+  // Check enrollment when user is loaded
+  useEffect(() => {
+    if (user && program) {
+      checkEnrollment()
+    }
+  }, [user, program])
+
+  async function checkEnrollment() {
+    const { data } = await supabase
+      .from('enrollments')
+      .select('id, status')
+      .eq('user_id', user.id)
+      .eq('program_id', program!.id)
+      .single()
+    setEnrollment(data)
   }
 
   if (loading) {
@@ -197,11 +228,29 @@ export default function ProgramDetailPage() {
                 </p>
               </div>
 
-              <Link href={`/programs/${program.slug}/enroll`}>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-lg">
-                  Enroll Now
+              {user && enrollment?.status === 'active' ? (
+                <Link href={`/programs/${program.slug}/learn`}>
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-lg">
+                    Go to Program
+                  </Button>
+                </Link>
+              ) : user && enrollment?.status === 'pending' ? (
+                <Button disabled className="w-full py-6 text-lg bg-amber-100 text-amber-700">
+                  Enrollment Pending
                 </Button>
-              </Link>
+              ) : user ? (
+                <Link href={`/programs/${program.slug}/enroll`}>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-lg">
+                    Enroll Now
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/login?redirectedFrom=/programs/${program.slug}/enroll`}>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-lg">
+                    Sign in to Enroll
+                  </Button>
+                </Link>
+              )}
 
               <p className="text-xs text-slate-400 text-center mt-3">
                 Secure payment · Instant access

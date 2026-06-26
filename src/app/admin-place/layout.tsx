@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { validateSession, destroySession } from '@/lib/supabase/client'
+import { validateSession, revokeSession } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 interface UserProfile {
@@ -134,7 +134,7 @@ export default function AdminLayout({
     const sessionToken = getSessionCookie()
     if (sessionToken) {
       try {
-        await destroySession(sessionToken)
+        await revokeSession(sessionToken)
       } catch {
         // Best-effort cleanup
       }

@@ -75,8 +75,8 @@ export default function Navbar() {
     const sessionToken = match ? match[1] : undefined
     if (sessionToken) {
       try {
-        const { destroySession } = await import('@/lib/supabase/client')
-        await destroySession(sessionToken)
+        const { revokeSession } = await import('@/lib/supabase/client')
+        await revokeSession(sessionToken)
       } catch {
         // Best-effort cleanup
       }

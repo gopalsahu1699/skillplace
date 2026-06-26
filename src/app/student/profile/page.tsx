@@ -82,8 +82,8 @@ export default function ProfilePage() {
         .order('enrolled_at', { ascending: false })
 
       setEnrollments(data || [])
-    } catch (err) {
-      console.error('Failed to fetch enrollments:', err)
+    } catch {
+      // Enrollment fetch failed
     }
     setEnrollmentsLoading(false)
   }

@@ -8,7 +8,6 @@ export async function getBranches() {
     .order('name', { ascending: true })
 
   if (error) {
-    console.error('Error fetching branches:', error)
     return []
   }
   return data || []
@@ -28,7 +27,6 @@ export async function getCourses(branchId?: string) {
   const { data, error } = await query
 
   if (error) {
-    console.error('Error fetching courses:', error)
     return []
   }
   return data || []
@@ -42,7 +40,6 @@ export async function getCourseBySlug(slug: string) {
     .single()
 
   if (error) {
-    console.error('Error fetching course:', JSON.stringify(error))
     return null
   }
   return data
@@ -56,7 +53,6 @@ export async function getTrainingPrograms() {
     .order('created_at', { ascending: true })
 
   if (error) {
-    console.error('Error fetching training programs:', error)
     return []
   }
   return data || []
@@ -70,7 +66,6 @@ export async function getProgramCourses(programId: string) {
     .order('order_index', { ascending: true })
 
   if (error) {
-    console.error('Error fetching program courses:', error)
     return []
   }
   return data || []
@@ -84,7 +79,6 @@ export async function getTestimonials() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching testimonials:', error)
     return []
   }
   return data || []
@@ -97,7 +91,6 @@ export async function getLeads() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching leads:', error)
     return []
   }
   return data || []
@@ -111,7 +104,6 @@ export async function getStudents() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching students:', error)
     return []
   }
   return data || []
@@ -124,7 +116,6 @@ export async function getPayments() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching payments:', error)
     return []
   }
   return data || []
@@ -159,7 +150,6 @@ export async function getRecentEnrollments() {
     .limit(5)
 
   if (error) {
-    console.error('Error fetching recent enrollments:', error)
     return []
   }
   return data || []
@@ -173,7 +163,6 @@ export async function getRecentPayments() {
     .limit(5)
 
   if (error) {
-    console.error('Error fetching recent payments:', error)
     return []
   }
   return data || []
@@ -187,7 +176,6 @@ export async function getStudentEnrollments(userId: string) {
     .order('enrolled_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching student enrollments:', error)
     return []
   }
   return data || []
@@ -201,7 +189,6 @@ export async function getStudentPurchases(userId: string) {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching student purchases:', error)
     return []
   }
   return data || []

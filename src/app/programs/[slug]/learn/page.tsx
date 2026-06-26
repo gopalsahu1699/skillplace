@@ -63,14 +63,30 @@ export default async function ProgramLearnPage({
     notFound()
   }
 
+  // Check enrollment: either at program level or course level
   const { data: enrollment } = await adminSupabase
     .from('enrollments')
     .select('id')
     .eq('user_id', user.id)
     .eq('program_id', program.id)
-    .single()
+    .in('status', ['active', 'completed'])
+    .maybeSingle()
 
-  if (!enrollment) {
+  // Also check if user enrolled in any course of this program
+  const { data: courseEnrollment } = !enrollment ? await adminSupabase
+    .from('enrollments')
+    .select('id')
+    .eq('user_id', user.id)
+    .in('status', ['active', 'completed'])
+    .in('course_id', (
+      await adminSupabase
+        .from('program_courses')
+        .select('course_id')
+        .eq('program_id', program.id)
+    ).data?.map((pc: any) => pc.course_id) || []
+    ).maybeSingle() : { data: null }
+
+  if (!enrollment && !courseEnrollment) {
     redirect(`/programs/${slug}`)
   }
 

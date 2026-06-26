@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Check, Wifi, Users, MapPin, X, CreditCard, Loader2, GraduationCap } from 'lucide-react'
-import { getRecords } from '@/lib/admin-api'
 import { supabase } from '@/lib/supabase/client'
 
 interface Branch {
@@ -97,8 +96,7 @@ export default function ProgramsPage() {
         .eq('status', 'active')
       if (error) throw error
       setEnrollments((data || []).filter((e: Enrollment) => e.training_programs))
-    } catch (err) {
-      console.error('Failed to fetch enrollments:', err)
+    } catch {
       setEnrollments([])
     }
     setEnrollmentsLoading(false)
@@ -106,10 +104,13 @@ export default function ProgramsPage() {
 
   async function fetchBranches() {
     try {
-      const data = await getRecords('branches')
+      const { data } = await supabase
+        .from('branches')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
       setBranches(data || [])
-    } catch (err) {
-      console.error('Failed to fetch branches:', err)
+    } catch {
       setBranches([])
     }
   }
@@ -119,10 +120,13 @@ export default function ProgramsPage() {
     try {
       const branch = branches.find(b => b.slug === selectedBranch)
       if (!branch) { setLoading(false); return }
-      const data = await getRecords('training_programs', 'branch_id', branch.id)
+      const { data } = await supabase
+        .from('training_programs')
+        .select('*,branches(*)')
+        .eq('branch_id', branch.id)
+        .eq('is_active', true)
       setPrograms(data || [])
-    } catch (err) {
-      console.error('Failed to fetch programs:', err)
+    } catch {
       setPrograms([])
     }
     setLoading(false)
@@ -179,7 +183,7 @@ export default function ProgramsPage() {
                             <Clock className="h-4 w-4" />
                             Enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}
                           </div>
-                          <Link href={`/programs/${program.slug}`}>
+                          <Link href={`/programs/${program.slug}/learn`}>
                             <Button className="w-full bg-blue-600 hover:bg-blue-700">
                               Go to Program
                             </Button>
@@ -282,7 +286,7 @@ export default function ProgramsPage() {
                                 <span className="text-2xl font-bold text-slate-900">₹{program.price.toLocaleString()}</span>
                               )}
                             </div>
-                            <Link href={`/programs/${program.slug}`}>
+                            <Link href={`/programs/${program.slug}/learn`}>
                               <Button className="bg-blue-600 hover:bg-blue-700">
                                 View Details
                               </Button>

@@ -1,15 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { supabase, createSession } from '@/lib/supabase/client'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { notify } from '@/lib/notifications'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,10 +30,22 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  // Get redirect URL from query params
+  const searchParams = useSearchParams()
+  const redirectedFrom = searchParams.get('redirectedFrom') || '/'
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    const clientIp = '127.0.0.1'
+    const rateCheck = checkRateLimit(clientIp, 5, 15 * 60 * 1000)
+    if (!rateCheck.allowed) {
+      setError('Too many login attempts. Please try again in 15 minutes.')
+      setLoading(false)
+      return
+    }
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -40,12 +61,26 @@ export default function LoginPage() {
 
     // Store session in Supabase user_sessions table
     if (data.user) {
-      try {
-        const session = await createSession(data.user.id, navigator.userAgent, null, data.session?.access_token)
-        document.cookie = `sp_session=${session.sessionToken}; path=/; max-age=604800; secure; samesite=lax`
-      } catch {
-        // Session creation is best-effort
+    try {
+      // Get JWT from the sign-in response or from current session
+      let jwt: string | undefined = data.session?.access_token
+      if (!jwt) {
+        // Fallback: get session from Supabase auth
+        const { data: currentSession } = await supabase.auth.getSession()
+        jwt = currentSession?.session?.access_token
       }
+      
+      if (!jwt) {
+        console.error('No JWT available for session creation')
+      }
+      
+      const session = await createSession(data.user.id, navigator.userAgent, null, jwt)
+      const isHttps = window.location.protocol === 'https:'
+      document.cookie = `sp_session=${session.sessionToken}; path=/; max-age=604800; ${isHttps ? 'secure; ' : ''}samesite=lax`
+    } catch (e) {
+      console.error('Failed to create session:', e)
+      // Session creation is best-effort
+    }
 
       notify.loginSuccess(data.user.user_metadata?.full_name || data.user.email)
       const { data: profile } = await supabase
@@ -57,10 +92,21 @@ export default function LoginPage() {
       if (profile?.role === 'admin' || profile?.role === 'employee') {
         window.location.href = '/admin-place'
       } else {
-        window.location.href = '/'
+        // Fallback: check employees table if profile doesn't have admin/employee role
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('role')
+          .eq('email', data.user.email)
+          .single()
+
+        if (employee?.role === 'admin' || employee?.role === 'employee') {
+          window.location.href = '/admin-place'
+        } else {
+          window.location.href = redirectedFrom
+        }
       }
     } else {
-      window.location.href = '/'
+      window.location.href = redirectedFrom
     }
   }
 

@@ -81,6 +81,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 })
       }
 
+      if (coupon.valid_from && new Date(coupon.valid_from) > new Date()) {
+        return NextResponse.json({ error: 'This coupon is not yet valid' }, { status: 400 })
+      }
+
       if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
         return NextResponse.json({ error: 'This coupon has reached its usage limit' }, { status: 400 })
       }

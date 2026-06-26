@@ -127,10 +127,11 @@ export default function CourseLearnClient({
     if (!activeLesson) return
 
     if (activeLesson.content_type === 'quiz') {
+      // Tests are per-course, not per-lesson
       supabase
         .from('tests')
         .select('*')
-        .eq('lesson_id', activeLesson.id)
+        .eq('course_id', course.id)
         .eq('is_active', true)
         .single()
         .then(({ data }) => {

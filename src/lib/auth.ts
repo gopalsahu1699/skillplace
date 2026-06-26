@@ -2,7 +2,7 @@ import { supabase } from './supabase/client'
 import {
   createSession,
   validateSession,
-  destroySession,
+  revokeSession,
   ValidatedSession,
 } from './supabase/client'
 
@@ -107,7 +107,7 @@ export async function signOut() {
   const sessionToken = getSessionCookie()
   if (sessionToken) {
     try {
-      await destroySession(sessionToken)
+      await revokeSession(sessionToken)
     } catch {
       // Best-effort cleanup
     }

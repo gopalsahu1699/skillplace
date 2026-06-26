@@ -291,8 +291,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
           }
           document.body.appendChild(script)
         }
-      } catch (err) {
-        console.error('Payment error:', err)
+      } catch {
         notify.paymentError()
       }
     }

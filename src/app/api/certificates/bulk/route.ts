@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
         .select()
 
       if (error) {
-        console.error('Bulk insert error:', error)
         return NextResponse.json({ error: 'Failed to create certificates' }, { status: 500 })
       }
 
@@ -128,7 +127,6 @@ export async function POST(request: NextRequest) {
         .select()
 
       if (error) {
-        console.error('Batch certificate insert error:', error)
         return NextResponse.json({ error: 'Failed to create certificates' }, { status: 500 })
       }
 
@@ -193,7 +191,6 @@ export async function POST(request: NextRequest) {
         .select()
 
       if (error) {
-        console.error('Student certificate insert error:', error)
         return NextResponse.json({ error: 'Failed to create certificates' }, { status: 500 })
       }
 
@@ -205,8 +202,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'No certificates, batch_id, or student_ids provided' }, { status: 400 })
-  } catch (err) {
-    console.error('Bulk certificate error:', err)
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

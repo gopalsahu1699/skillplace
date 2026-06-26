@@ -122,8 +122,8 @@ export default function EnrollPage() {
           }
         }
       }
-    } catch (err) {
-      console.error('Failed to fetch user profile:', err)
+    } catch {
+      // Profile fetch failed, proceed with empty form
     }
   }
 
@@ -141,12 +141,10 @@ export default function EnrollPage() {
       try {
         const programCourses = await getRecords('program_courses', 'program_id', prog.id, 'courses(id,title)')
         setCourses((programCourses || []).map((pc: { courses: Course }) => pc.courses).filter(Boolean))
-      } catch (e) {
-        console.error('Failed to fetch courses:', e)
+      } catch {
         setCourses([])
       }
-    } catch (err) {
-      console.error('Failed to fetch program:', err)
+    } catch {
       setProgram(null)
     }
     setLoading(false)

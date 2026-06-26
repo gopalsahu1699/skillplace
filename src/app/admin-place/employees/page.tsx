@@ -96,8 +96,7 @@ export default function AdminEmployeesPage() {
           is_active: formData.is_active,
         })
         notify.employeeUpdated()
-      } catch (err: any) {
-        console.error('Error updating employee:', err)
+      } catch {
         notify.genericError('Failed to update employee.')
         return
       }
@@ -120,8 +119,7 @@ export default function AdminEmployeesPage() {
           })
         }
         notify.employeeAdded()
-      } catch (err: any) {
-        console.error('Error creating employee:', err)
+      } catch {
         notify.genericError('Failed to create employee.')
         return
       }
@@ -137,8 +135,7 @@ export default function AdminEmployeesPage() {
     try {
       await deleteRecord('employees', deletingEmployee.id)
       notify.employeeDeleted()
-    } catch (err: any) {
-      console.error('Error deleting employee:', err)
+    } catch {
       notify.genericError('Failed to delete employee.')
     }
     setShowDeleteConfirm(false)
@@ -150,8 +147,7 @@ export default function AdminEmployeesPage() {
     try {
       await updateRecord('employees', employee.id, { is_active: !employee.is_active })
       notify.statusToggled(!employee.is_active)
-    } catch (err: any) {
-      console.error('Error toggling status:', err)
+    } catch {
       notify.genericError('Failed to toggle status.')
       return
     }
@@ -204,8 +200,7 @@ export default function AdminEmployeesPage() {
       notify.settingsSaved()
       setShowPermissions(false)
       fetchEmployees()
-    } catch (err: any) {
-      console.error('Error saving permissions:', err)
+    } catch {
       notify.genericError('Failed to save permissions.')
     }
   }

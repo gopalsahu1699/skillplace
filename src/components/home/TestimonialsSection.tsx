@@ -13,7 +13,6 @@ async function getTestimonials() {
     .limit(6)
 
   if (error) {
-    console.error('Error fetching testimonials:', error)
     return []
   }
   return data || []
