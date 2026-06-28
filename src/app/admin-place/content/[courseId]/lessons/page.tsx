@@ -1,14 +1,15 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { ArrowLeft, Plus, ChevronUp, ChevronDown, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, ChevronUp, ChevronDown, Edit, Trash2, Upload, Video, CheckCircle2, XCircle, Loader2, CloudUpload } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
+import { toast } from 'sonner'
 
 interface DbLesson {
   id: string
@@ -16,6 +17,10 @@ interface DbLesson {
   title: string
   content: string | null
   video_url: string | null
+  video_id: string | null
+  r2_source_key: string | null
+  r2_original_filename: string | null
+  stream_status: string | null
   duration_minutes: number | null
   order_index: number | null
   is_free: boolean | null
@@ -33,6 +38,8 @@ interface DbModule {
   created_at: string | null
   lessons?: DbLesson[]
 }
+
+type VideoUploadState = 'idle' | 'uploading' | 'ready' | 'error'
 
 export default function LessonsPage() {
   const params = useParams()
@@ -53,6 +60,14 @@ export default function LessonsPage() {
     is_free: false,
   })
   const [saving, setSaving] = useState(false)
+
+  // Video upload state
+  const [videoUploadState, setVideoUploadState] = useState<VideoUploadState>('idle')
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadedKey, setUploadedKey] = useState<string | null>(null)
+  const [uploadedFilename, setUploadedFilename] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchModules = useCallback(async () => {
     try {
@@ -92,6 +107,7 @@ export default function LessonsPage() {
   function openCreate() {
     setEditingLesson(null)
     setFormData({ title: '', content: '', video_url: '', duration_minutes: 0, is_free: false })
+    resetVideoUpload()
     setShowForm(true)
   }
 
@@ -104,7 +120,171 @@ export default function LessonsPage() {
       duration_minutes: lesson.duration_minutes || 0,
       is_free: lesson.is_free || false,
     })
+    // Set existing video state
+    if (lesson.r2_source_key) {
+      setUploadedKey(lesson.r2_source_key)
+      setUploadedFilename(lesson.r2_original_filename)
+      setVideoUploadState('ready')
+    } else {
+      resetVideoUpload()
+    }
     setShowForm(true)
+  }
+
+  function resetVideoUpload() {
+    setVideoUploadState('idle')
+    setUploadProgress(0)
+    setUploadError(null)
+    setUploadedKey(null)
+    setUploadedFilename(null)
+  }
+
+  const MULTIPART_THRESHOLD = 500 * 1024 * 1024 // 500MB — use multipart above this
+
+  async function handleVideoUpload(file: File) {
+    if (!file.type.startsWith('video/')) {
+      setUploadError('Please select a video file (MP4, WebM, MOV)')
+      setVideoUploadState('error')
+      return
+    }
+
+    // Max 10GB per file
+    if (file.size > 10 * 1024 * 1024 * 1024) {
+      setUploadError('File too large (max 10GB)')
+      setVideoUploadState('error')
+      return
+    }
+
+    setUploadError(null)
+    setVideoUploadState('uploading')
+    setUploadProgress(0)
+
+    const filename = file.name
+    const lessonId = editingLesson?.id || 'temp'
+
+    if (file.size > MULTIPART_THRESHOLD) {
+      // MULTIPART UPLOAD for large files (supports 2GB+)
+      await handleMultipartUpload(file, filename, lessonId)
+    } else {
+      // SIMPLE UPLOAD for smaller files
+      await handleSimpleUpload(file, filename, lessonId)
+    }
+  }
+
+  async function handleSimpleUpload(file: File, filename: string, lessonId: string) {
+    try {
+      const res = await fetch('/api/video/r2-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId, filename, contentType: file.type }),
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Failed to get upload URL' }))
+        throw new Error(errData.error || 'Failed to get upload URL')
+      }
+
+      const { uploadUrl, key } = await res.json()
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', uploadUrl)
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) setUploadProgress(Math.round((event.loaded / event.total) * 100))
+        }
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)))
+        xhr.onerror = () => reject(new Error('Upload failed'))
+        xhr.ontimeout = () => reject(new Error('Upload timed out'))
+        xhr.timeout = 600000
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.send(file)
+      })
+
+      setUploadedKey(key)
+      setUploadedFilename(filename)
+      setVideoUploadState('ready')
+      setUploadProgress(100)
+      toast.success('Video uploaded to R2!')
+    } catch (err) {
+      setVideoUploadState('error')
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    }
+  }
+
+  async function handleMultipartUpload(file: File, filename: string, lessonId: string) {
+    try {
+      // Step 1: Initiate multipart upload
+      const initRes = await fetch('/api/video/multipart/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, contentType: file.type, lessonId }),
+      })
+
+      if (!initRes.ok) {
+        const errData = await initRes.json().catch(() => ({ error: 'Failed to initiate upload' }))
+        throw new Error(errData.error || 'Failed to initiate upload')
+      }
+
+      const { uploadId, key, chunkSize } = await initRes.json()
+      const totalParts = Math.ceil(file.size / chunkSize)
+      const parts: { PartNumber: number; ETag: string }[] = []
+      let uploadedParts = 0
+
+      // Helper: upload a single part
+      async function uploadPart(file: File, key: string, uploadId: string, partNumber: number, chunkSize: number) {
+        const urlRes = await fetch(`/api/video/multipart/url?key=${encodeURIComponent(key)}&uploadId=${uploadId}&partNumber=${partNumber}`)
+        if (!urlRes.ok) throw new Error(`Failed to get URL for part ${partNumber}`)
+        const { url } = await urlRes.json()
+        const start = (partNumber - 1) * chunkSize
+        const end = Math.min(start + chunkSize, file.size)
+        const chunk = file.slice(start, end)
+        const uploadRes = await fetch(url, { method: 'PUT', body: chunk, headers: { 'Content-Type': file.type } })
+        if (!uploadRes.ok) throw new Error(`Part ${partNumber} failed: ${uploadRes.status}`)
+        const etag = uploadRes.headers.get('ETag')?.replace(/"/g, '') || ''
+        parts.push({ PartNumber: partNumber, ETag: etag })
+      }
+
+      // Step 2: Upload parts in batches of 3 (parallel)
+      const CONCURRENT = 3
+      for (let i = 1; i <= totalParts; i += CONCURRENT) {
+        const batch: Promise<void>[] = []
+        for (let j = i; j < i + CONCURRENT && j <= totalParts; j++) {
+          batch.push(uploadPart(file, key, uploadId, j, chunkSize))
+        }
+        await Promise.all(batch)
+        uploadedParts = Math.min(i + CONCURRENT - 1, totalParts)
+        setUploadProgress(Math.round((uploadedParts / totalParts) * 100))
+      }
+
+      // Step 3: Complete multipart upload
+      const completeRes = await fetch('/api/video/multipart/complete', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, uploadId, parts }),
+      })
+
+      if (!completeRes.ok) {
+        throw new Error('Failed to complete upload')
+      }
+
+      setUploadedKey(key)
+      setUploadedFilename(filename)
+      setVideoUploadState('ready')
+      setUploadProgress(100)
+      toast.success(`Video uploaded! (${(file.size / 1024 / 1024 / 1024).toFixed(1)}GB across ${totalParts} chunks)`)
+    } catch (err) {
+      setVideoUploadState('error')
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    }
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleVideoUpload(file)
+    }
+    // Reset file input so same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -113,12 +293,21 @@ export default function LessonsPage() {
     setSaving(true)
 
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         title: formData.title.trim(),
         content: formData.content.trim() || null,
-        video_url: formData.video_url.trim() || null,
         duration_minutes: formData.duration_minutes || null,
         is_free: formData.is_free,
+      }
+
+      // If video was uploaded to R2, store the key
+      if (uploadedKey && videoUploadState === 'ready') {
+        payload.r2_source_key = uploadedKey
+        payload.r2_original_filename = uploadedFilename
+        payload.video_url = null // Clear legacy URL since we use R2
+      } else if (formData.video_url.trim()) {
+        // Legacy: plain video URL
+        payload.video_url = formData.video_url.trim() || null
       }
 
       if (editingLesson) {
@@ -136,7 +325,7 @@ export default function LessonsPage() {
 
       setShowForm(false)
       setEditingLesson(null)
-      setFormData({ title: '', content: '', video_url: '', duration_minutes: 0, is_free: false })
+      resetVideoUpload()
       fetchModules()
     } catch {
       notify.genericError()
@@ -174,6 +363,16 @@ export default function LessonsPage() {
     } catch {
       notify.genericError()
     }
+  }
+
+  function getVideoBadge(lesson: DbLesson) {
+    if (lesson.r2_source_key) {
+      return <Badge variant="secondary" className="bg-green-50 text-green-600 border-0 text-xs gap-1"><CheckCircle2 className="h-3 w-3" />R2 Video</Badge>
+    }
+    if (lesson.video_url) {
+      return <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-0 text-xs gap-1"><Video className="h-3 w-3" />URL</Badge>
+    }
+    return null
   }
 
   return (
@@ -270,6 +469,16 @@ export default function LessonsPage() {
                           <ChevronDown className="h-3.5 w-3.5" />
                         </button>
                       </div>
+                      {/* Video icon */}
+                      {lesson.r2_source_key ? (
+                        <div className="h-10 w-16 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+                          <Video className="h-4 w-4 text-green-500" />
+                        </div>
+                      ) : lesson.video_url ? (
+                        <div className="h-10 w-16 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                          <Video className="h-4 w-4 text-blue-400" />
+                        </div>
+                      ) : null}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-slate-900 text-sm">{lesson.title}</p>
                         <div className="flex items-center gap-2 mt-1">
@@ -283,6 +492,7 @@ export default function LessonsPage() {
                               Free
                             </Badge>
                           ) : null}
+                          {getVideoBadge(lesson)}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
@@ -315,12 +525,13 @@ export default function LessonsPage() {
         </div>
       )}
 
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-lg">
+      {/* Create/Edit Lesson Dialog */}
+      <Dialog open={showForm} onOpenChange={(open) => { if (!open) resetVideoUpload(); setShowForm(open) }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingLesson ? 'Edit Lesson' : 'Create Lesson'}</DialogTitle>
             <DialogDescription>
-              {editingLesson ? 'Update lesson details' : 'Add a new lesson to this module'}
+              {editingLesson ? 'Update lesson details and upload video content' : 'Add a new lesson to this module'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -344,15 +555,130 @@ export default function LessonsPage() {
                 placeholder="Lesson content (optional)"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Video URL</label>
-              <Input
-                value={formData.video_url}
-                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                className="border-slate-300"
-                placeholder="YouTube or video URL (optional)"
-              />
+
+            {/* Video Upload Section */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700">Video Content</label>
+
+              {/* Upload area */}
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-blue-300 transition-colors">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+
+                {videoUploadState === 'idle' && !uploadedKey && (
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <CloudUpload className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-slate-600">Click to upload video</p>
+                    <p className="text-xs text-slate-400 mt-1">MP4, WebM, MOV up to 10GB</p>
+                    <p className="text-xs text-slate-400">Uploaded to Cloudflare R2 storage — large files use chunked upload</p>
+                  </div>
+                )}
+
+                {videoUploadState === 'uploading' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <Upload className="h-5 w-5 text-blue-600 animate-pulse" />
+                      <p className="text-sm font-medium text-slate-600">Uploading to R2...</p>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500">{uploadProgress}% uploaded</p>
+                  </div>
+                )}
+
+                {videoUploadState === 'ready' && uploadedKey && (
+                  <div className="space-y-3">
+                    <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto" />
+                    <p className="text-sm font-medium text-green-600">Video uploaded successfully!</p>
+                    {uploadedFilename && (
+                      <p className="text-xs text-slate-500 truncate max-w-xs mx-auto">{uploadedFilename}</p>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-slate-300 text-xs"
+                      onClick={() => { resetVideoUpload() }}
+                    >
+                      Replace Video
+                    </Button>
+                  </div>
+                )}
+
+                {videoUploadState === 'error' && (
+                  <div className="space-y-3">
+                    <XCircle className="h-8 w-8 text-red-500 mx-auto" />
+                    <p className="text-sm font-medium text-red-600">Upload failed</p>
+                    {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-slate-300 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Existing video info (when editing) */}
+              {editingLesson?.r2_source_key && videoUploadState === 'idle' && !uploadedKey && (
+                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                    <Video className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-green-700">Video stored on R2</p>
+                    <p className="text-xs text-green-600 truncate">{editingLesson.r2_original_filename || editingLesson.r2_source_key}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-green-300 text-xs shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Replace
+                  </Button>
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-2 text-slate-400">or enter video URL manually</span>
+                </div>
+              </div>
+
+              <div>
+                <Input
+                  value={formData.video_url}
+                  onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                  className="border-slate-300"
+                  placeholder="https://youtube.com/watch?v=... (fallback for external videos)"
+                  disabled={!!uploadedKey}
+                />
+                <p className="text-xs text-slate-400 mt-1">Optional: Use for YouTube or external video links only. Uploading above is preferred.</p>
+              </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-slate-700">Duration (minutes)</label>
@@ -377,10 +703,10 @@ export default function LessonsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="border-slate-300">
+              <Button type="button" variant="outline" onClick={() => { resetVideoUpload(); setShowForm(false) }} className="border-slate-300">
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" disabled={saving || videoUploadState === 'uploading'} className="bg-blue-600 hover:bg-blue-700">
                 {saving ? 'Saving...' : editingLesson ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>

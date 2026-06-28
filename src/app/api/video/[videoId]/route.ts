@@ -31,9 +31,9 @@ export async function GET(
 
     if (status.status.state !== 'ready') {
       return NextResponse.json({
-        error: 'Video not ready',
-        status: status.status.state,
-      }, { status: 202 })
+        status: status.status,
+        state: status.status.state,
+      }, { status: 200 })
     }
 
     const { playbackUrl, expiresAt } = await getSignedPlaybackUrl(videoId, 120)

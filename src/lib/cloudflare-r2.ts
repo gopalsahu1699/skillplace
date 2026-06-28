@@ -4,6 +4,10 @@ import {
   DeleteObjectCommand,
   CreateBucketCommand,
   HeadBucketCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
@@ -61,13 +65,104 @@ export async function generateUploadUrl(
   return getSignedUrl(r2Client, command, { expiresIn })
 }
 
-export async function deleteVideo(key: string): Promise<void> {
+// =============================================
+// MULTIPART UPLOAD FOR LARGE FILES (2GB+)
+// =============================================
+
+const CHUNK_SIZE = 100 * 1024 * 1024 // 100MB per part
+
+export interface MultipartUploadInit {
+  uploadId: string
+  key: string
+}
+
+/**
+ * Initiate a multipart upload. Returns uploadId and key.
+ */
+export async function initiateMultipartUpload(
+  key: string,
+  contentType: string = 'video/mp4'
+): Promise<MultipartUploadInit> {
+  const command = new CreateMultipartUploadCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
+  })
+  const result = await r2Client.send(command)
+  return {
+    uploadId: result.UploadId!,
+    key,
+  }
+}
+
+/**
+ * Generate a presigned URL for a specific part upload.
+ */
+export async function getPartUploadUrl(
+  key: string,
+  uploadId: string,
+  partNumber: number,
+  expiresIn: number = 3600
+): Promise<string> {
+  const command = new UploadPartCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+    UploadId: uploadId,
+    PartNumber: partNumber,
+  })
+  return getSignedUrl(r2Client, command, { expiresIn })
+}
+
+/**
+ * Complete the multipart upload after all parts are uploaded.
+ */
+export async function completeMultipartUpload(
+  key: string,
+  uploadId: string,
+  parts: { PartNumber: number; ETag: string }[]
+): Promise<{ location: string }> {
+  const command = new CompleteMultipartUploadCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+    UploadId: uploadId,
+    MultipartUpload: {
+      Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
+    },
+  })
+  const result = await r2Client.send(command)
+  return { location: result.Location || getR2Url(key) }
+}
+
+/**
+ * Abort a multipart upload (cleanup on failure).
+ */
+export async function abortMultipartUpload(
+  key: string,
+  uploadId: string
+): Promise<void> {
   await r2Client.send(
-    new DeleteObjectCommand({
+    new AbortMultipartUploadCommand({
       Bucket: R2_BUCKET_NAME,
       Key: key,
+      UploadId: uploadId,
     })
   )
 }
 
-export { R2_BUCKET_NAME, R2_PUBLIC_DOMAIN }
+/**
+ * Calculate number of parts needed for a file.
+ */
+export function getPartCount(fileSize: number): number {
+  return Math.ceil(fileSize / CHUNK_SIZE)
+}
+
+/**
+ * Get byte range for a specific part.
+ */
+export function getPartRange(partNumber: number, fileSize: number): { start: number; end: number } {
+  const start = (partNumber - 1) * CHUNK_SIZE
+  const end = Math.min(start + CHUNK_SIZE, fileSize)
+  return { start, end }
+}
+
+export { R2_BUCKET_NAME, R2_PUBLIC_DOMAIN, CHUNK_SIZE }
