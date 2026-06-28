@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: paymentRecord, error: recordError } = await adminSupabase
-      .from('purchases')
+      .from('payments')
       .select('*')
       .eq('razorpay_order_id', razorpay_order_id)
       .eq('status', 'pending')
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: updatedPayment } = await adminSupabase
-      .from('purchases')
+      .from('payments')
       .update({
         razorpay_payment_id,
         razorpay_signature,
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       .from('enrollments')
       .select('id')
       .eq('user_id', paymentRecord.user_id)
-      .eq('course_id', paymentRecord.course_id)
+      .eq('program_id', paymentRecord.program_id)
       .limit(1)
       .maybeSingle()
 
@@ -73,8 +73,10 @@ export async function POST(request: NextRequest) {
         .from('enrollments')
         .insert({
           user_id: paymentRecord.user_id,
-          course_id: paymentRecord.course_id,
+          program_id: paymentRecord.program_id,
+          branch_id: null,
           status: 'active',
+          program_type: 'online',
         })
         .select()
         .single()
@@ -83,17 +85,19 @@ export async function POST(request: NextRequest) {
       enrollment = newEnrollment
     }
 
-    const { data: course } = await adminSupabase
-      .from('courses')
-      .select('slug')
-      .eq('id', paymentRecord.course_id)
-      .single()
+    const { data: course } = paymentRecord.course_id
+      ? await adminSupabase.from('courses').select('slug').eq('id', paymentRecord.course_id).single()
+      : { data: null }
+
+    const redirectUrl = course?.slug
+      ? `/courses/${course.slug}/learn`
+      : '/programs'
 
     return NextResponse.json({
       success: true,
       payment: updatedPayment,
       enrollment,
-      redirectUrl: `/courses/${course?.slug}/learn`,
+      redirectUrl,
     }, { headers: rateLimitHeaders })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'

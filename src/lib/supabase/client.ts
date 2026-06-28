@@ -1,7 +1,16 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-const supabaseUrl = 'https://weebasgxtemffakbvcfa.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlZWJhc2d4dGVtZmZha2J2Y2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjc0NjgsImV4cCI6MjA5NzgwMzQ2OH0.3oDrU4VgzH3LflLt3CEcjM_4RTGnXd84pwRhpSRqD48'
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/, '')
+
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+}
+
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+if (!supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+}
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
   cookies: {

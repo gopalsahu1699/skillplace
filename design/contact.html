@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contact Us | Skillplace Academy</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#271901",
+                    "surface-light": "#F8FAFC",
+                    "error-container": "#ffdad6",
+                    "surface-container": "#e5eeff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#271901",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "inverse-surface": "#213145",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary-fixed": "#dae2fd",
+                    "secondary": "#0058be",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#d8e2ff",
+                    "background": "#f8f9ff",
+                    "success-green": "#22C55E",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-error": "#ffffff",
+                    "tertiary": "#000000",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "outline": "#76777d",
+                    "on-primary-container": "#7c839b",
+                    "navy-muted": "#1E293B",
+                    "on-surface-variant": "#45464d",
+                    "surface-bright": "#f8f9ff",
+                    "primary-fixed-dim": "#bec6e0",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#dce9ff",
+                    "on-secondary-fixed": "#001a42",
+                    "surface-variant": "#d3e4fe",
+                    "primary-container": "#131b2e",
+                    "tertiary-fixed": "#fcdeb5",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "surface-dim": "#cbdbf5",
+                    "on-primary-fixed": "#131b2e",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#2170e4",
+                    "surface-tint": "#565e74",
+                    "inverse-primary": "#bec6e0",
+                    "surface": "#f8f9ff",
+                    "surface-container-low": "#eff4ff",
+                    "on-surface": "#0b1c30",
+                    "on-secondary-container": "#fefcff",
+                    "on-tertiary-container": "#98805d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#0b1c30",
+                    "primary": "#000000",
+                    "on-error-container": "#93000a",
+                    "border-subtle": "#E2E8F0",
+                    "on-secondary-fixed-variant": "#004395",
+                    "outline-variant": "#c6c6cd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "base": "8px",
+                    "margin-mobile": "20px",
+                    "margin-desktop": "80px",
+                    "container-max": "1280px",
+                    "section-gap": "120px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "caption": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "display-lg-mobile": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        line-height: 1;
+      }
+      .academic-pattern {
+        background-color: #f8f9ff;
+        background-image: radial-gradient(#d3e4fe 0.5px, transparent 0.5px);
+        background-size: 24px 24px;
+      }
+      .shadow-soft {
+        box-shadow: 0px 4px 20px rgba(15, 23, 42, 0.05);
+      }
+      .input-focus-ring:focus {
+        border-color: #0058be;
+        box-shadow: 0 0 0 2px rgba(0, 88, 190, 0.2);
+        outline: none;
+      }
+    </style>
+</head>
+<body class="bg-surface-light text-on-surface font-body-md selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest dark:bg-primary-container flex justify-between items-center w-full px-base md:px-margin-desktop h-20 sticky top-0 z-50 shadow-sm dark:shadow-none border-b border-border-subtle dark:border-outline-variant">
+<div class="font-headline-md text-headline-md font-bold text-on-surface dark:text-on-primary">
+            Skillplace Academy
+        </div>
+<nav class="hidden md:flex items-center gap-gutter">
+<a class="text-on-surface-variant dark:text-on-primary-fixed-variant font-medium hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200 font-label-md text-label-md" href="#">Home</a>
+<a class="text-on-surface-variant dark:text-on-primary-fixed-variant font-medium hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200 font-label-md text-label-md" href="#">Courses</a>
+<a class="text-on-surface-variant dark:text-on-primary-fixed-variant font-medium hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200 font-label-md text-label-md" href="#">About Us</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-bold border-b-2 border-secondary pb-1 font-label-md text-label-md" href="#">Contact</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="bg-secondary-container text-on-secondary-container px-6 py-2.5 rounded-lg font-bold text-label-md hover:scale-95 transition-all duration-100">
+                Enroll Now
+            </button>
+<button class="md:hidden p-2 text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative overflow-hidden academic-pattern pt-24 pb-16 md:pt-32 md:pb-24 px-base md:px-margin-desktop text-center">
+<div class="max-w-container-max mx-auto relative z-10">
+<span class="inline-block py-1 px-3 bg-secondary-fixed text-on-secondary-fixed rounded-full text-caption font-bold mb-6 tracking-wider uppercase">
+                    Support Center
+                </span>
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary-container mb-6 animate-fade-in">
+                    Get In Touch
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                    Have questions about our programs? We're here to help you start your engineering career with industry-aligned precision and academic excellence.
+                </p>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary opacity-5 rounded-full blur-3xl"></div>
+<div class="absolute top-12 -left-24 w-64 h-64 bg-primary-fixed opacity-10 rounded-full blur-2xl"></div>
+</section>
+<!-- Contact Section -->
+<section class="max-w-container-max mx-auto px-base md:px-margin-desktop py-section-gap">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
+<!-- Left Column: Form -->
+<div class="bg-surface-container-lowest p-8 md:p-12 rounded-xl border border-border-subtle shadow-soft">
+<h2 class="font-headline-lg text-headline-lg text-primary-container mb-2">Send us a Message</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-10">Fill out the form below and our admissions team will get back to you within 24 hours.</p>
+<form action="#" class="space-y-6" onsubmit="event.preventDefault(); alert('Message sent successfully!');">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant" for="full_name">Full Name</label>
+<input class="w-full px-4 py-3 border border-border-subtle rounded-lg font-body-md input-focus-ring bg-surface-light" id="full_name" placeholder="John Doe" required="" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant" for="email">Email Address</label>
+<input class="w-full px-4 py-3 border border-border-subtle rounded-lg font-body-md input-focus-ring bg-surface-light" id="email" placeholder="john@example.com" required="" type="email"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant" for="phone">Phone Number</label>
+<div class="flex">
+<span class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-border-subtle bg-surface-container text-on-surface-variant font-label-md">+91</span>
+<input class="flex-1 px-4 py-3 border border-border-subtle rounded-r-lg font-body-md input-focus-ring bg-surface-light" id="phone" placeholder="7987814261" required="" type="tel"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant" for="message">Message</label>
+<textarea class="w-full px-4 py-3 border border-border-subtle rounded-lg font-body-md input-focus-ring bg-surface-light resize-none" id="message" placeholder="How can we help you?" required="" rows="4"></textarea>
+</div>
+<button class="w-full md:w-auto bg-primary-container text-on-primary px-10 py-4 rounded-lg font-bold text-headline-md hover:scale-[0.98] transition-transform duration-200 flex items-center justify-center gap-3" type="submit">
+                            Send Message
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'wght' 600">send</span>
+</button>
+</form>
+</div>
+<!-- Right Column: Info -->
+<div class="lg:pl-12 space-y-12">
+<!-- Contact Cards -->
+<div class="space-y-8">
+<div class="flex gap-6 group">
+<div class="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1">mail</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary-container mb-2">Email</h3>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+<a class="hover:text-secondary transition-colors" href="mailto:info@skillplace.com">info@skillplace.com</a><br/>
+<a class="hover:text-secondary transition-colors" href="mailto:admissions@skillplace.com">admissions@skillplace.com</a>
+</p>
+</div>
+</div>
+<div class="flex gap-6 group">
+<div class="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1">call</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary-container mb-2">Phone / WhatsApp</h3>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+<a class="hover:text-secondary transition-colors" href="tel:+917987814261">+91 79878 14261</a><br/>
+<a class="hover:text-secondary transition-colors" href="tel:+918085782471">+91 80857 82471</a>
+</p>
+</div>
+</div>
+<div class="flex gap-6 group">
+<div class="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1">location_on</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary-container mb-2">Address</h3>
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                                    Bilaspur, Chhattisgarh, India<br/>
+<span class="text-caption font-medium uppercase tracking-widest text-on-surface-variant opacity-70">Main Campus</span>
+</p>
+</div>
+</div>
+</div>
+<!-- Map Section -->
+<div class="rounded-xl overflow-hidden border border-border-subtle shadow-soft bg-surface-container">
+<div class="p-6 bg-surface-container-lowest flex justify-between items-center border-b border-border-subtle">
+<div>
+<h4 class="font-headline-md text-headline-md text-primary-container">Visit Our Office</h4>
+<p class="text-caption text-on-surface-variant">Located in the heart of the tech hub</p>
+</div>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded-lg text-label-md font-bold">
+                                Get Directions
+                            </button>
+</div>
+<div class="h-64 relative bg-surface-container-highest group">
+<div class="w-full h-full grayscale hover:grayscale-0 transition-all duration-700" data-alt="A clean, professional minimalist vector map illustration showing Bilaspur Chhattisgarh city layout. The map uses a sophisticated color palette of whites and light blues, matching a light-mode corporate tech aesthetic. The map features clear markers for Skillplace Academy with a modern pin icon. Soft daylight lighting enhances the clarity and precision of the engineering-inspired design." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCS0pgV5PGxlVJxT3Qn6L-StWDmq5duKdErJHZs2zc-SpVSr1fE4VJhtXJOmlw9Tuo7eE3MpjHgT8eMdYyPu9AtlAOYYc7SQ_GRvwsr8t7vF4JaTPMd3O-r6iBFs5_k0OpUvsjvpojKwwoOHoEsCOfdjPFbDyo6Tbs7y7bbo21BewgMRh2DDOEUBolaiDHWxb6daOmV18ylzsBbRaZFs5SCoMbXuQ_72boznPvPM7kxCIA74rtClM5JxI7ptTXbxYU7MZM2FvGzRCE')"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white shadow-xl animate-bounce">
+<span class="material-symbols-outlined">school</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="bg-primary-container text-on-primary py-24 px-base md:px-margin-desktop text-center relative overflow-hidden">
+<div class="max-w-container-max mx-auto relative z-10">
+<h2 class="font-display-lg text-display-lg-mobile md:text-display-lg mb-6">Ready to Start Your Career?</h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto mb-10 opacity-90">
+                    Join hundreds of successful alumni. Our advisors are ready to help you choose the right path for your technical future.
+                </p>
+<div class="flex flex-col sm:flex-row justify-center gap-4">
+<button class="bg-secondary-container text-on-secondary-container px-10 py-4 rounded-lg font-bold text-headline-md hover:shadow-lg hover:shadow-secondary/20 transition-all">
+                        View Programs
+                    </button>
+<button class="border-2 border-on-primary-container text-on-primary-container px-10 py-4 rounded-lg font-bold text-headline-md hover:bg-on-primary-container hover:text-primary-container transition-all">
+                        Download Brochure
+                    </button>
+</div>
+</div>
+<!-- Decorative Shapes -->
+<div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-secondary/10 to-transparent"></div>
+<div class="absolute bottom-0 left-0 w-64 h-64 border-[32px] border-white/5 rounded-full -translate-x-1/2 translate-y-1/2"></div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap px-base md:px-margin-desktop grid grid-cols-1 md:grid-cols-4 gap-gutter bg-primary-container dark:bg-tertiary-container">
+<div class="col-span-1 md:col-span-1">
+<div class="font-headline-md text-headline-md text-on-primary dark:text-on-tertiary-fixed mb-6 font-bold">
+                Skillplace Academy
+            </div>
+<p class="font-body-md text-body-md text-on-primary-container dark:text-on-tertiary-container opacity-80 mb-8 leading-relaxed">
+                Precision in Technical Education. Empowering engineers with industry-ready practical skills.
+            </p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full border border-on-primary-container/30 flex items-center justify-center text-on-primary-container hover:bg-secondary hover:border-secondary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">public</span>
+</a>
+<a class="w-10 h-10 rounded-full border border-on-primary-container/30 flex items-center justify-center text-on-primary-container hover:bg-secondary hover:border-secondary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+</a>
+</div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-secondary-fixed dark:text-tertiary-fixed font-bold mb-8 uppercase tracking-widest">Navigation</h4>
+<ul class="space-y-4">
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">Programs</a></li>
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">Courses</a></li>
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">Placements</a></li>
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">About Us</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-secondary-fixed dark:text-tertiary-fixed font-bold mb-8 uppercase tracking-widest">Legal &amp; Support</h4>
+<ul class="space-y-4">
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">Privacy Policy</a></li>
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">Terms of Service</a></li>
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">FAQ</a></li>
+<li><a class="font-body-md text-on-primary-container hover:text-on-secondary-fixed-variant transition-opacity" href="#">Support</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-secondary-fixed dark:text-tertiary-fixed font-bold mb-8 uppercase tracking-widest">Connect</h4>
+<p class="font-caption text-caption text-on-primary-container opacity-80 mb-6">
+                © 2024 Skillplace Academy. Precision in Technical Education.
+            </p>
+<div class="bg-primary-fixed-dim/10 p-4 rounded-lg border border-on-primary-container/20">
+<p class="text-caption text-on-primary-container">Industry Partner:</p>
+<p class="font-bold text-on-primary">Himanshu Construction</p>
+</div>
+</div>
+</footer>
+<!-- Micro-interactions Script -->
+<script>
+        document.querySelectorAll('input, textarea').forEach(element => {
+            element.addEventListener('focus', () => {
+                element.parentElement.querySelector('label').classList.add('text-secondary');
+            });
+            element.addEventListener('blur', () => {
+                element.parentElement.querySelector('label').classList.remove('text-secondary');
+            });
+        });
+
+        // Simple scroll reveal
+        window.addEventListener('scroll', () => {
+            const reveals = document.querySelectorAll('.animate-fade-in');
+            reveals.forEach(reveal => {
+                const windowHeight = window.innerHeight;
+                const revealTop = reveal.getBoundingClientRect().top;
+                if (revealTop < windowHeight - 150) {
+                    reveal.classList.add('opacity-100');
+                }
+            });
+        });
+    </script>
+</body></html>

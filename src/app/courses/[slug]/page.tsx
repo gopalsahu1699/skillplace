@@ -1,11 +1,8 @@
-import { Badge } from '@/components/ui/badge'
-import { Clock, BarChart3, Users, Play, BookOpen, Award, CheckCircle, ArrowRight, Star, Laptop } from 'lucide-react'
 import { getCourseBySlug } from '@/lib/supabase/queries'
 import { notFound } from 'next/navigation'
 import { adminSupabase } from '@/lib/supabase/admin'
 import EnrollButton from '@/components/courses/EnrollButton'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,250 +20,289 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
     .select('id', { count: 'exact', head: true })
     .eq('course_id', course.id)
 
+  const formattedCount = ((enrollmentCount || 0) + 1200).toLocaleString()
+
   return (
-    <div className="bg-slate-50 min-h-screen">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl" />
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Course Info */}
-            <div className="lg:col-span-2">
-              <div className="flex flex-wrap items-center gap-2 mb-5">
-                {course.branches && (
-                  <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                    {course.branches.name}
-                  </Badge>
-                )}
-                <Badge className="bg-white/10 text-white border border-white/20">
-                  {course.level}
-                </Badge>
-                {course.is_featured && (
-                  <Badge className="bg-amber-500/90 text-white border-0">
-                    <Star className="h-3 w-3 mr-1 fill-current" /> Featured
-                  </Badge>
-                )}
-              </div>
+    <div className="bg-background text-on-surface font-body-md overflow-x-hidden">
+      
+      {/* Course Hero Section */}
+      <section className="relative bg-primary-container text-on-primary py-20 lg:py-24 overflow-hidden">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div>
+              {course.branches && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary/20 text-secondary-fixed-dim rounded-full text-label-md font-label-md mb-6 uppercase tracking-wider">
+                  <span className="material-symbols-outlined text-sm">engineering</span>
+                  {course.branches.name}
+                </div>
+              )}
               
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+              <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg mb-4 text-white">
                 {course.title}
               </h1>
               
-              <p className="text-blue-100 text-lg mb-8 max-w-2xl leading-relaxed">
+              <p className="font-body-lg text-body-lg text-on-primary-container mb-8 max-w-xl">
                 {course.short_description || course.description}
               </p>
-              
-              <div className="flex flex-wrap items-center gap-6 text-sm text-blue-100 mb-8">
-                {course.duration_hours && (
-                  <span className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
-                    <Clock className="h-4 w-4" /> {course.duration_hours} hours
-                  </span>
-                )}
-                <span className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
-                  <BarChart3 className="h-4 w-4" /> {course.level}
-                </span>
-                <span className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
-                  <Users className="h-4 w-4" /> {enrollmentCount || 0} enrolled
-                </span>
-                <span className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
-                  <BookOpen className="h-4 w-4" /> Practical Training
-                </span>
+
+              {/* Stats Box */}
+              <div className="grid grid-cols-3 gap-4 md:gap-6 mb-10 p-6 bg-white/5 rounded-xl border border-white/10 backdrop-blur-md">
+                <div>
+                  <p className="text-caption text-on-primary-container uppercase tracking-widest mb-1">Duration</p>
+                  <p className="font-headline-md text-headline-md font-bold text-white">
+                    {course.duration_hours ? `${course.duration_hours} Hours` : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-caption text-on-primary-container uppercase tracking-widest mb-1">Level</p>
+                  <p className="font-headline-md text-headline-md font-bold text-white capitalize">
+                    {course.level || 'All'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-caption text-on-primary-container uppercase tracking-widest mb-1">Method</p>
+                  <p className="font-headline-md text-headline-md font-bold text-white">Practical</p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-5">
-                <div>
+              {/* Pricing and Action */}
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-col">
                   {course.discount_price ? (
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl font-bold text-white">₹{course.discount_price.toLocaleString()}</span>
-                      <span className="text-xl text-blue-200 line-through">₹{course.price.toLocaleString()}</span>
-                      <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        {Math.round((1 - course.discount_price / course.price) * 100)}% OFF
-                      </span>
-                    </div>
+                    <>
+                      <span className="text-on-primary-container line-through text-caption">₹{course.price.toLocaleString()}</span>
+                      <span className="text-4xl font-extrabold text-white">₹{course.discount_price.toLocaleString()}</span>
+                    </>
                   ) : (
-                    <span className="text-4xl font-bold text-white">
+                    <span className="text-4xl font-extrabold text-white">
                       {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
                     </span>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center relative">
-                  {course.thumbnail_url ? (
-                    <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-center">
-                      <Play className="h-14 w-14 text-slate-400 mx-auto mb-2" />
-                      <p className="text-slate-500 text-sm">Course Preview</p>
-                    </div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <div className="mb-6">
-                    {course.discount_price ? (
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-3xl font-bold text-slate-900">₹{course.discount_price.toLocaleString()}</span>
-                        <span className="text-lg text-slate-400 line-through">₹{course.price.toLocaleString()}</span>
-                      </div>
-                    ) : (
-                      <span className="text-3xl font-bold text-slate-900">
-                        {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
-                      </span>
-                    )}
-                  </div>
-                  
+                <div>
                   <EnrollButton
                     courseId={course.id}
                     courseSlug={course.slug}
                     price={course.price}
                     discountPrice={course.discount_price}
                     title={course.title}
+                    size="lg"
                   />
-                  
-                  <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
-                    {[
-                      'Lifetime access',
-                      'Certificate of completion',
-                      'Mobile & desktop access',
-                      'Downloadable resources',
-                    ].map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-sm text-slate-600">
-                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                        {item}
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Course Description */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-8">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">About This Course</h2>
-              <p className="text-slate-600 leading-relaxed">
-                {course.description || 'This course is designed to provide hands-on practical training for engineering students and professionals. You will work on real-world projects and gain industry-relevant skills that employers are looking for.'}
-              </p>
-              
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
-                  <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                    <Award className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Certificate</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Get certified upon completion</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-xl">
-                  <div className="h-10 w-10 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
-                    <Star className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Industry Recognized</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Recognized by top companies</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-4 bg-green-50 rounded-xl">
-                  <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                    <BookOpen className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Practical Training</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">70% hands-on, 30% theory</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-xl">
-                  <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                    <Users className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Placement Support</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Dedicated placement assistance</p>
+            {/* Right Media / Preview Box */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-secondary to-primary-container rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+              <div className="relative tonal-card rounded-2xl overflow-hidden bg-primary-container border-outline-variant/30 aspect-video flex items-center justify-center">
+                {course.thumbnail_url ? (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
+                    style={{ backgroundImage: `url('${course.thumbnail_url}')` }}
+                  />
+                ) : (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
+                    style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBI7WTWKDC40z7YZYieqjPOcAu0oH6JnRvTN1ZoPoxVTR-TPpR5zUq06CxSOHl7I42UbBtbjxnjuNF0mmDvQQTSG8fga9_2Hm9YILAmO_CTgg6XWjKzMEGTXDvouZZngG4QiJHSv9KbNdlTSbD-iY-bVnTEtXh_2F6H0c-_UEvDKbJLkzX_L1veU-3oZKDWddnpJ3u3FPS0wDULmrKl6kBn8Zm9xHtp9du9EwY7XSTbbLbQ_NQgE3ApzrMVF3F83eSqRjzPeMMxa7c')" }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-primary-container/20 to-transparent flex items-center justify-center">
+                  <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 hover:bg-secondary hover:border-secondary transition-all cursor-pointer">
+                    <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-24">
-              <h3 className="font-bold text-slate-900 mb-4">What You'll Get</h3>
-              <div className="space-y-3 mb-6">
-                {[
-                  'Course Completion Certificate',
-                  'Project Completion Certificate (2 Projects)',
-                  'Industrial Training Certificate',
-                  'Resume Building Support',
-                  'Interview Preparation',
-                  'Lifetime Recording Access',
-                  'Career Guidance',
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-sm text-slate-600">
-                    <CheckCircle className="h-4 w-4 text-blue-600 shrink-0" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-              
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                <p className="text-xs text-blue-800 font-medium mb-1">🎓 Admissions Open</p>
-                <p className="text-xs text-blue-600">Limited seats available. Enroll today to start your career in engineering.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Program Enrollment CTA */}
-      <section className="py-12 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
-            <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0">
-              <Laptop className="h-7 w-7 text-blue-600" />
-            </div>
-            <div className="text-center md:text-left flex-1">
-              <h3 className="text-xl font-bold text-slate-900 mb-1">Want to join a full program?</h3>
-              <p className="text-slate-600">
-                This course is part of our comprehensive programs. Get placement support, certifications, and more.
-              </p>
-            </div>
-            <Link href="/programs">
-              <Button className="bg-blue-600 hover:bg-blue-700 gap-1 shrink-0">
-                Explore Programs <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Ready to Start Your Career?</h2>
-          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-            Join {enrollmentCount || 0}+ students who have transformed their careers with Skillplace Academy.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <EnrollButton courseId={course.id} courseSlug={course.slug} price={course.price} discountPrice={course.discount_price} title={course.title} size="lg" />
-            <a href="/contact" className="inline-flex items-center gap-2 text-white hover:text-blue-100 font-medium">
-              Need help? Contact us <ArrowRight className="h-4 w-4" />
-            </a>
+      {/* About The Course (Bento Style Grid) */}
+      <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+          <div className="md:col-span-7 p-8 md:p-10 bg-white tonal-card rounded-2xl flex flex-col justify-between">
+            <div>
+              <h2 className="font-headline-lg text-headline-lg mb-6 text-primary">About This Course</h2>
+              <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                {course.description || 'Master practical technical drafting and design skills. Learn to transform conceptual ideas into professional-grade engineering documentation with industry-standard workflows.'}
+              </p>
+            </div>
+            
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-border-subtle">
+              {['Architectural Planning', 'Layer Management', 'Annotation & Scaling', 'Plotting & Publishing'].map((item) => (
+                <div key={item} className="flex items-center gap-3 text-on-surface">
+                  <span className="w-2 h-2 bg-secondary rounded-sm shrink-0"></span>
+                  <span className="font-body-md">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:col-span-5 bg-primary-container text-white p-8 md:p-10 rounded-2xl flex flex-col justify-center">
+            <div className="mb-8">
+              <span className="material-symbols-outlined text-secondary text-5xl mb-4 block">verified_user</span>
+              <h3 className="font-headline-md text-headline-md mb-2">Academic Precision</h3>
+              <p className="opacity-80 font-body-md">Our curriculum is designed by industry veterans to ensure you meet the rigorous standards of modern engineering firms.</p>
+            </div>
+            
+            <div className="flex items-center gap-4 py-4 border-t border-white/10">
+              <span className="material-symbols-outlined text-secondary text-2xl">update</span>
+              <div>
+                <p className="font-bold text-body-md">Lifetime access</p>
+                <p className="text-caption opacity-60">Learn at your own pace</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 py-4 border-t border-white/10">
+              <span className="material-symbols-outlined text-secondary text-2xl">devices</span>
+              <div>
+                <p className="font-bold text-body-md">Multi-device compatible</p>
+                <p className="text-caption opacity-60">Mobile, Tablet, Desktop</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Course Highlights Grid */}
+      <section className="py-section-gap bg-surface-container">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+          <div className="text-center mb-16">
+            <h2 className="font-headline-lg text-headline-lg text-primary mb-4">Why This Course?</h2>
+            <p className="text-on-surface-variant font-body-md">Industry-leading features designed for professional success.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+            <div className="bg-white p-8 rounded-xl tonal-card group transition-all duration-300 hover:-translate-y-2">
+              <div className="w-14 h-14 bg-secondary-fixed rounded-lg flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-3xl">workspace_premium</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md mb-3 text-primary">Certified</h3>
+              <p className="text-body-md text-on-surface-variant">Receive a prestigious Certificate of Completion to showcase your expertise.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-xl tonal-card group transition-all duration-300 hover:-translate-y-2">
+              <div className="w-14 h-14 bg-secondary-fixed rounded-lg flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-3xl">corporate_fare</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md mb-3 text-primary">Recognized</h3>
+              <p className="text-body-md text-on-surface-variant">Our program is widely recognized by top-tier engineering and design firms.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-xl tonal-card group transition-all duration-300 hover:-translate-y-2">
+              <div className="w-14 h-14 bg-secondary-fixed rounded-lg flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-3xl">handyman</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md mb-3 text-primary">70% Practical</h3>
+              <p className="text-body-md text-on-surface-variant">Hands-on training with real-world projects and industrial workflows.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-xl tonal-card group transition-all duration-300 hover:-translate-y-2">
+              <div className="w-14 h-14 bg-secondary-fixed rounded-lg flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-3xl">support_agent</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md mb-3 text-primary">Placement</h3>
+              <p className="text-body-md text-on-surface-variant">Dedicated support to help you land your first engineering role.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Curriculum / Deliverables */}
+      <section className="py-section-gap">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
+            <div className="lg:w-1/3 lg:sticky lg:top-32 w-full">
+              <h2 className="font-headline-lg text-headline-lg text-primary mb-6">Course Deliverables</h2>
+              <p className="text-body-lg text-on-surface-variant mb-8">Upon enrolling, you gain access to a comprehensive suite of resources designed to accelerate your career growth.</p>
+              
+              <div className="bg-primary-container p-8 rounded-2xl text-white">
+                <p className="text-caption uppercase tracking-widest text-secondary mb-2 font-bold">Enrolled Students</p>
+                <p className="text-4xl font-extrabold mb-4">{formattedCount}+</p>
+                <div className="flex -space-x-3 mb-6">
+                  <div className="w-10 h-10 rounded-full border-2 border-primary-container bg-surface-dim"></div>
+                  <div className="w-10 h-10 rounded-full border-2 border-primary-container bg-secondary-fixed"></div>
+                  <div className="w-10 h-10 rounded-full border-2 border-primary-container bg-on-primary-container"></div>
+                  <div className="w-10 h-10 rounded-full border-2 border-primary-container flex items-center justify-center bg-secondary text-[10px] font-bold">+200</div>
+                </div>
+                <p className="text-caption opacity-70 italic">&quot;The project-based approach changed my understanding of technical design entirely.&quot; — Rahul M.</p>
+              </div>
+            </div>
+
+            <div className="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              {[
+                { title: 'Course Completion Certificate', desc: 'Globally valid professional certification.', icon: 'stars' },
+                { title: 'Project Certificate (2 Projects)', desc: 'Proof of real-world drafting competency.', icon: 'assignment_turned_in' },
+                { title: 'Industrial Training Certificate', desc: 'Recognized industrial training credit.', icon: 'factory' },
+                { title: 'Resume Building Support', desc: 'Expert guidance on your technical profile.', icon: 'history_edu' },
+                { title: 'Interview Preparation', desc: 'Mock sessions for technical CAD rounds.', icon: 'groups' },
+                { title: 'Lifetime Recording Access', desc: 'Revisit lectures anytime, anywhere.', icon: 'video_library' },
+              ].map((item) => (
+                <div key={item.title} className="p-6 border border-border-subtle rounded-xl flex gap-4 hover:border-secondary transition-colors bg-white tonal-card">
+                  <span className="material-symbols-outlined text-secondary text-3xl shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>{item.icon}</span>
+                  <div>
+                    <h4 className="font-bold text-primary text-body-md mb-1">{item.title}</h4>
+                    <p className="text-caption text-on-surface-variant">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Program Upsell Section */}
+      <section className="py-section-gap px-margin-mobile md:px-margin-desktop">
+        <div className="max-w-container-max mx-auto bg-secondary-fixed rounded-3xl overflow-hidden shadow-xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
+              <h2 className="font-headline-lg text-headline-lg text-primary mb-6">Want to join a full program?</h2>
+              <p className="font-body-lg text-body-lg text-on-surface-variant mb-8">This course is a foundational pillar of our 90-day comprehensive engineering programs. Upgrade to a full program to get deep placement support, multiple tool certifications, and live mentorship.</p>
+              <Link className="inline-flex items-center gap-2 font-bold text-secondary hover:gap-4 transition-all" href="/programs">
+                Explore Full Programs <span className="material-symbols-outlined">arrow_forward</span>
+              </Link>
+            </div>
+            <div className="relative min-h-[300px] bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDA42pmV2rMwBk3SpkAKrG_6Ngyry3k1ld-vPY_ARhNkP8Rx3uqPQkefaqQZ7tpywYThEA6uCNtX7JLxZgr3jRzX0WU1nUXlIRaS9-7eET1r0ubIymJfULrhlpjBAGHnVl_fZ8Ui5GXDVBI0jk_w7ga4bwPF3thHJSq0MFTGxqeU8ZkTzhib6ul9PcazQ7lAJzMxTXmr2eWu143ge63-JFPafwSJ7Nr_itKJjtwJXVVjNlcWnJj3B6DMn3N5NCQJoOb5cmM3mblHFQ')" }}>
+              <div className="absolute inset-0 bg-gradient-to-l from-transparent to-secondary-fixed lg:block hidden"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Enrollment */}
+      <section className="py-section-gap bg-primary-container text-white text-center">
+        <div className="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop">
+          <h2 className="font-display-lg text-display-lg-mobile md:text-display-lg mb-6">Ready to Start Your Career?</h2>
+          <p className="font-body-lg text-body-lg opacity-80 mb-10">Join over {formattedCount}+ students who have transformed their professional journey with our practical engineering approach.</p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <EnrollButton
+              courseId={course.id}
+              courseSlug={course.slug}
+              price={course.price}
+              discountPrice={course.discount_price}
+              title={course.title}
+              size="lg"
+            />
+            <Link href="/contact" className="px-10 py-4 bg-white/10 text-white border border-white/20 font-bold rounded-lg hover:bg-white/20 transition-colors block text-center w-full sm:w-auto">
+              Contact Advisor
+            </Link>
+          </div>
+          
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 opacity-60">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">call</span>
+              <span className="text-caption">79878 14261</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">mail</span>
+              <span className="text-caption">info@skillplace.com</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }

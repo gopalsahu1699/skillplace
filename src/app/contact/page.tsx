@@ -1,10 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Mail, Phone, MapPin, Send, User, MessageSquare } from 'lucide-react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 
 export default function ContactPage() {
@@ -15,6 +11,7 @@ export default function ContactPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [message, setMessage] = useState('')
+  const [focusedField, setFocusedField] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -40,149 +37,288 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen">
-      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-10 md:py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Contact Us</h1>
-          <p className="text-blue-100 max-w-2xl mx-auto">
-            Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
+    <div className="bg-background text-on-surface font-body-md overflow-x-hidden">
+
+      {/* Hero Section — dot-pattern background */}
+      <section
+        className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24 px-margin-mobile md:px-margin-desktop text-center"
+        style={{
+          backgroundColor: '#f8f9ff',
+          backgroundImage: 'radial-gradient(#d3e4fe 0.5px, transparent 0.5px)',
+          backgroundSize: '24px 24px',
+        }}
+      >
+        {/* Decorative blobs */}
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary opacity-5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-12 -left-24 w-64 h-64 bg-primary-fixed opacity-10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="max-w-container-max mx-auto relative z-10">
+          <span className="inline-block py-1 px-3 bg-secondary-fixed text-on-secondary font-label-md text-[12px] rounded-full mb-6 tracking-wider uppercase">
+            Support Center
+          </span>
+          <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-primary-container mb-6">
+            Get In Touch
+          </h1>
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+            Have questions about our programs? We&apos;re here to help you start your engineering career with industry-aligned precision and academic excellence.
           </p>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Form */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Send us a Message</h2>
+      {/* Contact Section */}
+      <section className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
+
+          {/* Left Column: Form */}
+          <div className="bg-surface-container-lowest p-8 md:p-12 rounded-xl border border-border-subtle shadow-soft">
+            <h2 className="font-headline-lg text-headline-lg text-primary-container mb-2">Send us a Message</h2>
+            <p className="font-body-md text-on-surface-variant mb-10">
+              Fill out the form below and our admissions team will get back to you within 24 hours.
+            </p>
+
             {submitted ? (
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-10 text-center">
-                <div className="inline-flex h-16 w-16 bg-green-100 rounded-2xl items-center justify-center mb-5">
-                  <Send className="h-8 w-8 text-green-600" />
+              <div className="bg-success-green/5 border border-success-green/30 rounded-xl p-10 text-center">
+                <div className="w-16 h-16 bg-success-green/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                  <span className="material-symbols-outlined text-success-green text-4xl" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
                 </div>
-                <h3 className="text-lg font-bold text-green-800 mb-2">Message Sent!</h3>
-                <p className="text-green-700 mb-6">Thank you for contacting us. We&apos;ll get back to you within 24 hours.</p>
-                <Button variant="outline" onClick={() => setSubmitted(false)} className="border-green-300 text-green-700 hover:bg-green-100">
+                <h3 className="font-headline-md text-headline-md text-success-green mb-2">Message Sent!</h3>
+                <p className="text-on-surface-variant mb-8">Thank you for contacting us. We&apos;ll get back to you within 24 hours.</p>
+                <button
+                  onClick={() => { setSubmitted(false); setName(''); setEmail(''); setPhone(''); setMessage('') }}
+                  className="border-2 border-secondary text-secondary px-8 py-3 rounded-lg font-label-md hover:bg-secondary hover:text-on-primary transition-all"
+                >
                   Send Another Message
-                </Button>
+                </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-                <div>
-                  <Label htmlFor="name" className="text-slate-700">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="name"
-                      placeholder="Enter your name"
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="full_name"
+                      className={`font-label-md text-label-md transition-colors ${focusedField === 'name' ? 'text-secondary' : 'text-on-surface-variant'}`}
+                    >
+                      Full Name
+                    </label>
+                    <input
+                      id="full_name"
+                      type="text"
+                      placeholder="John Doe"
+                      required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
+                      onFocus={() => setFocusedField('name')}
+                      onBlur={() => setFocusedField(null)}
+                      className="w-full px-4 py-3 border border-border-subtle rounded-lg font-body-md bg-surface-light input-focus-ring transition-all"
                     />
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="email" className="text-slate-700">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="email"
+                      className={`font-label-md text-label-md transition-colors ${focusedField === 'email' ? 'text-secondary' : 'text-on-surface-variant'}`}
+                    >
+                      Email Address
+                    </label>
+                    <input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="john@example.com"
+                      required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
+                      className="w-full px-4 py-3 border border-border-subtle rounded-lg font-body-md bg-surface-light input-focus-ring transition-all"
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="phone" className="text-slate-700">Phone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
+
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="phone"
+                    className={`font-label-md text-label-md transition-colors ${focusedField === 'phone' ? 'text-secondary' : 'text-on-surface-variant'}`}
+                  >
+                    Phone Number
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-border-subtle bg-surface-container text-on-surface-variant font-label-md">
+                      +91
+                    </span>
+                    <input
                       id="phone"
-                      placeholder="Enter your phone number"
+                      type="tel"
+                      placeholder="79878 14261"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                      onFocus={() => setFocusedField('phone')}
+                      onBlur={() => setFocusedField(null)}
+                      className="flex-1 px-4 py-3 border border-border-subtle rounded-r-lg font-body-md bg-surface-light input-focus-ring transition-all"
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="message" className="text-slate-700">Message</Label>
-                  <div className="relative">
-                    <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <Textarea
-                      id="message"
-                      placeholder="How can we help you?"
-                      rows={5}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
+
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="message"
+                    className={`font-label-md text-label-md transition-colors ${focusedField === 'message' ? 'text-secondary' : 'text-on-surface-variant'}`}
+                  >
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    placeholder="How can we help you?"
+                    required
+                    rows={4}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onFocus={() => setFocusedField('message')}
+                    onBlur={() => setFocusedField(null)}
+                    className="w-full px-4 py-3 border border-border-subtle rounded-lg font-body-md bg-surface-light input-focus-ring resize-none transition-all"
+                  />
                 </div>
-                {error && <p className="text-sm text-red-500 bg-red-50 p-3 rounded-lg">{error}</p>}
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm" disabled={loading}>
-                  {loading ? 'Sending...' : 'Send Message'}
-                </Button>
+
+                {error && (
+                  <div className="bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full md:w-auto bg-primary-container text-on-primary px-10 py-4 rounded-lg font-bold text-headline-md hover:scale-[0.98] transition-transform duration-200 flex items-center justify-center gap-3 disabled:opacity-60"
+                >
+                  {loading ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                      Sending…
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <span className="material-symbols-outlined" style={{ fontVariationSettings: '"wght" 600' }}>send</span>
+                    </>
+                  )}
+                </button>
               </form>
             )}
           </div>
 
-          {/* Contact Info */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Contact Information</h2>
-            <div className="space-y-5">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-4 hover:shadow-md transition-all duration-300">
-                <div className="h-11 w-11 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Mail className="h-5 w-5 text-blue-600" />
+          {/* Right Column: Info */}
+          <div className="lg:pl-12 space-y-12">
+
+            {/* Contact Cards */}
+            <div className="space-y-8">
+              {/* Email */}
+              <div className="flex gap-6 group">
+                <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300 shrink-0">
+                  <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: '"FILL" 1' }}>mail</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Email</h3>
-                  <p className="text-sm text-slate-500">info@skillplace.com</p>
-                  <p className="text-sm text-slate-500">admissions@skillplace.com</p>
+                  <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Email</h3>
+                  <p className="font-body-md text-on-surface-variant leading-relaxed">
+                    <a href="mailto:info@skillplace.com" className="hover:text-secondary transition-colors">info@skillplace.com</a><br />
+                    <a href="mailto:admissions@skillplace.com" className="hover:text-secondary transition-colors">admissions@skillplace.com</a>
+                  </p>
                 </div>
               </div>
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-4 hover:shadow-md transition-all duration-300">
-                <div className="h-11 w-11 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-blue-600" />
+
+              {/* Phone */}
+              <div className="flex gap-6 group">
+                <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300 shrink-0">
+                  <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: '"FILL" 1' }}>call</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Phone / WhatsApp</h3>
-                  <p className="text-sm text-slate-500">+91 7987814261</p>
-                  <p className="text-sm text-slate-500">+91 8085782471</p>
+                  <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Phone / WhatsApp</h3>
+                  <p className="font-body-md text-on-surface-variant leading-relaxed">
+                    <a href="tel:+917987814261" className="hover:text-secondary transition-colors">+91 79878 14261</a><br />
+                    <a href="tel:+918085782471" className="hover:text-secondary transition-colors">+91 80857 82471</a>
+                  </p>
                 </div>
               </div>
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-4 hover:shadow-md transition-all duration-300">
-                <div className="h-11 w-11 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-                  <MapPin className="h-5 w-5 text-blue-600" />
+
+              {/* Address */}
+              <div className="flex gap-6 group">
+                <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300 shrink-0">
+                  <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: '"FILL" 1' }}>location_on</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Address</h3>
-                  <p className="text-sm text-slate-500">Bilaspur, Chhattisgarh</p>
+                  <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Address</h3>
+                  <p className="font-body-md text-on-surface-variant leading-relaxed">
+                    Bilaspur, Chhattisgarh, India<br />
+                    <span className="text-[12px] font-medium uppercase tracking-widest text-on-surface-variant opacity-70">Main Campus</span>
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 overflow-hidden rounded-2xl h-52 border border-slate-200 shadow-sm">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117942.36109968412!2d82.08316104860012!3d22.08051787680785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a280b13abdbdcbf%3A0xf635fb85d852a38a!2sBilaspur%2C%20Chhattisgarh!5e0!3m2!1sen!2sin!4v1719391000000!5m2!1sen!2sin"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+            {/* Map Card */}
+            <div className="rounded-xl overflow-hidden border border-border-subtle shadow-soft bg-surface-container">
+              <div className="p-6 bg-surface-container-lowest flex justify-between items-center border-b border-border-subtle">
+                <div>
+                  <h4 className="font-headline-md text-headline-md text-primary-container">Visit Our Office</h4>
+                  <p className="text-[12px] text-on-surface-variant">Bilaspur, Chhattisgarh</p>
+                </div>
+                <a
+                  href="https://maps.google.com/?q=Bilaspur,Chhattisgarh"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-all"
+                >
+                  Get Directions
+                </a>
+              </div>
+              <div className="h-64 relative bg-surface-container-highest group">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117942.36109968412!2d82.08316104860012!3d22.08051787680785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a280b13abdbdcbf%3A0xf635fb85d852a38a!2sBilaspur%2C%20Chhattisgarh!5e0!3m2!1sen!2sin!4v1719391000000!5m2!1sen!2sin"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="grayscale group-hover:grayscale-0 transition-all duration-700"
+                />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white shadow-xl animate-bounce">
+                    <span className="material-symbols-outlined">school</span>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-primary-container text-on-primary py-24 px-margin-mobile md:px-margin-desktop text-center relative overflow-hidden">
+        {/* Decorative shapes */}
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-secondary/10 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 border-[32px] border-white/5 rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none" />
+
+        <div className="max-w-container-max mx-auto relative z-10">
+          <h2 className="font-display-lg text-display-lg-mobile md:text-display-lg mb-6">Ready to Start Your Career?</h2>
+          <p className="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto mb-10 opacity-90">
+            Join hundreds of successful alumni. Our advisors are ready to help you choose the right path for your technical future.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link
+              href="/programs"
+              className="bg-secondary-container text-on-secondary px-10 py-4 rounded-lg font-bold text-headline-md hover:shadow-lg transition-all"
+            >
+              View Programs
+            </Link>
+            <Link
+              href="/courses"
+              className="border-2 border-on-primary-container text-on-primary-container px-10 py-4 rounded-lg font-bold text-headline-md hover:bg-on-primary-container hover:text-primary-container transition-all"
+            >
+              Browse Courses
+            </Link>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }

@@ -71,9 +71,10 @@ export async function POST(request: NextRequest) {
       course_title: course.title,
     })
 
-    await adminSupabase.from('purchases').insert({
+    await adminSupabase.from('payments').insert({
       user_id: userId,
       course_id: courseId,
+      program_id: null,
       amount,
       currency: 'INR',
       razorpay_order_id: order.id,

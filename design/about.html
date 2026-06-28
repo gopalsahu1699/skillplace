@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>About Us | Skillplace Academy</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#565e74",
+                        "surface-container-low": "#eff4ff",
+                        "surface-dim": "#cbdbf5",
+                        "tertiary": "#000000",
+                        "inverse-surface": "#213145",
+                        "tertiary-fixed": "#fcdeb5",
+                        "secondary-fixed": "#d8e2ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#98805d",
+                        "surface-variant": "#d3e4fe",
+                        "on-background": "#0b1c30",
+                        "primary-fixed": "#dae2fd",
+                        "outline-variant": "#c6c6cd",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#131b2e",
+                        "surface-light": "#F8FAFC",
+                        "surface-container-high": "#dce9ff",
+                        "primary": "#000000",
+                        "on-primary-container": "#7c839b",
+                        "surface-container": "#e5eeff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#2170e4",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-fixed-dim": "#bec6e0",
+                        "tertiary-container": "#271901",
+                        "on-secondary-fixed-variant": "#004395",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "outline": "#76777d",
+                        "on-secondary-fixed": "#001a42",
+                        "on-surface-variant": "#45464d",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-primary-fixed": "#131b2e",
+                        "background": "#f8f9ff",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed": "#271901",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#0058be",
+                        "on-surface": "#0b1c30",
+                        "surface": "#f8f9ff",
+                        "on-secondary-container": "#fefcff",
+                        "on-error-container": "#93000a",
+                        "border-subtle": "#E2E8F0",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "surface-container-highest": "#d3e4fe",
+                        "inverse-primary": "#bec6e0",
+                        "success-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "navy-muted": "#1E293B"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "section-gap": "120px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "base": "8px",
+                        "margin-desktop": "80px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "caption": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                        "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-shadow-sm {
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface selection:bg-secondary/20">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 bg-surface-container-lowest dark:bg-primary-container shadow-sm dark:shadow-none">
+<nav class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="text-headline-md font-headline-md font-extrabold text-on-surface dark:text-on-primary-fixed tracking-tight">
+                Skillplace Academy
+            </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">Home</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">Programs</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">Courses</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">Placements</a>
+<a class="text-secondary dark:text-secondary-fixed font-bold border-b-2 border-secondary dark:border-secondary-fixed pb-1 font-label-md text-label-md" href="#">About</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-all">Login</button>
+<button class="px-6 py-2 rounded-lg font-label-md text-label-md bg-primary-container text-on-primary-container hover:opacity-90 transition-all scale-95 active:scale-90 duration-200">Register</button>
+</div>
+</nav>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative h-[600px] flex items-center overflow-hidden">
+<div class="absolute inset-0 z-0" data-alt="A cinematic, wide-angle shot of a state-of-the-art engineering laboratory filled with precision robotic arms and industrial automation equipment. The space is bathed in cool blue and neutral white light, reflecting the corporate modernism aesthetic. Two professional engineers in crisp business-casual attire are collaborating over a holographic architectural schematic. The atmosphere is professional, ambitious, and clean, highlighting a high-tech academic environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDgVjL6HHC7ZexccS3B2wlMbDnJhl1DLAWQ6FFZ7T_0aC343PUU7W06xYNKgntBmor0cj75MmctDD1UKRfUDMK8wRMP5WJ554f99YXvniXxXAb3wdymawXhR0YRwT8BfOCA7Qortkc8q6sYV6G9nJZBsvxDyyrJU7pwyNYWL7_X42jETNNRqX3AAmQqg5iRGNOnPNVapb3XYdb5h5Y22Y1p-_kaqXHxKdiuhW5qJ42A6zshWN1hf-AjUlimJq_NYmA5bm9rtREFLPM')"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-primary-container/90 via-primary-container/40 to-transparent z-10"></div>
+<div class="relative z-20 max-w-container-max mx-auto px-margin-desktop w-full">
+<div class="max-w-2xl">
+<span class="inline-block py-1 px-3 rounded bg-secondary/10 text-secondary font-label-md text-label-md mb-6">ESTABLISHED 2020</span>
+<h1 class="font-display-lg text-display-lg text-white mb-6 leading-tight">Empowering Engineers with Practical Skills</h1>
+<p class="font-body-lg text-body-lg text-white/80 mb-10 leading-relaxed">
+                        Bridge the gap between academic knowledge and industry requirements. We provide high-stakes technical education to transform ambitious students into competent industry professionals.
+                    </p>
+<div class="flex gap-4">
+<button class="px-8 py-4 bg-secondary text-white font-label-md text-label-md rounded-lg shadow-lg hover:shadow-secondary/20 transition-all">Our Programs</button>
+<button class="px-8 py-4 border border-white/30 text-white font-label-md text-label-md rounded-lg hover:bg-white/10 transition-all">View Courses</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Mission & Vision -->
+<section class="py-section-gap bg-surface-container-lowest">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="grid md:grid-cols-2 gap-16">
+<div class="space-y-6">
+<div class="w-16 h-16 rounded-xl bg-surface-container flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-secondary text-4xl">rocket_launch</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Our Mission</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                            To bridge the gap between academic knowledge and industry requirements by providing practical, hands-on training in engineering skills. We aim to make every student job-ready within 90 days of joining.
+                        </p>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-on-surface">
+<span class="w-2 h-2 rounded-sm bg-secondary"></span>
+                                Practical Skill Focused
+                            </li>
+<li class="flex items-center gap-3 text-on-surface">
+<span class="w-2 h-2 rounded-sm bg-secondary"></span>
+                                90-Day Transformation
+                            </li>
+</ul>
+</div>
+<div class="space-y-6">
+<div class="w-16 h-16 rounded-xl bg-surface-container flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-secondary text-4xl">visibility</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Our Vision</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                            To become India's leading skill development platform for engineers, creating a community of industry-ready professionals who can contribute meaningfully to the engineering sector.
+                        </p>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-on-surface">
+<span class="w-2 h-2 rounded-sm bg-secondary"></span>
+                                Nationwide Community
+                            </li>
+<li class="flex items-center gap-3 text-on-surface">
+<span class="w-2 h-2 rounded-sm bg-secondary"></span>
+                                Industry Contribution
+                            </li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<!-- Why Choose Us -->
+<section class="py-section-gap bg-surface-bright">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="text-center max-w-3xl mx-auto mb-20">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">Why Choose Skillplace?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">We combine industry expertise with practical training to deliver results through a mathematically rigorous curriculum designed for modern engineers.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Cards -->
+<div class="group bg-white p-8 rounded-xl border border-border-subtle shadow-[0px_4px_20px_rgba(15,23,42,0.05)] hover:shadow-xl hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary mb-6 text-3xl">menu_book</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Industry-Relevant Curriculum</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Courses designed by industry experts based on current market demands and emerging technological trends.</p>
+</div>
+<div class="group bg-white p-8 rounded-xl border border-border-subtle shadow-[0px_4px_20px_rgba(15,23,42,0.05)] hover:shadow-xl hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary mb-6 text-3xl">school</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Expert Faculty</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Learn from professionals with 10+ years of industry experience across diverse engineering sectors.</p>
+</div>
+<div class="group bg-white p-8 rounded-xl border border-border-subtle shadow-[0px_4px_20px_rgba(15,23,42,0.05)] hover:shadow-xl hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary mb-6 text-3xl">handyman</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Hands-On Training</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">70% practical training with real-world projects, simulations, and actual industrial assignments.</p>
+</div>
+<div class="group bg-white p-8 rounded-xl border border-border-subtle shadow-[0px_4px_20px_rgba(15,23,42,0.05)] hover:shadow-xl hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary mb-6 text-3xl">verified</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Certified Courses</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Get industry-recognized certifications upon completion, valued by top engineering firms nationwide.</p>
+</div>
+<div class="group bg-white p-8 rounded-xl border border-border-subtle shadow-[0px_4px_20px_rgba(15,23,42,0.05)] hover:shadow-xl hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary mb-6 text-3xl">work_history</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Placement Assistance</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Dedicated placement cell with over 200+ active hiring partners across industrial clusters.</p>
+</div>
+<div class="group bg-white p-8 rounded-xl border border-border-subtle shadow-[0px_4px_20px_rgba(15,23,42,0.05)] hover:shadow-xl hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary mb-6 text-3xl">event_available</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Flexible Scheduling</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Weekday and weekend batches available to suit both students and working professionals.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Our Team -->
+<section class="py-section-gap bg-surface-container-lowest">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="mb-20">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-4">Our Team</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Our leadership consists of experienced engineers and educators who are passionate about transforming technical education.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Team Member 1 -->
+<div class="text-center group">
+<div class="relative mb-8 mx-auto w-64 h-64 overflow-hidden rounded-2xl bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A professional portrait of Dr. Rajesh Mehta, an middle-aged academic leader with a confident expression. He is wearing a sharp charcoal grey suit and a blue tie, standing against a blurred background of a clean, modern university corridor. The lighting is soft and flattering, emphasizing a mood of competence and wisdom. The image follows a high-key, professional academic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiaYv-dHH1E_-_ljEd59uJsBRt9kSTAXnFPKn47efCjH4G5avNNG-FMBEVyC5Wlsjz2gBqUro-Bg9V7Dh-8ecRSouOR8vV8O_UWvSL1TCnfMe2Kho7hSdi85jMHpobGJ2Z6zzvjL7D7bllxaNL2rPDcsXPUegbJchDqyIokfw6srS0vT0n12LNui8kaT0NpuMcLjPiFtIRdRPkC0i2DDoyyTHFX0uAPL4OwHZGT0QHOt5XHMcprA9c3FF548dqvkNT0iSv5G8vj4c"/>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Dr. Rajesh Mehta</h4>
+<p class="text-secondary font-label-md text-label-md mb-2">Founder &amp; Director</p>
+<p class="text-on-surface-variant font-body-md text-body-md">Civil Engineering Expert</p>
+</div>
+<!-- Team Member 2 -->
+<div class="text-center group">
+<div class="relative mb-8 mx-auto w-64 h-64 overflow-hidden rounded-2xl bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A professional corporate headshot of Prof. Sunita Sharma. She is wearing professional business attire in a muted blue tone, with a friendly and authoritative demeanor. The setting is a bright, airy office with minimalist design. Soft natural light illuminates the scene, projecting an image of approachable leadership and technical expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFK6UJ20QV3exOMx8xAc5eAqB0NWlVuAT3_x7W6Q8-bOp-ARYB1ZPIDy1erJhoI9KKW3vyPl_ocQVK4ZqbeEhxrhBaop_MujVAeGllYSH7zyoVwRgKYs_4CcJm_BEirknzfvKe3ICDuSkBiSRNlKJYnU5uL95-NnQChAIEL8ZZCp-d9iHQqQ8vc9iXbSSixJNezqBXGeKISAb2Tnc80wXamTVdxukurKKtcWJq00vZtk9k9TS85PlR3qKj9zXS3PNcrX4b3u4--UY"/>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Prof. Sunita Sharma</h4>
+<p class="text-secondary font-label-md text-label-md mb-2">Head of Training</p>
+<p class="text-on-surface-variant font-body-md text-body-md">Mechanical Engineering Lead</p>
+</div>
+<!-- Team Member 3 -->
+<div class="text-center group">
+<div class="relative mb-8 mx-auto w-64 h-64 overflow-hidden rounded-2xl bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Er. Amit Deshmukh, a young and energetic placement head, captured in a professional headshot. He is dressed in a smart business-casual white shirt, looking directly into the camera with a helpful smile. The background is a clean white studio with a slight blue gradient, evoking trust and modern efficiency. High-quality lighting and crisp details characterize the shot." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTyHg9sSIp2iGG0H3A6pYa39XBrRtdbpfm-SLCIImhDV17Y8f-erQ8Qb2TOBvdf8tXEKkIsM7rJhP4fgjS8NJhSUp29g68HYZuRLtWD304agzAb7CRXxBJa5PaQYsY3B3wGPxL3dnvbgiV3aIQbiFFMvGunm5LggLfUc6LdZfhg7RLLSsy5_dhxgVpw9bRIxT61gxEJVcQA8pn05LgPV7CBqcpECfIk7B_0aQoqNu7WKg4muujt0-aW9rj079FriP8VCMBJTAInkc"/>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Er. Amit Deshmukh</h4>
+<p class="text-secondary font-label-md text-label-md mb-2">Placement Head</p>
+<p class="text-on-surface-variant font-body-md text-body-md">Electronics &amp; IT Specialist</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Partners Section -->
+<section class="py-20 border-y border-border-subtle bg-white overflow-hidden">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<p class="text-center text-on-surface-variant font-label-md text-label-md mb-12 tracking-widest uppercase">Trusted by Industry Leaders</p>
+<div class="flex flex-wrap justify-center items-center gap-20 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-4xl mb-2">settings_suggest</span>
+<span class="font-bold text-xl tracking-tight">Autommensor Automation</span>
+<span class="text-xs uppercase font-label-md">Pvt. Ltd.</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-4xl mb-2">construction</span>
+<span class="font-bold text-xl tracking-tight">himanshu construction</span>
+<span class="text-xs uppercase font-label-md">Industry Partner</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Ready to Start CTA -->
+<section class="py-section-gap bg-primary-container text-white text-center">
+<div class="max-w-3xl mx-auto px-margin-mobile">
+<h2 class="font-headline-lg text-display-lg-mobile md:text-display-lg mb-8">Ready to Start Your Career?</h2>
+<p class="font-body-lg text-body-lg mb-12 text-on-primary-container leading-relaxed">Join Skillplace Academy today and become a job-ready engineer in just 90 days with our industry-led training programs.</p>
+<div class="flex flex-col md:flex-row gap-4 justify-center">
+<button class="px-10 py-5 bg-secondary hover:bg-secondary/90 transition-all rounded-lg font-bold text-lg shadow-lg">Enroll Now</button>
+<button class="px-10 py-5 border border-on-primary-container hover:bg-on-primary-container/10 transition-all rounded-lg font-bold text-lg">Download Prospectus</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-primary-container dark:bg-tertiary-container w-full">
+<div class="flex flex-col gap-section-gap px-margin-desktop py-section-gap max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+<div class="col-span-1 md:col-span-2">
+<div class="text-headline-md font-headline-md font-bold text-surface-container-lowest mb-6">Skillplace Academy</div>
+<p class="text-on-primary-container font-body-md text-body-md max-w-md mb-8">
+                        Precision in Technical Education. Learn practical skills with live classes, projects, and placement assistance.
+                    </p>
+<div class="flex flex-col gap-4 text-on-primary-container">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-fixed">mail</span>
+<span>info@skillplace.com</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-fixed">call</span>
+<span>+91 79878 14261</span>
+</div>
+</div>
+</div>
+<div>
+<h4 class="text-surface-container-lowest font-bold mb-6">Quick Links</h4>
+<ul class="flex flex-col gap-4">
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Programs</a></li>
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Courses</a></li>
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Career Services</a></li>
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Alumni</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-surface-container-lowest font-bold mb-6">Support</h4>
+<ul class="flex flex-col gap-4">
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Privacy Policy</a></li>
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Terms of Service</a></li>
+<li><a class="text-on-primary-fixed-variant hover:text-secondary-fixed transition-colors font-body-md text-body-md" href="#">Contact Us</a></li>
+</ul>
+</div>
+</div>
+<div class="pt-12 border-t border-on-primary-container/20 flex flex-col md:flex-row justify-between items-center gap-6">
+<p class="text-on-primary-container font-body-md text-body-md opacity-80">
+                    © 2024 Skillplace Academy. Precision in Technical Education.
+                </p>
+<div class="flex gap-6">
+<a class="text-on-primary-container hover:text-secondary-fixed transition-all" href="#"><span class="material-symbols-outlined">public</span></a>
+<a class="text-on-primary-container hover:text-secondary-fixed transition-all" href="#"><span class="material-symbols-outlined">share</span></a>
+<a class="text-on-primary-container hover:text-secondary-fixed transition-all" href="#"><span class="material-symbols-outlined">contact_support</span></a>
+</div>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interaction for hover effects on cards
+        document.querySelectorAll('.group').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-8px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body></html>

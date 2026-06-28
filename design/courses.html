@@ -1,0 +1,437 @@
+<!DOCTYPE html><html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Courses | Skillplace Academy</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#271901",
+                    "background": "#f8f9ff",
+                    "surface-tint": "#565e74",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "border-subtle": "#E2E8F0",
+                    "secondary": "#0058be",
+                    "outline-variant": "#c6c6cd",
+                    "on-surface": "#0b1c30",
+                    "surface-container": "#e5eeff",
+                    "tertiary": "#000000",
+                    "secondary-container": "#2170e4",
+                    "on-secondary-fixed": "#001a42",
+                    "on-primary-container": "#7c839b",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-tertiary-container": "#98805d",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-dim": "#cbdbf5",
+                    "primary-fixed": "#dae2fd",
+                    "primary": "#000000",
+                    "surface-bright": "#f8f9ff",
+                    "surface": "#f8f9ff",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-light": "#F8FAFC",
+                    "navy-muted": "#1E293B",
+                    "primary-fixed-dim": "#bec6e0",
+                    "surface-container-high": "#dce9ff",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "on-secondary-fixed-variant": "#004395",
+                    "inverse-surface": "#213145",
+                    "tertiary-fixed": "#fcdeb5",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#fefcff",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "primary-container": "#131b2e",
+                    "success-green": "#22C55E",
+                    "on-primary-fixed": "#131b2e",
+                    "tertiary-container": "#271901",
+                    "outline": "#76777d",
+                    "on-background": "#0b1c30",
+                    "inverse-primary": "#bec6e0",
+                    "on-surface-variant": "#45464d",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#eff4ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "base": "8px",
+                    "margin-mobile": "20px",
+                    "margin-desktop": "80px",
+                    "section-gap": "120px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "display-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "caption": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-card {
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0px 4px 20px rgba(15, 23, 42, 0.05);
+            transition: all 0.3s ease;
+        }
+        .tonal-card:hover {
+            box-shadow: 0px 10px 30px rgba(15, 23, 42, 0.1);
+            border-color: #0058be;
+        }
+        .cta-button {
+            background-color: #0058be;
+            transition: transform 0.15s ease, background-color 0.2s ease;
+        }
+        .cta-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar -->
+<header class="docked full-width top-0 sticky z-50 bg-surface/95 backdrop-blur-md dark:bg-background/95 border-b border-border-subtle dark:border-outline-variant shadow-sm h-20 transition-all duration-300">
+<nav class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-full">
+<div class="flex items-center gap-2">
+<a class="font-display-lg text-headline-md font-extrabold text-primary dark:text-primary-fixed" href="/">
+                    Skillplace Academy
+                </a>
+</div>
+<!-- Desktop Navigation -->
+<div class="hidden md:flex items-center gap-8">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-secondary-container hover:text-secondary transition-colors duration-200" href="/">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-secondary-container hover:text-secondary transition-colors duration-200" href="/programs">Programs</a>
+<a class="font-label-md text-label-md text-secondary dark:text-secondary-fixed-dim font-bold border-b-2 border-secondary h-full flex items-center" href="/courses">Courses</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-secondary-container hover:text-secondary transition-colors duration-200" href="/placements">Placements</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-secondary-container hover:text-secondary transition-colors duration-200" href="/about">About</a>
+</div>
+<div class="flex items-center gap-4">
+<a class="hidden sm:block font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="/login">Login</a>
+<a class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md font-bold active:scale-95 transition-transform duration-150" href="/register">Register</a>
+<button class="md:hidden text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative py-24 px-margin-desktop max-w-container-max mx-auto overflow-hidden">
+<div class="relative z-10 max-w-2xl">
+<span class="inline-block py-1 px-3 mb-6 rounded-full bg-secondary-container text-on-secondary-fixed font-label-md text-caption uppercase tracking-wider">Expert-Designed Curriculum</span>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-6 leading-tight">Industry-Focused Courses</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-10 leading-relaxed">
+                    Bridge the gap between academic knowledge and industrial excellence. Our curriculum is crafted by domain experts to ensure immediate employment and long-term career growth in engineering.
+                </p>
+<div class="flex flex-wrap gap-4">
+<button class="px-8 py-4 bg-on-background text-on-primary font-label-md text-label-md rounded-lg shadow-lg hover:shadow-xl transition-all">Explore All Programs</button>
+<button class="px-8 py-4 border border-secondary text-secondary font-label-md text-label-md rounded-lg hover:bg-secondary/5 transition-all">Download Brochure</button>
+</div>
+</div>
+<!-- Abstract background element -->
+<div class="absolute -right-20 -top-20 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
+<div class="absolute right-0 bottom-0 w-1/2 h-full opacity-20 pointer-events-none">
+
+</div>
+</section>
+<!-- Course Grid -->
+<section class="py-section-gap px-margin-desktop max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Category: Civil Engineering -->
+<div class="tonal-card rounded-xl p-8 flex flex-col group">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined text-3xl" style="transform: translateY(0px);">architecture</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Civil Engineering</h3>
+<p class="text-on-surface-variant text-body-md mb-8">Master structural design and project management with industry-standard tools.</p>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">AutoCAD 2D &amp; 3D</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Revit Architecture</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">STAAD.Pro Connect</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Quantity Surveying</span>
+</li>
+</ul>
+<div class="flex flex-col gap-3">
+<button class="w-full py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform">Enroll Now</button>
+<button class="w-full py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">download</span>
+                            Syllabus
+                        </button>
+</div>
+</div>
+<!-- Category: Mechanical Engineering -->
+<div class="tonal-card rounded-xl p-8 flex flex-col group">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined text-3xl">precision_manufacturing</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Mechanical Engineering</h3>
+<p class="text-on-surface-variant text-body-md mb-8">Design future products with advanced CAD/CAM/CAE specialized modules.</p>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">SolidWorks Masterclass</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">CATIA V5/V6</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">ANSYS Simulation</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">HVAC Systems Design</span>
+</li>
+</ul>
+<div class="flex flex-col gap-3">
+<button class="w-full py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform">Enroll Now</button>
+<button class="w-full py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">download</span>
+                            Syllabus
+                        </button>
+</div>
+</div>
+<!-- Category: Electrical Engineering -->
+<div class="tonal-card rounded-xl p-8 flex flex-col group">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined text-3xl">electrical_services</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Electrical Engineering</h3>
+<p class="text-on-surface-variant text-body-md mb-8">Powering the world through smart grid and automation technologies.</p>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">PLC &amp; SCADA Automation</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Electrical AutoCAD</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Solar PV System Design</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Power System Analysis</span>
+</li>
+</ul>
+<div class="flex flex-col gap-3">
+<button class="w-full py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform">Enroll Now</button>
+<button class="w-full py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">download</span>
+                            Syllabus
+                        </button>
+</div>
+</div>
+<!-- Category: Electronics -->
+<div class="tonal-card rounded-xl p-8 flex flex-col group">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined text-3xl">developer_board</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Electronics &amp; Telecom</h3>
+<p class="text-on-surface-variant text-body-md mb-8">Developing the core of modern smart devices and communication nets.</p>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Embedded Systems (IoT)</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">VLSI Design</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">PCB Design &amp; Fab</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Network Engineering</span>
+</li>
+</ul>
+<div class="flex flex-col gap-3">
+<button class="w-full py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform">Enroll Now</button>
+<button class="w-full py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">download</span>
+                            Syllabus
+                        </button>
+</div>
+</div>
+<!-- Category: Other Professional Skills -->
+<div class="tonal-card rounded-xl p-8 lg:col-span-2 flex flex-col md:flex-row gap-8 group">
+<div class="flex-1">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Core Professional Skills</h3>
+<p class="text-on-surface-variant text-body-md mb-8">Complementary technical and soft skills essential for modern engineering placements.</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Project Management (PMP)</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Digital Marketing for Eng.</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Data Science Foundation</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="w-2 h-2 bg-secondary rounded-sm"></span>
+<span class="font-body-md text-on-surface-variant">Soft Skills &amp; Interviews</span>
+</li>
+</div>
+<div class="flex flex-wrap gap-4">
+<button class="px-8 py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform">Enroll Now</button>
+<button class="px-8 py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors">View All Skills</button>
+</div>
+</div>
+<div class="hidden md:block w-1/3 rounded-xl overflow-hidden relative min-h-[200px]">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A bright, modern classroom setting with professional adult learners engaged in a hands-on technical workshop using advanced digital equipment. The lighting is crisp and even, reflecting a corporate educational atmosphere with navy and light blue accents." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDv6zypbYFbso11apZ69Xt_uCTq4axlNtL3KaHwjMTBBhXM2IbIOPPgwQNNcZGNtc9HMlZ7TxdwUQC3oTyuIwiqUOtYLvFVooWan8dNZqnq8jFaNSdyjrj-sgaHmR7LLVuSdpwv5xYxj6KZWWHS1ylCY-Neqof3t81REoBuVd4sl838tUyw5wQ0qlzGy5O-rMmRwzt-0zixaRrstudaIOE5qtNjd86xFg01oDmX6HJe7c4dbXSsjChJjmLze2_GA_5DCo6-r8XHKY8&quot;);"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="bg-primary-container py-section-gap">
+<div class="px-margin-desktop max-w-container-max mx-auto text-center">
+<h2 class="font-display-lg text-headline-lg text-on-primary mb-6">Ready to Start Your Career?</h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto mb-10">
+                    Join thousands of successful alumni who have transformed their professional journey through Skillplace Academy.
+                </p>
+<div class="flex flex-col sm:flex-row justify-center gap-6">
+<button class="px-10 py-4 bg-secondary text-on-primary font-label-md text-label-md rounded-lg hover:bg-secondary-container transition-all active:scale-95">Enroll in a Course</button>
+<button class="px-10 py-4 border border-on-primary-container text-on-primary font-label-md text-label-md rounded-lg hover:bg-white/5 transition-all">Speak to an Expert</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-primary-container dark:bg-surface-container-lowest text-on-primary-container dark:text-on-surface">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-section-gap max-w-container-max mx-auto">
+<div class="space-y-6">
+<div class="font-display-lg text-headline-md font-extrabold text-on-primary dark:text-primary">
+                    Skillplace Academy
+                </div>
+<p class="font-body-md text-body-md opacity-80">
+                    Empowering the next generation of engineers with precise, industry-aligned technical education and placement support.
+                </p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full border border-on-primary-container/30 flex items-center justify-center hover:bg-secondary transition-colors" href="#">
+<span class="material-symbols-outlined text-on-primary">language</span>
+</a>
+<a class="w-10 h-10 rounded-full border border-on-primary-container/30 flex items-center justify-center hover:bg-secondary transition-colors" href="#">
+<span class="material-symbols-outlined text-on-primary">mail</span>
+</a>
+</div>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-primary mb-6">Quick Links</h4>
+<ul class="space-y-4">
+<li class=""><a class="text-on-primary-container/80 hover:text-tertiary-fixed transition-colors font-label-md" href="#">Contact Us</a></li>
+<li class=""><a class="text-on-primary-container/80 hover:text-tertiary-fixed transition-colors font-label-md" href="#">Privacy Policy</a></li>
+<li class=""><a class="text-on-primary-container/80 hover:text-tertiary-fixed transition-colors font-label-md" href="#">Terms of Service</a></li>
+<li class=""><a class="text-on-primary-container/80 hover:text-tertiary-fixed transition-colors font-label-md" href="#">FAQ</a></li>
+<li class=""><a class="text-on-primary-container/80 hover:text-tertiary-fixed transition-colors font-label-md" href="#">Blog</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-primary mb-6">Contact Us</h4>
+<ul class="space-y-4 font-body-md opacity-80">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-on-primary">location_on</span>
+<span class="">123 Tech Plaza, Engineering Hub, Silicon Valley, CA 94043</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-primary">call</span>
+<span class="">+1 (800) SKILL-EDU</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-primary">schedule</span>
+<span class="">Mon - Sat: 9:00 AM - 7:00 PM</span>
+</li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-primary mb-6">Location</h4>
+<div class="rounded-xl overflow-hidden h-48 border border-on-primary-container/20">
+<img class="w-full h-full object-cover" data-alt="A clean, professional map visualization of an urban technology district, rendered in a sleek minimalist style with deep navy and vibrant blue accents matching the corporate academic brand identity." data-location="Silicon Valley" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKNYX1h1UsFGX7-0tZzS32aKZW5f8gQzAVlgQix0q9SIiHs53_RGZkL2l2N49CwvpfhhQpWljPzbsoYNhQvrAXXJ9bz-gPwwmGp3P4-62g_RdqI_rX4urIOMZhk5c5JuNPWtB33m3cOkBB_SmAKxl6rTB4O69AlzNbwuKPbqG8nBNn5rsJKZw4k4SoxElINIJkZQwgawh2-0EwM8HF45InBJuW9pP4MFg4yYTV-tZLfmXBBRB_S91mpoQfLCa3GTnNEWzxt9DfXqg">
+</div>
+</div>
+</div>
+<div class="border-t border-on-primary-container/10 px-margin-desktop py-8 max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-label-md text-label-md opacity-60">© 2024 Skillplace Academy. All rights reserved.</p>
+<div class="flex gap-8">
+<a class="font-label-md text-label-md opacity-60 hover:opacity-100 transition-opacity" href="#">Sitemap</a>
+<a class="font-label-md text-label-md opacity-60 hover:opacity-100 transition-opacity" href="#">Cookies Settings</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('.tonal-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const icon = card.querySelector('.material-symbols-outlined');
+                if(icon) icon.style.transform = 'translateY(-4px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                const icon = card.querySelector('.material-symbols-outlined');
+                if(icon) icon.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+
+
+</body></html>

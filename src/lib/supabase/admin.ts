@@ -15,4 +15,6 @@ if (!supabaseUrl) {
 
 export const adminSupabase: SupabaseClient = (supabaseUrl && serviceKey)
   ? createClient(supabaseUrl, serviceKey)
-  : (null as any)
+  : createClient('https://placeholder.supabase.co', 'placeholder-key', {
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+    })

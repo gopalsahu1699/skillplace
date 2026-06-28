@@ -38,12 +38,7 @@ export async function POST(request: Request) {
       login_method: 'email',
     }).then(() => {}, () => {})
 
-    await adminSupabase.from('user_activity').insert({
-      user_id: data.user.id,
-      action: 'login',
-      ip_address: ip,
-      user_agent: userAgent,
-    }).then(() => {}, () => {})
+
   }
 
   return NextResponse.json({ success: true, user: data.user })
