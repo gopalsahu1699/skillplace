@@ -90,6 +90,12 @@ export default async function ProgramLearnPage({
     redirect(`/programs/${slug}`)
   }
 
+  adminSupabase.from('user_activity').insert({
+    user_id: user.id,
+    action: 'page_view',
+    resource: `/programs/${slug}/learn`,
+  }).then(() => {}, () => {})
+
   const { data: programCourses } = await adminSupabase
     .from('program_courses')
     .select('courses(*), course_id')

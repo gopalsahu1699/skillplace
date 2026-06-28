@@ -41,7 +41,7 @@ export default function ContactPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-16 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-10 md:py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Contact Us</h1>
@@ -51,7 +51,7 @@ export default function ContactPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Form */}
           <div>
@@ -169,11 +169,16 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="mt-8 bg-slate-200 rounded-2xl h-52 flex items-center justify-center border border-slate-300">
-              <div className="text-center">
-                <MapPin className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <span className="text-sm text-slate-500 font-medium">Map Placeholder</span>
-              </div>
+            <div className="mt-8 overflow-hidden rounded-2xl h-52 border border-slate-200 shadow-sm">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117942.36109968412!2d82.08316104860012!3d22.08051787680785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a280b13abdbdcbf%3A0xf635fb85d852a38a!2sBilaspur%2C%20Chhattisgarh!5e0!3m2!1sen!2sin!4v1719391000000!5m2!1sen!2sin"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
           </div>
         </div>

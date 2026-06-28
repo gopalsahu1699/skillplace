@@ -1,33 +1,27 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 const supabaseUrl = 'https://weebasgxtemffakbvcfa.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlZWJhc2d4dGVtZmZha2J2Y2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjc0NjgsImV4cCI6MjA5NzgwMzQ2OH0.3oDrU4VgzH3LflLt3CEcjM_4RTGnXd84pwRhpSRqD48'
 
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+  cookies: {
+    getAll() {
+      if (typeof document === 'undefined') return []
+      return document.cookie.split(';').map(c => {
+        const [name, ...rest] = c.split('=')
+        return { name: name.trim(), value: rest.join('=').trim() }
+      }).filter(c => c.name)
+    },
+    setAll(cookies) {
+      if (typeof document === 'undefined') return
+      cookies.forEach(({ name, value, options }) => {
+        let cookie = `${name}=${value}; path=/; max-age=${options?.maxAge || 604800}; samesite=${options?.sameSite || 'lax'}`
+        if (options?.secure) cookie += '; secure'
+        document.cookie = cookie
+      })
+    },
   },
 })
-
-function generateToken(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID()
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
-export interface SessionData {
-  sessionToken: string
-  accessToken: string
-  refreshToken: string
-  expiresAt: Date
-}
 
 export interface ValidatedSession {
   id: string
@@ -57,100 +51,6 @@ export interface ValidatedSession {
     created_at: string
     updated_at: string
   } | null
-}
-
-export async function createSession(
-  userId: string,
-  userAgent?: string,
-  ip?: string | null,
-  accessToken?: string
-): Promise<SessionData> {
-  const sessionToken = generateToken()
-  const accessTokenGenerated = generateToken()
-  const refreshToken = generateToken()
-
-  const ua = (userAgent || 'unknown').toLowerCase()
-  let deviceType = 'unknown'
-  if (/mobile|android|iphone/.test(ua)) deviceType = 'mobile'
-  else if (/tablet|ipad/.test(ua)) deviceType = 'tablet'
-  else if (/windows|mac|linux/.test(ua)) deviceType = 'desktop'
-
-  let browser = 'unknown'
-  if (/chrome/.test(ua)) browser = 'chrome'
-  else if (/firefox/.test(ua)) browser = 'firefox'
-  else if (/safari/.test(ua)) browser = 'safari'
-  else if (/edge/.test(ua)) browser = 'edge'
-
-  let os = 'unknown'
-  if (/windows/.test(ua)) os = 'windows'
-  else if (/mac/.test(ua)) os = 'macos'
-  else if (/linux/.test(ua)) os = 'linux'
-  else if (/android/.test(ua)) os = 'android'
-  else if (/ios|iphone|ipad/.test(ua)) os = 'ios'
-
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-
-  const sessionRecord = {
-    user_id: userId,
-    session_token: sessionToken,
-    access_token: accessTokenGenerated,
-    refresh_token: refreshToken,
-    ip_address: ip,
-    user_agent: userAgent,
-    device_type: deviceType,
-    browser,
-    os,
-    login_method: 'email',
-    expires_at: expiresAt.toISOString(),
-  }
-
-  let client = supabase
-  if (accessToken) {
-    const { createClient } = await import('@supabase/supabase-js')
-    client = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    })
-  }
-
-  const { data: existingProfile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', userId)
-    .single()
-
-  if (!existingProfile) {
-    await supabase.from('profiles').insert({
-      id: userId,
-      email: '',
-      full_name: null,
-      phone: null,
-      role: 'student',
-      is_active: true,
-    })
-  }
-
-  const { error } = await client.from('user_sessions').insert(sessionRecord)
-  if (error) throw error
-
-  const { data: newSession } = await client
-    .from('user_sessions')
-    .select('id')
-    .eq('session_token', sessionToken)
-    .single()
-
-  if (newSession) {
-    await client.from('user_activity').insert({
-      user_id: userId,
-      session_id: newSession.id,
-      action: 'login',
-      ip_address: ip,
-      user_agent: userAgent,
-    }).then(() => {}, () => {})
-  }
-
-  return { sessionToken, accessToken: accessTokenGenerated, refreshToken, expiresAt }
 }
 
 export async function validateSession(

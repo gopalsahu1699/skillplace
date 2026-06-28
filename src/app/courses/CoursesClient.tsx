@@ -36,7 +36,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-12 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-10 md:py-12 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold text-white">
@@ -49,12 +49,9 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <div className="space-y-10">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">My Purchased Courses</h2>
-            <PurchasedCourses />
-          </div>
+          <PurchasedCourses />
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <div className="relative mb-5">

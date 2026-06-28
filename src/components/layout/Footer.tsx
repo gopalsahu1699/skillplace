@@ -56,10 +56,16 @@ export default function Footer() {
                 <Mail className="h-4 w-4 text-blue-400" />
                 info@skillplace.com
               </a>
-              <a href="tel:+919876543210" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
-                <Phone className="h-4 w-4 text-blue-400" />
-                +91 9876543210
-              </a>
+              <div className="flex flex-col gap-2.5">
+                <a href="tel:+917987814261" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
+                  <Phone className="h-4 w-4 text-blue-400" />
+                  79878 14261
+                </a>
+                <a href="tel:+918085782471" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
+                  <Phone className="h-4 w-4 text-blue-400" />
+                  80857 82471
+                </a>
+              </div>
               <div className="flex items-center gap-2 text-sm text-slate-400">
                 <MapPin className="h-4 w-4 text-blue-400" />
                 Bilaspur, Chhattisgarh

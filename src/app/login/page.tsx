@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
-import { supabase, createSession } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { notify } from '@/lib/notifications'
 
@@ -30,7 +30,6 @@ function LoginForm() {
   const [resetLoading, setResetLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Get redirect URL from query params
   const searchParams = useSearchParams()
   const redirectedFrom = searchParams.get('redirectedFrom') || '/'
 
@@ -59,30 +58,15 @@ function LoginForm() {
       return
     }
 
-    // Store session in Supabase user_sessions table
     if (data.user) {
-    try {
-      // Get JWT from the sign-in response or from current session
-      let jwt: string | undefined = data.session?.access_token
-      if (!jwt) {
-        // Fallback: get session from Supabase auth
-        const { data: currentSession } = await supabase.auth.getSession()
-        jwt = currentSession?.session?.access_token
-      }
-      
-      if (!jwt) {
-        console.error('No JWT available for session creation')
-      }
-      
-      const session = await createSession(data.user.id, navigator.userAgent, null, jwt)
-      const isHttps = window.location.protocol === 'https:'
-      document.cookie = `sp_session=${session.sessionToken}; path=/; max-age=604800; ${isHttps ? 'secure; ' : ''}samesite=lax`
-    } catch (e) {
-      console.error('Failed to create session:', e)
-      // Session creation is best-effort
-    }
-
       notify.loginSuccess(data.user.user_metadata?.full_name || data.user.email)
+
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      }).catch(() => {})
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -92,7 +76,6 @@ function LoginForm() {
       if (profile?.role === 'admin' || profile?.role === 'employee') {
         window.location.href = '/admin-place'
       } else {
-        // Fallback: check employees table if profile doesn't have admin/employee role
         const { data: employee } = await supabase
           .from('employees')
           .select('role')
@@ -146,7 +129,6 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-700 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative flex flex-col justify-center px-12 xl:px-16">
@@ -181,7 +163,6 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Right side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-12 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">

@@ -26,23 +26,17 @@ const ALLOWED_TABLES = new Set([
 ])
 
 async function verifyAdminSession(request: NextRequest): Promise<boolean> {
-  const sessionToken = request.cookies.get('sp_session')?.value
-  if (!sessionToken) return false
+  const supabaseAccessToken = request.cookies.get('sb-access-token')?.value
+  if (!supabaseAccessToken) return false
 
   try {
-    const { data: session } = await adminSupabase
-      .from('user_sessions')
-      .select('user_id, expires_at')
-      .eq('session_token', sessionToken)
-      .single()
-
-    if (!session) return false
-    if (new Date(session.expires_at) < new Date()) return false
+    const { data: { user }, error } = await adminSupabase.auth.getUser(supabaseAccessToken)
+    if (error || !user) return false
 
     const { data: profile } = await adminSupabase
       .from('profiles')
       .select('role')
-      .eq('id', session.user_id)
+      .eq('id', user.id)
       .single()
 
     return profile?.role === 'admin'

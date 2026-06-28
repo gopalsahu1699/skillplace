@@ -1,6 +1,5 @@
 import { supabase } from './supabase/client'
 import {
-  createSession,
   validateSession,
   revokeSession,
   ValidatedSession,
@@ -33,24 +32,6 @@ export function validatePasswordStrength(password: string): PasswordValidation {
   return { valid: errors.length === 0, errors }
 }
 
-function setSessionCookie(sessionToken: string): void {
-  if (typeof document !== 'undefined') {
-    document.cookie = `sp_session=${sessionToken}; path=/; max-age=604800; secure; samesite=lax`
-  }
-}
-
-function getSessionCookie(): string | undefined {
-  if (typeof document === 'undefined') return undefined
-  const match = document.cookie.match(/(?:^|;\s*)sp_session=([^;]*)/)
-  return match ? match[1] : undefined
-}
-
-function clearSessionCookie(): void {
-  if (typeof document !== 'undefined') {
-    document.cookie = 'sp_session=; path=/; max-age=0'
-  }
-}
-
 export async function signUp(
   email: string,
   password: string,
@@ -73,13 +54,6 @@ export async function signUp(
       phone,
       role: 'student',
     })
-
-    try {
-      const session = await createSession(data.user.id, undefined, null, data.session?.access_token)
-      setSessionCookie(session.sessionToken)
-    } catch {
-      // Session creation is best-effort during sign up
-    }
   }
   return data
 }
@@ -90,36 +64,37 @@ export async function signIn(email: string, password: string) {
     password,
   })
   if (error) throw error
-  if (data.user) {
-    try {
-      const userAgent =
-        typeof navigator !== 'undefined' ? navigator.userAgent : undefined
-      const session = await createSession(data.user.id, userAgent, null, data.session?.access_token)
-      setSessionCookie(session.sessionToken)
-    } catch {
-      // Session creation is best-effort during sign in
-    }
-  }
   return data
 }
 
 export async function signOut() {
-  const sessionToken = getSessionCookie()
-  if (sessionToken) {
-    try {
-      await revokeSession(sessionToken)
-    } catch {
-      // Best-effort cleanup
-    }
-    clearSessionCookie()
-  }
   await supabase.auth.signOut()
 }
 
 export async function getCurrentSession(): Promise<ValidatedSession | null> {
-  const sessionToken = getSessionCookie()
-  if (!sessionToken) return null
-  return await validateSession(sessionToken)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: session } = await supabase
+    .from('user_sessions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .eq('is_revoked', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!session) return null
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  session.profiles = profile || null
+  return session as ValidatedSession
 }
 
 export async function getSession() {

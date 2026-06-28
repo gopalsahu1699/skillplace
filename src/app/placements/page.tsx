@@ -28,7 +28,7 @@ export default function PlacementsPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-16 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-10 md:py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Placement Assistance</h1>
@@ -38,7 +38,7 @@ export default function PlacementsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center hover:shadow-lg transition-all duration-300 group">
             <div className="h-16 w-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">

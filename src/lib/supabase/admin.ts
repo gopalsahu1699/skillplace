@@ -13,4 +13,6 @@ if (!supabaseUrl) {
   // Supabase URL missing - admin operations will fail
 }
 
-export const adminSupabase: SupabaseClient = createClient(supabaseUrl, serviceKey)
+export const adminSupabase: SupabaseClient = (supabaseUrl && serviceKey)
+  ? createClient(supabaseUrl, serviceKey)
+  : (null as any)

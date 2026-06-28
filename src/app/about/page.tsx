@@ -3,7 +3,7 @@ import { Target, Eye, Users, Award, BookOpen, Wrench, MapPin, Briefcase } from '
 export default function AboutPage() {
   return (
     <div className="bg-slate-50 min-h-screen">
-      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-16 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 py-10 md:py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">About Skillplace Academy</h1>
@@ -16,9 +16,9 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         {/* Mission & Vision */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 mb-10 md:mb-16">
           <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:shadow-lg transition-all duration-300">
             <div className="flex items-center gap-3 mb-5">
               <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center">
@@ -44,8 +44,8 @@ export default function AboutPage() {
         </div>
 
         {/* Why Choose Us */}
-        <div className="mb-16">
-          <div className="text-center mb-12">
+        <div className="mb-10 md:mb-16">
+          <div className="text-center mb-8 md:mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-3">Why Choose Skillplace?</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">We combine industry expertise with practical training to deliver results</p>
           </div>
@@ -73,14 +73,14 @@ export default function AboutPage() {
         </div>
 
         {/* Team */}
-        <div className="bg-white p-8 rounded-2xl border border-slate-200 mb-8">
-          <div className="text-center mb-8">
+        <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 mb-6 md:mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-3">Our Team</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">
               Our team consists of experienced engineers and educators who are passionate about skill development.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {[
               { name: 'Dr. Rajesh Mehta', role: 'Founder & Director', specialty: 'Civil Engineering' },
               { name: 'Prof. Sunita Sharma', role: 'Head of Training', specialty: 'Mechanical Engineering' },

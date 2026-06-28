@@ -70,18 +70,6 @@ export default function Navbar() {
   }, [])
 
   async function handleLogout() {
-    // Destroy session in Supabase
-    const match = document.cookie.match(/(?:^|;\s*)sp_session=([^;]*)/)
-    const sessionToken = match ? match[1] : undefined
-    if (sessionToken) {
-      try {
-        const { revokeSession } = await import('@/lib/supabase/client')
-        await revokeSession(sessionToken)
-      } catch {
-        // Best-effort cleanup
-      }
-      document.cookie = 'sp_session=; path=/; max-age=0'
-    }
     await supabase.auth.signOut()
     notify.logoutSuccess()
     window.location.href = '/'
@@ -105,7 +93,7 @@ export default function Navbar() {
           onClick={() => setMobileOpen(false)}
         />
       )}
-      <nav className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60' : 'bg-white border-b border-slate-200'}`}>
+      <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60' : 'bg-white border-b border-slate-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2.5 group">
@@ -231,8 +219,8 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        <div className={`md:hidden border-t border-slate-200 bg-white transition-all duration-300 ${mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-          <div className="px-4 py-4 space-y-1">
+        <div className={`md:hidden border-t border-slate-200 bg-white transition-all duration-300 absolute top-16 left-0 right-0 shadow-lg border-b z-50 ${mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+          <div className="px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto bg-white">
             {navLinks.map((link) => (
               <Link
                 key={link.href}

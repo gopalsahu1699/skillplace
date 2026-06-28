@@ -83,7 +83,7 @@ export default async function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="relative py-20 md:py-28 bg-gradient-to-br from-blue-50 via-white to-slate-50 overflow-hidden">
+      <section className="relative py-12 md:py-20 lg:py-24 bg-gradient-to-br from-blue-50 via-white to-slate-50 overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-blue-100/80 backdrop-blur-sm text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-blue-200/50">
@@ -120,7 +120,7 @@ export default async function Home() {
       </section>
 
       {/* Stats */}
-      <section className="py-14 bg-white border-y border-slate-200">
+      <section className="py-8 md:py-12 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {stats.map((s) => {
@@ -140,13 +140,13 @@ export default async function Home() {
       </section>
 
       {/* Programs */}
-      <section className="py-12 md:py-20 bg-slate-50">
+      <section className="py-10 md:py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Our Training Programs</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">Choose the learning format that works best for you</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {programs.slice(0, 6).map((p: any) => {
               const Icon = p.icon
               return (
@@ -201,9 +201,9 @@ export default async function Home() {
       </section>
 
       {/* Courses by Branch */}
-      <section className="py-12 md:py-20 bg-white">
+      <section className="py-10 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Job-Oriented Courses</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">Industry-focused curriculum designed for immediate employment</p>
           </div>
@@ -251,9 +251,9 @@ export default async function Home() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-12 md:py-20 bg-slate-50">
+      <section className="py-10 md:py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Why Choose Skillplace Academy?</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">We combine practical training with career support to ensure your success</p>
           </div>
@@ -276,13 +276,13 @@ export default async function Home() {
 
       {/* Testimonials */}
       {testimonials.length > 0 && (
-        <section className="py-12 md:py-20 bg-white">
+        <section className="py-10 md:py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 md:mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">What Our Students Say</h2>
               <p className="text-slate-500 max-w-2xl mx-auto">Hear from students who transformed their careers</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {testimonials.slice(0, 3).map((t) => (
                 <div key={t.id} className="bg-slate-50 p-5 md:p-7 rounded-2xl border border-slate-200 hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center gap-1 mb-4">
@@ -308,9 +308,9 @@ export default async function Home() {
       )}
 
       {/* CTA */}
-      <section className="py-12 md:py-20 bg-slate-50">
+      <section className="py-10 md:py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Get In Touch</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">Have questions? We&apos;re here to help you start your journey</p>
           </div>
@@ -339,7 +339,7 @@ export default async function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative py-12 md:py-20 bg-gradient-to-r from-slate-900 to-slate-800 overflow-hidden">
+      <section className="relative py-12 md:py-16 bg-gradient-to-r from-slate-900 to-slate-800 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #2563eb 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Start Your Career?</h2>

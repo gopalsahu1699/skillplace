@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { validateSession, revokeSession } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 interface UserProfile {
@@ -15,18 +14,6 @@ interface UserProfile {
   email: string
   full_name: string | null
   role: string
-}
-
-function getSessionCookie(): string | undefined {
-  if (typeof document === 'undefined') return undefined
-  const match = document.cookie.match(/(?:^|;\s*)sp_session=([^;]*)/)
-  return match ? match[1] : undefined
-}
-
-function clearSessionCookie(): void {
-  if (typeof document !== 'undefined') {
-    document.cookie = 'sp_session=; path=/; max-age=0'
-  }
 }
 
 export default function AdminLayout({
@@ -60,22 +47,7 @@ export default function AdminLayout({
           return
         }
 
-        const sessionToken = getSessionCookie()
-        if (!sessionToken) {
-          router.push('/login')
-          return
-        }
-
-        const validatedSession = await validateSession(sessionToken)
-        if (!validatedSession) {
-          clearSessionCookie()
-          setError('Session expired. Please sign in again.')
-          setLoading(false)
-          return
-        }
-
-        // Check profiles table first, then employees table
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -86,7 +58,6 @@ export default function AdminLayout({
         if (profile && profile.role === 'admin') {
           setAdminUser(profile)
         } else {
-          // Fallback: check employees table by email (more robust than ID)
           const { data: employee } = await supabase
             .from('employees')
             .select('role')
@@ -96,7 +67,6 @@ export default function AdminLayout({
           if (employee?.role === 'admin') {
             setAdminUser({ id: user.id, email: user.email || '', full_name: user.user_metadata?.full_name || null, role: 'admin' })
           } else {
-            clearSessionCookie()
             setError('Access denied. Admin privileges required.')
             setLoading(false)
             return
@@ -104,7 +74,7 @@ export default function AdminLayout({
         }
 
         setLoading(false)
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setError('Session check failed. Please refresh the page.')
           setLoading(false)
@@ -131,15 +101,6 @@ export default function AdminLayout({
   }, [loading])
 
   const handleLogout = async () => {
-    const sessionToken = getSessionCookie()
-    if (sessionToken) {
-      try {
-        await revokeSession(sessionToken)
-      } catch {
-        // Best-effort cleanup
-      }
-      clearSessionCookie()
-    }
     await supabase.auth.signOut()
     setAdminUser(null)
     router.push('/')
