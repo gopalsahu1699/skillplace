@@ -8,6 +8,14 @@ export default function AuthCallback() {
   const router = useRouter()
 
   useEffect(() => {
+    // Check if this is a password recovery link
+    const hash = window.location.hash
+    if (hash && hash.includes('type=recovery')) {
+      // Redirect to the reset-password page with the token in the URL
+      router.push(`/auth/reset-password${window.location.search}${window.location.hash}`)
+      return
+    }
+
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         router.push('/')

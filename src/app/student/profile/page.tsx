@@ -25,7 +25,8 @@ export default function ProfilePage() {
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true)
   const [formData, setFormData] = useState({
     full_name: '',
-    phone: '',
+    phoneCode: '+91',
+    phoneNumber: '',
     date_of_birth: '',
     gender: '',
     location: '',
@@ -53,9 +54,20 @@ export default function ProfilePage() {
 
     if (data) {
       setProfile(data)
+      // Parse phone: extract country code if present
+      let phoneCode = '+91'
+      let phoneNumber = data.phone || ''
+      if (phoneNumber) {
+        const match = phoneNumber.match(/^\+(\d{1,4})/)
+        if (match) {
+          phoneCode = `+${match[1]}`
+          phoneNumber = phoneNumber.slice(match[0].length)
+        }
+      }
       setFormData({
         full_name: data.full_name || '',
-        phone: data.phone || '',
+        phoneCode,
+        phoneNumber,
         date_of_birth: data.date_of_birth || '',
         gender: data.gender || '',
         location: data.location || '',
@@ -95,11 +107,15 @@ export default function ProfilePage() {
     setSaving(true)
     setSuccess(false)
 
+    const fullPhone = formData.phoneNumber
+      ? `${formData.phoneCode}${formData.phoneNumber.replace(/[\s\-()]/g, '')}`
+      : null
+
     const { error } = await supabase
       .from('profiles')
       .update({
         full_name: formData.full_name,
-        phone: formData.phone,
+        phone: fullPhone,
         date_of_birth: formData.date_of_birth || null,
         gender: formData.gender || null,
         location: formData.location || null,
@@ -137,7 +153,7 @@ export default function ProfilePage() {
   // Profile completion calculation (8 editable fields)
   const completionFields = [
     { key: 'full_name', label: 'Full Name', value: formData.full_name },
-    { key: 'phone', label: 'Phone', value: formData.phone },
+    { key: 'phone', label: 'Phone', value: formData.phoneNumber ? `${formData.phoneCode} ${formData.phoneNumber}` : '' },
     { key: 'date_of_birth', label: 'Date of Birth', value: formData.date_of_birth },
     { key: 'gender', label: 'Gender', value: formData.gender },
     { key: 'location', label: 'Location', value: formData.location },
@@ -264,16 +280,40 @@ export default function ProfilePage() {
               </div>
               <div>
                 <Label htmlFor="phone" className="text-slate-700">Phone</Label>
-                <div className="relative mt-1.5">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="pl-10 border-slate-300"
-                    placeholder="+91 9876543210"
-                  />
+                <div className="flex gap-2 mt-1.5">
+                  <select
+                    value={formData.phoneCode}
+                    onChange={(e) => setFormData({ ...formData, phoneCode: e.target.value })}
+                    className="w-[120px] shrink-0 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="+91">+91 (IN)</option>
+                    <option value="+1">+1 (US)</option>
+                    <option value="+44">+44 (UK)</option>
+                    <option value="+61">+61 (AU)</option>
+                    <option value="+971">+971 (UAE)</option>
+                    <option value="+65">+65 (SG)</option>
+                    <option value="+86">+86 (CN)</option>
+                    <option value="+81">+81 (JP)</option>
+                    <option value="+82">+82 (KR)</option>
+                    <option value="+49">+49 (DE)</option>
+                    <option value="+33">+33 (FR)</option>
+                    <option value="+966">+966 (SA)</option>
+                    <option value="+974">+974 (QA)</option>
+                    <option value="+973">+973 (BH)</option>
+                    <option value="+968">+968 (OM)</option>
+                    <option value="+965">+965 (KW)</option>
+                  </select>
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phoneNumber}
+                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      className="pl-10 border-slate-300"
+                      placeholder="98765 43210"
+                    />
+                  </div>
                 </div>
               </div>
               <div>

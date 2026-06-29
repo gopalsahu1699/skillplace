@@ -41,8 +41,16 @@ export async function POST(request: Request) {
       )
     }
 
-    const phoneRegex = /^[+]?[\d\s\-()]{7,15}$/
-    if (!phoneRegex.test(phone)) {
+    // Phone validation: accept international format like +91XXXXXXXXXX
+    const phoneDigits = phone.replace(/[\s\-()]/g, '')
+    if (phoneDigits.startsWith('91')) {
+      if (!/^[6-9]\d{9}$/.test(phoneDigits.slice(2))) {
+        return NextResponse.json(
+          { error: 'Invalid Indian phone number. Format: +91XXXXXXXXXX' },
+          { status: 400 }
+        )
+      }
+    } else if (!/^\d{7,12}$/.test(phoneDigits)) {
       return NextResponse.json(
         { error: 'Invalid phone number' },
         { status: 400 }

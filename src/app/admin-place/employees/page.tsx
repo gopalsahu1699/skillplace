@@ -34,6 +34,7 @@ export default function AdminEmployeesPage() {
     name: '',
     email: '',
     phone: '',
+    phoneCode: '+91',
     role: 'instructor' as string,
     department: '',
     bio: '',
@@ -83,12 +84,17 @@ export default function AdminEmployeesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const phoneDigits = formData.phone.replace(/[\s\-()]/g, '')
+    const fullPhone = formData.phoneCode && phoneDigits
+      ? `${formData.phoneCode}${phoneDigits}`
+      : formData.phone || null
+
     if (editingEmployee) {
       try {
         await updateRecord('employees', editingEmployee.id, {
           name: formData.name,
           email: formData.email,
-          phone: formData.phone || null,
+          phone: fullPhone,
           role: formData.role,
           department: formData.department || null,
           bio: formData.bio || null,
@@ -105,7 +111,7 @@ export default function AdminEmployeesPage() {
         const newEmployee = await createRecord('employees', {
           name: formData.name,
           email: formData.email,
-          phone: formData.phone || null,
+          phone: fullPhone,
           role: formData.role,
           department: formData.department || null,
           bio: formData.bio || null,
@@ -156,10 +162,21 @@ export default function AdminEmployeesPage() {
 
   function handleEdit(employee: EmployeeWithPermissions) {
     setEditingEmployee(employee)
+    // Parse phone: extract country code if present
+    let phoneCode = '+91'
+    let phone = employee.phone || ''
+    if (phone) {
+      const match = phone.match(/^\+(\d{1,4})/)
+      if (match) {
+        phoneCode = `+${match[1]}`
+        phone = phone.slice(match[0].length)
+      }
+    }
     setFormData({
       name: employee.name,
       email: employee.email,
-      phone: employee.phone || '',
+      phone,
+      phoneCode,
       role: employee.role,
       department: employee.department || '',
       bio: employee.bio || '',
@@ -210,6 +227,7 @@ export default function AdminEmployeesPage() {
       name: '',
       email: '',
       phone: '',
+      phoneCode: '+91',
       role: 'instructor',
       department: '',
       bio: '',
@@ -293,11 +311,36 @@ export default function AdminEmployeesPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Phone</label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="border-slate-300"
-              />
+              <div className="flex gap-2">
+                <select
+                  value={formData.phoneCode || '+91'}
+                  onChange={(e) => setFormData({ ...formData, phoneCode: e.target.value })}
+                  className="w-[120px] shrink-0 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="+91">+91 (IN)</option>
+                  <option value="+1">+1 (US)</option>
+                  <option value="+44">+44 (UK)</option>
+                  <option value="+61">+61 (AU)</option>
+                  <option value="+971">+971 (UAE)</option>
+                  <option value="+65">+65 (SG)</option>
+                  <option value="+86">+86 (CN)</option>
+                  <option value="+81">+81 (JP)</option>
+                  <option value="+82">+82 (KR)</option>
+                  <option value="+49">+49 (DE)</option>
+                  <option value="+33">+33 (FR)</option>
+                  <option value="+966">+966 (SA)</option>
+                  <option value="+974">+974 (QA)</option>
+                  <option value="+973">+973 (BH)</option>
+                  <option value="+968">+968 (OM)</option>
+                  <option value="+965">+965 (KW)</option>
+                </select>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="9876543210"
+                  className="border-slate-300"
+                />
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Role</label>

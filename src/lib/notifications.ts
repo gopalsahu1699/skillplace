@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 export const notify = {
   loginSuccess: (name?: string) => toast.success(`Welcome back, ${name || 'Student'}!`),
   loginError: (msg?: string) => toast.error(msg || 'Login failed. Please check your credentials.'),
+  resetPasswordEmailSent: () => toast.success('Password reset link sent! Check your email.'),
   registerSuccess: () => toast.success('Account created successfully! Please check your email.'),
   registerError: (msg?: string) => toast.error(msg || 'Registration failed. Please try again.'),
   logoutSuccess: () => toast.success('Logged out successfully!'),

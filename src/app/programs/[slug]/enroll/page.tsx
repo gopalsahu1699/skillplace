@@ -44,7 +44,8 @@ interface Course {
 interface FormData {
   fullName: string
   email: string
-  phone: string
+  phoneCode: string
+  phoneNumber: string
   location: string
   notes: string
   acceptTerms: boolean
@@ -71,7 +72,8 @@ export default function EnrollPage() {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
-    phone: '',
+    phoneCode: '+91',
+    phoneNumber: '',
     location: '',
     notes: '',
     acceptTerms: false,
@@ -107,11 +109,22 @@ export default function EnrollPage() {
           .single()
 
         if (profile) {
+          // Parse phone: extract country code if present
+          let phoneCode = '+91'
+          let phoneNumber = profile.phone || ''
+          if (phoneNumber) {
+            const match = phoneNumber.match(/^\+(\d{1,4})/)
+            if (match) {
+              phoneCode = `+${match[1]}`
+              phoneNumber = phoneNumber.slice(match[0].length)
+            }
+          }
           setFormData(prev => ({
             ...prev,
             fullName: profile.full_name || prev.fullName,
             email: profile.email || prev.email,
-            phone: profile.phone || prev.phone,
+            phoneCode,
+            phoneNumber,
           }))
         } else {
           // Fallback to auth user email if no profile
@@ -152,6 +165,11 @@ export default function EnrollPage() {
       setProgram(null)
     }
     setLoading(false)
+  }
+
+  function getFullPhone(): string {
+    const digits = formData.phoneNumber.replace(/[\s\-()]/g, '')
+    return `${formData.phoneCode}${digits}`
   }
 
   function updateForm(updates: Partial<FormData>) {
@@ -224,7 +242,7 @@ export default function EnrollPage() {
           programName: program.name,
           studentName: formData.fullName,
           email: formData.email,
-          phone: formData.phone,
+          phone: getFullPhone(),
           couponCode: appliedCoupon?.code || null,
         }),
       })
@@ -265,7 +283,7 @@ export default function EnrollPage() {
                 programId: program.id,
                 studentName: formData.fullName,
                 email: formData.email,
-                phone: formData.phone,
+                phone: getFullPhone(),
                 location: formData.location,
                 notes: formData.notes,
               }),
@@ -290,7 +308,7 @@ export default function EnrollPage() {
         prefill: {
           name: formData.fullName,
           email: formData.email,
-          contact: formData.phone,
+          contact: getFullPhone(),
         },
         theme: {
           color: '#2563eb',
@@ -312,9 +330,7 @@ export default function EnrollPage() {
     }
   }, [program, formData, appliedCoupon])
 
-  function canProceed() {
-    return formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phone.trim() !== ''
-  }
+  const canProceed = formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phoneNumber.trim() !== ''
 
   const stepConfig = {
     info: { index: 0, label: 'Personal Info' },
@@ -462,13 +478,37 @@ export default function EnrollPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">Phone *</label>
-                    <Input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => updateForm({ phone: e.target.value })}
-                      placeholder="Enter your phone number"
-                      className="border-slate-300"
-                    />
+                    <div className="flex gap-2">
+                      <select
+                        value={formData.phoneCode}
+                        onChange={(e) => updateForm({ phoneCode: e.target.value })}
+                        className="w-[130px] shrink-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      >
+                        <option value="+91">+91 (IN)</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+61">+61 (AU)</option>
+                        <option value="+971">+971 (UAE)</option>
+                        <option value="+65">+65 (SG)</option>
+                        <option value="+86">+86 (CN)</option>
+                        <option value="+81">+81 (JP)</option>
+                        <option value="+82">+82 (KR)</option>
+                        <option value="+49">+49 (DE)</option>
+                        <option value="+33">+33 (FR)</option>
+                        <option value="+966">+966 (SA)</option>
+                        <option value="+974">+974 (QA)</option>
+                        <option value="+973">+973 (BH)</option>
+                        <option value="+968">+968 (OM)</option>
+                        <option value="+965">+965 (KW)</option>
+                      </select>
+                      <Input
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={(e) => updateForm({ phoneNumber: e.target.value })}
+                        placeholder="98765 43210"
+                        className="border-slate-300"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">Location</label>
@@ -517,7 +557,7 @@ export default function EnrollPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-slate-500">Phone</span>
-                      <span className="text-sm font-medium text-slate-900">{formData.phone}</span>
+                      <span className="text-sm font-medium text-slate-900">{getFullPhone()}</span>
                     </div>
                     {formData.location && (
                       <div className="flex justify-between">
@@ -663,7 +703,7 @@ export default function EnrollPage() {
                     displayPrice > 0 ? (
                       <Button
                         onClick={() => setStep('payment')}
-                        disabled={!canProceed() || !formData.acceptTerms}
+                        disabled={!canProceed || !formData.acceptTerms}
                         className="bg-blue-600 hover:bg-blue-700 gap-1"
                       >
                         Proceed to Pay
@@ -672,7 +712,7 @@ export default function EnrollPage() {
                     ) : (
                       <Button
                         onClick={openRazorpay}
-                        disabled={submitting || !canProceed() || !formData.acceptTerms}
+                        disabled={submitting || !canProceed || !formData.acceptTerms}
                         className="bg-green-600 hover:bg-green-700 gap-1"
                       >
                         {submitting ? (
