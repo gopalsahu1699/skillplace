@@ -302,3 +302,282 @@ html {
   background-image: radial-gradient(#d3e4fe 0.5px, transparent 0.5px);
   background-size: 24px 24px;
 }
+
+/* =====================================================
+   SCROLL PROGRESS BAR
+   ===================================================== */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0058be, #2170e4);
+  z-index: 9999;
+  transition: width 0.1s linear;
+}
+
+/* =====================================================
+   SECTION REVEAL ANIMATIONS
+   ===================================================== */
+.reveal-init {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-init.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-init.reveal-from-left {
+  transform: translateX(-32px);
+}
+
+.reveal-init.reveal-from-left.reveal-visible {
+  transform: translateX(0);
+}
+
+.reveal-init.reveal-from-right {
+  transform: translateX(32px);
+}
+
+.reveal-init.reveal-from-right.reveal-visible {
+  transform: translateX(0);
+}
+
+.reveal-init.reveal-scale {
+  transform: scale(0.95);
+}
+
+.reveal-init.reveal-scale.reveal-visible {
+  transform: scale(1);
+}
+
+/* Stagger children */
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-stagger.reveal-visible > *:nth-child(1) { transition-delay: 0ms; }
+.reveal-stagger.reveal-visible > *:nth-child(2) { transition-delay: 80ms; }
+.reveal-stagger.reveal-visible > *:nth-child(3) { transition-delay: 160ms; }
+.reveal-stagger.reveal-visible > *:nth-child(4) { transition-delay: 240ms; }
+.reveal-stagger.reveal-visible > *:nth-child(5) { transition-delay: 320ms; }
+.reveal-stagger.reveal-visible > *:nth-child(6) { transition-delay: 400ms; }
+.reveal-stagger.reveal-visible > *:nth-child(7) { transition-delay: 480ms; }
+.reveal-stagger.reveal-visible > *:nth-child(8) { transition-delay: 560ms; }
+
+.reveal-stagger.reveal-visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =====================================================
+   FAQ ACCORDION
+   ===================================================== */
+.faq-accordion-item {
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.faq-accordion-item:last-child {
+  border-bottom: none;
+}
+
+.faq-accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-accordion-content[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.faq-accordion-content > div {
+  overflow: hidden;
+}
+
+/* =====================================================
+   COUNTER ANIMATION (numbers fade in)
+   ===================================================== */
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-count-up {
+  animation: count-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =====================================================
+   TIMELINE CONNECTOR
+   ===================================================== */
+.timeline-connector {
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #0058be, #2170e4);
+}
+
+@media (max-width: 768px) {
+  .timeline-connector {
+    left: 20px;
+    top: 40px;
+    bottom: 0;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(180deg, #0058be, #2170e4);
+  }
+}
+
+/* =====================================================
+   HERO ANIMATIONS
+   ===================================================== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 5s ease-in-out infinite 1s;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* =====================================================
+   GLASSMORPHISM
+   ===================================================== */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* =====================================================
+   GRID PATTERN BACKGROUND
+   ===================================================== */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(0, 88, 190, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 88, 190, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* =====================================================
+   SHIMMER EFFECT (for CTAs)
+   ===================================================== */
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* =====================================================
+   GRADIENT TEXT
+   ===================================================== */
+.gradient-text {
+  background: linear-gradient(135deg, #0058be 0%, #2170e4 50%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* =====================================================
+   HOVER LIFT
+   ===================================================== */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 88, 190, 0.15);
+}
+
+/* =====================================================
+   GLOW EFFECT
+   ===================================================== */
+.glow-secondary {
+  box-shadow: 0 0 20px rgba(0, 88, 190, 0.3), 0 0 60px rgba(0, 88, 190, 0.1);
+}
+
+/* =====================================================
+   NOISE TEXTURE OVERLAY
+   ===================================================== */
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}

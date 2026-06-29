@@ -1,8 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,15 +12,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
-import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Loader2, BookOpen, ChevronRight, Clock, CheckCircle } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Loader2 } from 'lucide-react'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [enrollments, setEnrollments] = useState<any[]>([])
-  const [enrollmentsLoading, setEnrollmentsLoading] = useState(true)
   const [formData, setFormData] = useState({
     full_name: '',
     phoneCode: '+91',
@@ -36,7 +32,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile()
-    fetchEnrollments()
   }, [])
 
   async function fetchProfile() {
@@ -76,28 +71,6 @@ export default function ProfilePage() {
       })
     }
     setLoading(false)
-  }
-
-  async function fetchEnrollments() {
-    setEnrollmentsLoading(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setEnrollmentsLoading(false)
-        return
-      }
-
-      const { data } = await supabase
-        .from('enrollments')
-        .select('*, training_programs(name, slug, duration_weeks, program_type)')
-        .eq('user_id', user.id)
-        .order('enrolled_at', { ascending: false })
-
-      setEnrollments(data || [])
-    } catch {
-      // Enrollment fetch failed
-    }
-    setEnrollmentsLoading(false)
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -440,94 +413,6 @@ export default function ProfilePage() {
             </Button>
           </div>
         </form>
-      </div>
-
-      {/* My Purchased Programs */}
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-3xl shadow-sm overflow-hidden mt-6">
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">My Purchased Programs</h2>
-              <p className="text-xs text-slate-500">{enrollments.length} program{enrollments.length !== 1 ? 's' : ''} enrolled</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6">
-          {enrollmentsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-              <span className="ml-2 text-sm text-slate-500">Loading programs...</span>
-            </div>
-          ) : enrollments.length === 0 ? (
-            <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 mb-3">No programs purchased yet.</p>
-              <Link href="/programs">
-                <Button variant="outline" className="border-slate-300 text-sm">
-                  Browse Programs
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {enrollments.map((enrollment) => {
-                const program = enrollment.training_programs
-                const isActive = enrollment.status === 'active'
-                const isCompleted = enrollment.status === 'completed'
-                return (
-                  <Link
-                    key={enrollment.id}
-                    href={`/programs/${program?.slug || ''}`}
-                    className="block border border-slate-200 rounded-xl p-4 hover:bg-slate-50 hover:border-blue-200 transition-colors group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                        <span className="text-sm font-bold text-blue-600">
-                          {program?.name?.charAt(0) || '?'}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-900 truncate">
-                            {program?.name || 'Unknown Program'}
-                          </p>
-                          {isCompleted && (
-                            <Badge className="bg-green-100 text-green-700 border-0 text-xs shrink-0">
-                              <CheckCircle className="h-3 w-3 mr-0.5" />
-                              Completed
-                            </Badge>
-                          )}
-                          {isActive && (
-                            <Badge className="bg-blue-100 text-blue-700 border-0 text-xs shrink-0">
-                              Active
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                          {program?.duration_weeks && (
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {program.duration_weeks} weeks
-                            </span>
-                          )}
-                          {program?.program_type && (
-                            <span className="capitalize">{program.program_type}</span>
-                          )}
-                          <span>Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )

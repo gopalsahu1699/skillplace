@@ -2,13 +2,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, BookOpen, Award, ClipboardList, User, LogOut, Bell } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Award, ClipboardList, User, LogOut, Bell, ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase/client'
 
 const links = [
   { href: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/student/my-courses', label: 'My Courses', icon: BookOpen },
+  { href: '/student/my-programs', label: 'My Purchased Programs', icon: ShoppingBag },
   { href: '/student/certificates', label: 'Certificates', icon: Award },
   { href: '/student/tests', label: 'Tests', icon: ClipboardList },
   { href: '/student/notifications', label: 'Notifications', icon: Bell },
