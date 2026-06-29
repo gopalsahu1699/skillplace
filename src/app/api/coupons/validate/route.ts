@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     const { data: coupon, error } = await adminSupabase
       .from('coupons')
-      .select('id, code, discount_type, discount_rate, min_order_amount, max_uses, used_count, valid_from, valid_until, is_active')
+      .select('id, code, discount_type, discount_rate, max_discount_amount, min_order_amount, max_uses, used_count, valid_from, valid_until, is_active')
       .eq('code', normalizedCode)
       .single()
 
@@ -84,6 +84,9 @@ export async function POST(request: Request) {
     let discountAmount = 0
     if (coupon.discount_type === 'percent') {
       discountAmount = Math.round(amount * coupon.discount_rate / 100)
+      if (coupon.max_discount_amount && discountAmount > coupon.max_discount_amount) {
+        discountAmount = coupon.max_discount_amount
+      }
     } else {
       discountAmount = Math.min(coupon.discount_rate, amount)
     }

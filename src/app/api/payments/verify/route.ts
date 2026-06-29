@@ -60,29 +60,45 @@ export async function POST(request: NextRequest) {
       .single()
 
     const { data: existingEnrollment } = await adminSupabase
-      .from('enrollments')
+      .from('course_enrollments')
       .select('id')
       .eq('user_id', paymentRecord.user_id)
-      .eq('program_id', paymentRecord.program_id)
+      .eq('course_id', paymentRecord.course_id)
       .limit(1)
       .maybeSingle()
 
     let enrollment = existingEnrollment
     if (!existingEnrollment) {
       const { data: newEnrollment, error: enrollError } = await adminSupabase
-        .from('enrollments')
+        .from('course_enrollments')
         .insert({
           user_id: paymentRecord.user_id,
-          program_id: paymentRecord.program_id,
-          branch_id: null,
+          course_id: paymentRecord.course_id,
           status: 'active',
-          program_type: 'online',
         })
         .select()
         .single()
 
       if (enrollError) throw enrollError
       enrollment = newEnrollment
+    }
+
+    // Increment coupon used_count if coupon was used
+    // Safe from double-count: this route only processes payments with status='pending'
+    // Once status is updated to 'completed', neither webhook nor verify will reprocess
+    if (paymentRecord.coupon_id) {
+      const { data: coupon } = await adminSupabase
+        .from('coupons')
+        .select('used_count')
+        .eq('id', paymentRecord.coupon_id)
+        .single()
+
+      if (coupon) {
+        await adminSupabase
+          .from('coupons')
+          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
+          .eq('id', paymentRecord.coupon_id)
+      }
     }
 
     const { data: course } = paymentRecord.course_id

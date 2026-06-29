@@ -195,7 +195,7 @@ export default async function Home() {
               {/* Program 1 */}
               <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300">
                 <div className="relative aspect-video">
-                  <img className="w-full h-full object-cover" alt="Civil Engineering" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1zwIvsJyShDXvkg2QuS4UK5aYqA1iiqrI-7niuVokAGGrQHy5JXL8vik3aFIxUUZooV8HefabiK4k7ScvvoHIgU6ke03zenNNdzfj7dlrgF50MwVIzUbDHDDpGp7pegfzqrAob-hFOdrS-5vJ7I2msyXrxgMUK3UY-2KDAmPOUb1zaAgNmn-llePQsw7kwLZRHqWp8bfmv_DjSQrZ1jVrGTr0yqg3JFsKJUM73JYP_fF-2dxiEMB8PMZa_N9wuj0IgbovtGegz58" />
+                  <img className="w-full h-full object-cover" alt="Civil Engineering" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg" />
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
                     <span className="text-caption font-bold text-secondary uppercase tracking-widest">Online</span>
                   </div>
@@ -231,7 +231,7 @@ export default async function Home() {
               {/* Program 2 */}
               <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300">
                 <div className="relative aspect-video">
-                  <img className="w-full h-full object-cover" alt="Mechanical Engineering" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvhSMqXf8G9pR6_b9ccZAMBGTZzLZoou1zzFiZe9L0XFdCkkMAIJy-T-VjrBRMIo5y-lPzfYNCJxyQ7588jjL0OAMuVglVGxRUIPScUUHaQnPXOfFHeMITsj5NYVhRyTH5Y-z5B59Cvtw0b6ncDVM3WMpQvrTYLJnjGq6fJNt97WCAuWFOGwdSySPrv2R9NkuA3ekEWv40gf68rkGao1PEReBZUV8wa3QhgkfaJuqVYmjTmaMN4Wrz5icowA4K3303f9tawp8CUxg" />
+                  <img className="w-full h-full object-cover" alt="Mechanical Engineering" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-mechanical-engineering.jpg" />
                   <div className="absolute top-4 right-4 bg-secondary text-white px-3 py-1 rounded-full shadow-sm">
                     <span className="text-caption font-bold uppercase tracking-widest">Offline</span>
                   </div>
@@ -267,7 +267,7 @@ export default async function Home() {
               {/* Program 3 */}
               <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300">
                 <div className="relative aspect-video">
-                  <img className="w-full h-full object-cover" alt="Electronics & Automation" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJh3ehcq0B6ONNBQkl4eOVQPIVbMwmFd432Klcncer-NjdfoIPWVYOwnlj8wsS8KzocJwRPyRYcdKobCTKknITw70KXsG9P_H54c26RRRTzbuiFykPSq0KcQ3VaxtWYJ3BJt9Rabcnsl5OZuKRYDqkiGnRlZYx4Yp1tQGTCteJXWDIrYmiV5AxpAB7gcZLwjRspxa_kwLI1Jb8mlCKz-UqKyAhgsLqMCh2qha6vMPGMyZ7UF49L6zxebBP3tU1CcuVjxouQoRH2kU" />
+                  <img className="w-full h-full object-cover" alt="Electronics & Automation" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-electronics-automation.jpg" />
                   <div className="absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full shadow-sm">
                     <span className="text-caption font-bold uppercase tracking-widest">Hybrid</span>
                   </div>
@@ -444,7 +444,7 @@ export default async function Home() {
           <div className="relative">
             <div className="absolute -inset-4 bg-secondary/5 rounded-3xl -rotate-2"></div>
             <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl border border-border-subtle">
-              <img className="w-full h-auto" alt="Engineering Students" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWPOuNzTy6G0Yiu3_HXyXhNvkK4KYr7LyE7xs3BWBPtuG6cFzzRdcR9MUXlHJ5IGwK6qDHgCd4BzEKXO-ORpSseG5gqne03piATInNgBKLXuMdy7irLA54l0SbuS9kDLkhT7CRb0kDPvHTH0ZUVZdd4pHvjUy5gtHdERelrcYnlqWmBhER5jV8jF268-NH0-mPk5aP60HwNfqMLZKycmhf9Hs5X1JJo5x6h8SQVSaPN6bHTvUxir1Ph3JI5F3nzl5RTGhWnOgTkoE" />
+              <img className="w-full h-auto" alt="Engineering Students" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/home-engineering-students.jpg" />
               <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-6 rounded-xl border border-border-subtle">
                 <div className="flex items-center gap-4 mb-2">
                   <div className="flex -space-x-3">

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { Course } from '@/types'
+import { supabase } from '@/lib/supabase/client'
 
 interface Branch {
   id: string
@@ -38,6 +39,25 @@ const getBranchDesc = (slug: string) => {
 export default function CoursesClient({ courses, categories }: CoursesClientProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([])
+  const [user, setUser] = useState<{ id: string } | null>(null)
+
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  async function checkUser() {
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    setUser(currentUser)
+    if (currentUser) {
+      const { data } = await supabase
+        .from('course_enrollments')
+        .select('course_id')
+        .eq('user_id', currentUser.id)
+        .eq('status', 'active')
+      setEnrolledCourseIds(data?.map(e => e.course_id) || [])
+    }
+  }
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
@@ -95,6 +115,77 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
           </div>
         </div>
       </section>
+
+      {/* My Enrolled Courses Section */}
+      {user && enrolledCourseIds.length > 0 && (
+        <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+          <div className="mb-10">
+            <span className="text-secondary font-label-md tracking-widest uppercase mb-3 block">Continue Learning</span>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface">My Enrolled Courses</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+            {courses.filter(c => enrolledCourseIds.includes(c.id)).map((course) => {
+              const branch = (course as any).branches
+              return (
+                <div key={course.id} className="tonal-card rounded-xl overflow-hidden flex flex-col group border-2 border-secondary/20">
+                  <div className="h-48 bg-surface-container overflow-hidden relative">
+                    {course.thumbnail_url ? (
+                      <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="material-symbols-outlined text-5xl text-on-surface-variant/30" style={{ fontVariationSettings: '"FILL" 1' }}>
+                          {getBranchIcon(branch?.slug || '')}
+                        </span>
+                      </div>
+                    )}
+                    {branch && (
+                      <span className="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-label-md text-[10px] uppercase px-2 py-1 rounded">
+                        {branch.name}
+                      </span>
+                    )}
+                    <span className="absolute top-3 right-3 bg-success-green/90 text-white font-label-md text-[10px] uppercase px-2 py-1 rounded flex items-center gap-1">
+                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>check_circle</span>
+                      Enrolled
+                    </span>
+                  </div>
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="flex items-center gap-2 mb-3">
+                      {course.level && (
+                        <span className={`font-label-md text-[10px] uppercase px-2 py-0.5 rounded ${
+                          course.level === 'beginner' ? 'bg-success-green/10 text-success-green' :
+                          course.level === 'intermediate' ? 'bg-tertiary-fixed/20 text-on-tertiary-fixed' :
+                          'bg-error-container text-on-error-container'
+                        }`}>
+                          {course.level}
+                        </span>
+                      )}
+                      {course.duration_hours && (
+                        <span className="flex items-center gap-1 text-on-surface-variant text-xs">
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>schedule</span>
+                          {course.duration_hours}h
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-headline-md text-headline-md text-on-surface mb-2 line-clamp-2 group-hover:text-secondary transition-colors">
+                      {course.title}
+                    </h3>
+                    <p className="text-on-surface-variant text-body-md text-sm mb-6 line-clamp-3 flex-grow">
+                      {course.short_description || course.description}
+                    </p>
+                    <Link
+                      href={`/courses/${course.slug}/learn`}
+                      className="w-full py-3 bg-secondary text-on-primary font-label-md text-label-md rounded-lg text-center hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_circle</span>
+                      Continue Learning
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Course Categories Overview Grid */}
       <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
@@ -174,7 +265,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
             <div className="hidden md:block w-1/3 rounded-xl overflow-hidden relative min-h-[200px]">
               <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDv6zypbYFbso11apZ69Xt_uCTq4axlNtL3KaHwjMTBBhXM2IbIOPPgwQNNcZGNtc9HMlZ7TxdwUQC3oTyuIwiqUOtYLvFVooWan8dNZqnq8jFaNSdyjrj-sgaHmR7LLVuSdpwv5xYxj6KZWWHS1ylCY-Neqof3t81REoBuVd4sl838tUyw5wQ0qlzGy5O-rMmRwzt-0zixaRrstudaIOE5qtNjd86xFg01oDmX6HJe7c4dbXSsjChJjmLze2_GA_5DCo6-r8XHKY8')" }}
+                style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/courses-hero-bg.jpg')" }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent" />
             </div>

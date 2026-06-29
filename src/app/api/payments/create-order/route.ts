@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { courseId, userId } = await request.json()
+    const { courseId, userId, couponCode } = await request.json()
 
     if (!courseId || !userId) {
       return NextResponse.json({ error: 'Missing courseId or userId' }, { status: 400 })
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: existingEnrollment } = await adminSupabase
-      .from('enrollments')
+      .from('course_enrollments')
       .select('id')
       .eq('user_id', userId)
       .eq('course_id', courseId)
@@ -41,11 +41,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Already enrolled' }, { status: 400 })
     }
 
-    const amount = course.discount_price || course.price
+    let amount = course.discount_price || course.price
+    let couponId: string | null = null
 
-    if (amount === 0) {
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+      const normalizedCode = couponCode.trim().toUpperCase()
+      const { data: coupon } = await adminSupabase
+        .from('coupons')
+        .select('id, discount_type, discount_rate, max_discount_amount, min_order_amount, max_uses, used_count, valid_from, valid_until, is_active')
+        .eq('code', normalizedCode)
+        .single()
+
+      if (!coupon) {
+        return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 })
+      }
+      if (!coupon.is_active) {
+        return NextResponse.json({ error: 'This coupon is no longer active' }, { status: 400 })
+      }
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
+        return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 })
+      }
+      if (coupon.valid_from && new Date(coupon.valid_from) > new Date()) {
+        return NextResponse.json({ error: 'This coupon is not yet valid' }, { status: 400 })
+      }
+      if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+        return NextResponse.json({ error: 'This coupon has reached its usage limit' }, { status: 400 })
+      }
+      if (coupon.min_order_amount && amount < coupon.min_order_amount) {
+        return NextResponse.json(
+          { error: `Minimum order amount for this coupon is ₹${coupon.min_order_amount}` },
+          { status: 400 }
+        )
+      }
+
+      let discountAmount = 0
+      if (coupon.discount_type === 'percent') {
+        discountAmount = Math.round(amount * coupon.discount_rate / 100)
+        if (coupon.max_discount_amount && discountAmount > coupon.max_discount_amount) {
+          discountAmount = coupon.max_discount_amount
+        }
+      } else {
+        discountAmount = Math.min(coupon.discount_rate, amount)
+      }
+      amount = amount - discountAmount
+      couponId = coupon.id
+    }
+
+    if (amount <= 0) {
       const { data: enrollment, error: enrollError } = await adminSupabase
-        .from('enrollments')
+        .from('course_enrollments')
         .insert({
           user_id: userId,
           course_id: courseId,
@@ -56,6 +100,22 @@ export async function POST(request: NextRequest) {
 
       if (enrollError) throw enrollError
 
+      // Increment coupon used_count if coupon was applied
+      if (couponId) {
+        const { data: coupon } = await adminSupabase
+          .from('coupons')
+          .select('used_count')
+          .eq('id', couponId)
+          .single()
+
+        if (coupon) {
+          await adminSupabase
+            .from('coupons')
+            .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
+            .eq('id', couponId)
+        }
+      }
+
       return NextResponse.json({
         success: true,
         free: true,
@@ -65,16 +125,22 @@ export async function POST(request: NextRequest) {
     }
 
     const receipt = `crs_${userId.slice(0, 6)}_${courseId.slice(0, 6)}_${Date.now()}`.slice(0, 40)
-    const order = await createOrder(amount, 'INR', receipt, {
+    const orderNotes: Record<string, string> = {
       course_id: courseId,
       user_id: userId,
       course_title: course.title,
-    })
+    }
+    if (couponId) {
+      orderNotes.coupon_id = couponId
+    }
+
+    const order = await createOrder(amount, 'INR', receipt, orderNotes)
 
     await adminSupabase.from('payments').insert({
       user_id: userId,
       course_id: courseId,
       program_id: null,
+      coupon_id: couponId,
       amount,
       currency: 'INR',
       razorpay_order_id: order.id,

@@ -348,7 +348,7 @@ export default function ProgramDetailPage() {
                 <img
                   className="rounded-2xl border border-border-subtle shadow-sm w-full object-cover max-h-72"
                   alt="Curriculum CAD Illustration"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjzITmyTVQMiWaqQu4bAU4E9HCVmPlF2mbeo85T65iIiTM3uXUKZb8bXuQt_-4whIHeageGvLY1m29FSEAzkIf_lBm8Z9ipdz3TfPPBWRL-Sx-ruh9lDmS1Xlod-SruoJKv-US5dyEmojyJW1J9evKnkWBOnUfP9NjeU6L0gO3DTu0vXPaKW6PDoIv-10yPPSTkdrZfNfYGmQq44pdlAgu8r94JBtLivJQAJcYOP9NfX4P1AsRIog7iAB2q3utX-8OBaLrtjvcqYc"
+                  src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/program-detail.jpg"
                 />
               </div>
             </div>

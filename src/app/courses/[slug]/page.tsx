@@ -16,7 +16,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
 
   // Use admin client for enrollment count
   const { count: enrollmentCount } = await adminSupabase
-    .from('enrollments')
+    .from('course_enrollments')
     .select('id', { count: 'exact', head: true })
     .eq('course_id', course.id)
 
@@ -104,7 +104,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 ) : (
                   <div 
                     className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
-                    style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBI7WTWKDC40z7YZYieqjPOcAu0oH6JnRvTN1ZoPoxVTR-TPpR5zUq06CxSOHl7I42UbBtbjxnjuNF0mmDvQQTSG8fga9_2Hm9YILAmO_CTgg6XWjKzMEGTXDvouZZngG4QiJHSv9KbNdlTSbD-iY-bVnTEtXh_2F6H0c-_UEvDKbJLkzX_L1veU-3oZKDWddnpJ3u3FPS0wDULmrKl6kBn8Zm9xHtp9du9EwY7XSTbbLbQ_NQgE3ApzrMVF3F83eSqRjzPeMMxa7c')" }}
+                    style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-detail-gallery.jpg')" }}
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-primary-container/20 to-transparent flex items-center justify-center">
@@ -263,7 +263,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 Explore Full Programs <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
-            <div className="relative min-h-[300px] bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDA42pmV2rMwBk3SpkAKrG_6Ngyry3k1ld-vPY_ARhNkP8Rx3uqPQkefaqQZ7tpywYThEA6uCNtX7JLxZgr3jRzX0WU1nUXlIRaS9-7eET1r0ubIymJfULrhlpjBAGHnVl_fZ8Ui5GXDVBI0jk_w7ga4bwPF3thHJSq0MFTGxqeU8ZkTzhib6ul9PcazQ7lAJzMxTXmr2eWu143ge63-JFPafwSJ7Nr_itKJjtwJXVVjNlcWnJj3B6DMn3N5NCQJoOb5cmM3mblHFQ')" }}>
+            <div className="relative min-h-[300px] bg-cover bg-center" style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-detail-banner.jpg')" }}>
               <div className="absolute inset-0 bg-gradient-to-l from-transparent to-secondary-fixed lg:block hidden"></div>
             </div>
           </div>

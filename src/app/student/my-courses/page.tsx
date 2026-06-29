@@ -34,7 +34,7 @@ export default function MyCoursesPage() {
     }
 
     const { data } = await supabase
-      .from('enrollments')
+      .from('course_enrollments')
       .select('*, courses(title, slug, thumbnail_url)')
       .eq('user_id', user.id)
       .order('enrolled_at', { ascending: false })

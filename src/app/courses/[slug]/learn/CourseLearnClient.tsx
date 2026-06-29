@@ -69,11 +69,11 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
       if (currentUser) {
         // Check enrollment
         const { data: enrollment } = await supabase
-          .from('enrollments')
+          .from('course_enrollments')
           .select('id')
           .eq('user_id', currentUser.id)
           .eq('course_id', course.id)
-          .single()
+          .maybeSingle()
 
         setEnrolled(!!enrollment)
       }
@@ -88,7 +88,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
       if (session?.user) {
         // Re-check enrollment after login
         supabase
-          .from('enrollments')
+          .from('course_enrollments')
           .select('id')
           .eq('user_id', session.user.id)
           .eq('course_id', course.id)

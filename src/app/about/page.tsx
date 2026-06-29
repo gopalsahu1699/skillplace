@@ -5,19 +5,19 @@ const teamMembers = [
     name: 'Dr. Rajesh Mehta',
     role: 'Founder & Director',
     specialty: 'Civil Engineering Expert',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDiaYv-dHH1E_-_ljEd59uJsBRt9kSTAXnFPKn47efCjH4G5avNNG-FMBEVyC5Wlsjz2gBqUro-Bg9V7Dh-8ecRSouOR8vV8O_UWvSL1TCnfMe2Kho7hSdi85jMHpobGJ2Z6zzvjL7D7bllxaNL2rPDcsXPUegbJchDqyIokfw6srS0vT0n12LNui8kaT0NpuMcLjPiFtIRdRPkC0i2DDoyyTHFX0uAPL4OwHZGT0QHOt5XHMcprA9c3FF548dqvkNT0iSv5G8vj4c',
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-team-founder.jpg',
   },
   {
     name: 'Prof. Sunita Sharma',
     role: 'Head of Training',
     specialty: 'Mechanical Engineering Lead',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBFK6UJ20QV3exOMx8xAc5eAqB0NWlVuAT3_x7W6Q8-bOp-ARYB1ZPIDy1erJhoI9KKW3vyPl_ocQVK4ZqbeEhxrhBaop_MujVAeGllYSH7zyoVwRgKYs_4CcJm_BEirknzfvKe3ICDuSkBiSRNlKJYnU5uL95-NnQChAIEL8ZZCp-d9iHQqQ8vc9iXbSSixJNezqBXGeKISAb2Tnc80wXamTVdxukurKKtcWJq00vZtk9k9TS85PlR3qKj9zXS3PNcrX4b3u4--UY',
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-team-training-head.jpg',
   },
   {
     name: 'Er. Amit Deshmukh',
     role: 'Placement Head',
     specialty: 'Electronics & IT Specialist',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBTyHg9sSIp2iGG0H3A6pYa39XBrRtdbpfm-SLCIImhDV17Y8f-erQ8Qb2TOBvdf8tXEKkIsM7rJhP4fgjS8NJhSUp29g68HYZuRLtWD304agzAb7CRXxBJa5PaQYsY3B3wGPxL3dnvbgiV3aIQbiFFMvGunm5LggLfUc6LdZfhg7RLLSsy5_dhxgVpw9bRIxT61gxEJVcQA8pn05LgPV7CBqcpECfIk7B_0aQoqNu7WKg4muujt0-aW9rj079FriP8VCMBJTAInkc',
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-team-placement-head.jpg',
   },
 ]
 
@@ -40,7 +40,7 @@ export default function AboutPage() {
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDgVjL6HHC7ZexccS3B2wlMbDnJhl1DLAWQ6FFZ7T_0aC343PUU7W06xYNKgntBmor0cj75MmctDD1UKRfUDMK8wRMP5WJ554f99YXvniXxXAb3wdymawXhR0YRwT8BfOCA7Qortkc8q6sYV6G9nJZBsvxDyyrJU7pwyNYWL7_X42jETNNRqX3AAmQqg5iRGNOnPNVapb3XYdb5h5Y22Y1p-_kaqXHxKdiuhW5qJ42A6zshWN1hf-AjUlimJq_NYmA5bm9rtREFLPM')",
+            backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-hero-bg.jpg')",
           }}
         />
         {/* Gradient overlay */}

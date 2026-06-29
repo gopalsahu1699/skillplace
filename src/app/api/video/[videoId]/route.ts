@@ -13,7 +13,7 @@ export async function GET(
 
   if (userId && courseId) {
     const { data: enrollment } = await adminSupabase
-      .from('enrollments')
+      .from('course_enrollments')
       .select('id')
       .eq('user_id', userId)
       .eq('course_id', courseId)

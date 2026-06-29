@@ -40,6 +40,7 @@ interface Coupon {
   code: string
   discount_type: 'percent' | 'amount'
   discount_rate: number
+  max_discount_amount: number | null
   min_order_amount: number | null
   max_uses: number | null
   used_count: number
@@ -63,6 +64,7 @@ export default function AdminCouponsPage() {
     code: '',
     discount_type: 'percent' as 'percent' | 'amount',
     discount_rate: '',
+    max_discount_amount: '',
     min_order_amount: '',
     max_uses: '',
     valid_from: '',
@@ -106,6 +108,7 @@ export default function AdminCouponsPage() {
       code: '',
       discount_type: 'percent',
       discount_rate: '',
+      max_discount_amount: '',
       min_order_amount: '',
       max_uses: '',
       valid_from: '',
@@ -121,6 +124,7 @@ export default function AdminCouponsPage() {
       code: coupon.code,
       discount_type: coupon.discount_type,
       discount_rate: coupon.discount_rate.toString(),
+      max_discount_amount: coupon.max_discount_amount?.toString() || '',
       min_order_amount: coupon.min_order_amount?.toString() || '',
       max_uses: coupon.max_uses?.toString() || '',
       valid_from: coupon.valid_from?.split('T')[0] || '',
@@ -140,6 +144,7 @@ export default function AdminCouponsPage() {
         code: formData.code.trim().toUpperCase(),
         discount_type: formData.discount_type,
         discount_rate: parseFloat(formData.discount_rate),
+        max_discount_amount: formData.max_discount_amount ? parseFloat(formData.max_discount_amount) : null,
         min_order_amount: formData.min_order_amount ? parseFloat(formData.min_order_amount) : null,
         max_uses: formData.max_uses ? parseInt(formData.max_uses) : null,
         valid_from: formData.valid_from ? new Date(formData.valid_from).toISOString() : new Date().toISOString(),
@@ -322,7 +327,7 @@ export default function AdminCouponsPage() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-sm font-medium text-green-700">
                         {coupon.discount_type === 'percent'
-                          ? `${coupon.discount_rate}% OFF`
+                          ? `${coupon.discount_rate}% OFF${coupon.max_discount_amount ? ` (upto ₹${coupon.max_discount_amount})` : ''}`
                           : `₹${coupon.discount_rate} OFF`}
                       </span>
                       {coupon.min_order_amount && coupon.min_order_amount > 0 && (
@@ -462,6 +467,25 @@ export default function AdminCouponsPage() {
                 </div>
               </div>
             </div>
+            {formData.discount_type === 'percent' && (
+              <div>
+                <label className="text-sm font-medium text-slate-700">
+                  Max Discount Cap (optional)
+                </label>
+                <div className="relative mt-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₹</span>
+                  <Input
+                    type="number"
+                    step="1"
+                    value={formData.max_discount_amount}
+                    onChange={(e) => setFormData({ ...formData, max_discount_amount: e.target.value })}
+                    className="pl-8 border-slate-300"
+                    placeholder="e.g. 4000 (leave empty for no cap)"
+                  />
+                </div>
+                <p className="text-xs text-slate-400 mt-1">E.g., 20% upto ₹4,000 means max discount is ₹4,000 even if 20% of price is higher</p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-slate-700">Min Order Amount</label>

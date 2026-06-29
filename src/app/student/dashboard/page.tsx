@@ -22,7 +22,7 @@ export default function StudentDashboard() {
 
     const [enrollmentsRes, notificationsRes] = await Promise.all([
       supabase
-        .from('enrollments')
+        .from('course_enrollments')
         .select('*, courses(title, slug)')
         .eq('user_id', user.id)
         .order('enrolled_at', { ascending: false }),
