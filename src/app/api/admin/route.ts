@@ -41,10 +41,10 @@ const ALLOWED_TABLES = new Set([
   'test_attempts',
 ])
 
-async function verifyAdminSession(request: NextRequest): Promise<boolean> {
+async function verifyAdminSession(request: NextRequest): Promise<{ ok: boolean; userId?: string }> {
   const supabaseAccessToken = request.cookies.get('sb-access-token')?.value
   const supabaseRefreshToken = request.cookies.get('sb-refresh-token')?.value
-  if (!supabaseAccessToken) return false
+  if (!supabaseAccessToken) return { ok: false }
 
   try {
     let { data: { user }, error } = await adminSupabase.auth.getUser(supabaseAccessToken)
@@ -64,7 +64,7 @@ async function verifyAdminSession(request: NextRequest): Promise<boolean> {
       }
     }
 
-    if (error || !user) return false
+    if (error || !user) return { ok: false }
 
     // Check profiles table first
     const { data: profile } = await adminSupabase
@@ -73,18 +73,23 @@ async function verifyAdminSession(request: NextRequest): Promise<boolean> {
       .eq('id', user.id)
       .single()
 
-    if (profile?.role === 'admin') return true
+    if (profile?.role === 'admin') return { ok: true, userId: user.id }
 
     // Fallback: check employees table (admins may not have a profile entry)
     const { data: employee } = await adminSupabase
       .from('employees')
-      .select('role')
+      .select('id, role')
       .eq('email', user.email)
       .single()
 
-    return employee?.role === 'admin'
+    if (employee?.role === 'admin') return { ok: true, userId: employee.id }
+
+    // Non-admin employee — allow access (page-level permission guard handles restrictions)
+    if (employee) return { ok: true, userId: employee.id }
+
+    return { ok: false }
   } catch {
-    return false
+    return { ok: false }
   }
 }
 
@@ -97,8 +102,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
   }
 
-  const isAuthenticated = await verifyAdminSession(request)
-  if (!isAuthenticated) {
+  const authResult = await verifyAdminSession(request)
+  if (!authResult.ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
   }
 
@@ -158,8 +163,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
   }
 
-  const isAuthenticated = await verifyAdminSession(request)
-  if (!isAuthenticated) {
+  const authResult = await verifyAdminSession(request)
+  if (!authResult.ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
   }
 
@@ -190,8 +195,8 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
   }
 
-  const isAuthenticated = await verifyAdminSession(request)
-  if (!isAuthenticated) {
+  const authResult = await verifyAdminSession(request)
+  if (!authResult.ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
   }
 
@@ -227,8 +232,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
   }
 
-  const isAuthenticated = await verifyAdminSession(request)
-  if (!isAuthenticated) {
+  const authResult = await verifyAdminSession(request)
+  if (!authResult.ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
   }
 

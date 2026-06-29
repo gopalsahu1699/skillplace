@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { razorpay, RAZORPAY_KEY_ID } from '@/lib/razorpay'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
@@ -107,7 +108,93 @@ export async function POST(request: Request) {
         discountAmount = coupon.discount_rate
       }
 
-      const finalPrice = Math.max(basePrice - discountAmount, 1)
+      const finalPrice = basePrice - discountAmount
+
+      if (finalPrice <= 0) {
+        // Free enrollment — enroll directly
+        let profileId: string | null = null
+        const { data: existingProfile } = await adminSupabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .single()
+
+        if (existingProfile) {
+          profileId = existingProfile.id
+          await adminSupabase
+            .from('profiles')
+            .update({
+              full_name: studentName,
+              phone,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', profileId)
+        } else {
+          const { data: newProfile, error: profileError } = await adminSupabase
+            .from('profiles')
+            .insert({
+              email,
+              full_name: studentName,
+              phone,
+              role: 'student',
+              is_active: true,
+            })
+            .select('id')
+            .single()
+
+          if (profileError) {
+            return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
+          }
+          profileId = newProfile.id
+        }
+
+        const { error: enrollmentError } = await adminSupabase
+          .from('enrollments')
+          .insert({
+            user_id: profileId,
+            program_id: programId,
+            status: 'active',
+            notes: null,
+          })
+
+        if (enrollmentError) {
+          return NextResponse.json({ error: 'Failed to create enrollment' }, { status: 500 })
+        }
+
+        // Save payment record for free enrollment (so it shows in admin)
+        await adminSupabase.from('payments').insert({
+          user_id: profileId,
+          course_id: null,
+          program_id: programId,
+          coupon_id: coupon.id,
+          amount: 0,
+          currency: 'INR',
+          razorpay_order_id: null,
+          razorpay_payment_id: null,
+          razorpay_signature: null,
+          status: 'completed',
+        })
+
+        // Increment coupon used_count
+        const { data: couponCheck } = await adminSupabase
+          .from('coupons')
+          .select('used_count')
+          .eq('id', coupon.id)
+          .single()
+
+        if (couponCheck) {
+          await adminSupabase
+            .from('coupons')
+            .update({ used_count: (couponCheck.used_count || 0) + 1, updated_at: new Date().toISOString() })
+            .eq('id', coupon.id)
+        }
+
+        return NextResponse.json({
+          free: true,
+          success: true,
+        }, { headers: rateLimitHeaders })
+      }
+
       amount = finalPrice * 100
       couponId = coupon.id
     }
@@ -130,6 +217,29 @@ export async function POST(request: Request) {
       currency: 'INR',
       receipt: receiptId,
       notes: orderNotes,
+    })
+
+    // Find profile for this email to save payment record
+    const { data: existingProfile } = await adminSupabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single()
+
+    const profileId = existingProfile?.id || null
+
+    // Save payment record (so it shows in admin payments)
+    await adminSupabase.from('payments').insert({
+      user_id: profileId,
+      course_id: null,
+      program_id: programId,
+      coupon_id: couponId,
+      amount: amount,
+      currency: 'INR',
+      razorpay_order_id: order.id,
+      razorpay_payment_id: null,
+      razorpay_signature: null,
+      status: 'pending',
     })
 
     return NextResponse.json({

@@ -38,19 +38,40 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', paymentRecord.id)
 
+        // Resolve user_id if null (program payments may not have it at creation time)
+        let resolvedUserId = paymentRecord.user_id
+        if (!resolvedUserId) {
+          // Try to find profile by email from Razorpay notes
+          const email = payment.notes?.email
+          if (email) {
+            const { data: profile } = await adminSupabase
+              .from('profiles')
+              .select('id')
+              .eq('email', email)
+              .single()
+            if (profile) {
+              resolvedUserId = profile.id
+              await adminSupabase
+                .from('payments')
+                .update({ user_id: resolvedUserId })
+                .eq('id', paymentRecord.id)
+            }
+          }
+        }
+
         // Course enrollment
-        if (paymentRecord.course_id) {
+        if (paymentRecord.course_id && resolvedUserId) {
           const { data: existingEnrollment } = await adminSupabase
             .from('course_enrollments')
             .select('id')
-            .eq('user_id', paymentRecord.user_id)
+            .eq('user_id', resolvedUserId)
             .eq('course_id', paymentRecord.course_id)
             .limit(1)
             .maybeSingle()
 
           if (!existingEnrollment) {
             await adminSupabase.from('course_enrollments').insert({
-              user_id: paymentRecord.user_id,
+              user_id: resolvedUserId,
               course_id: paymentRecord.course_id,
               status: 'active',
             })
@@ -58,18 +79,18 @@ export async function POST(request: NextRequest) {
         }
 
         // Program enrollment
-        if (paymentRecord.program_id) {
+        if (paymentRecord.program_id && resolvedUserId) {
           const { data: existingEnrollment } = await adminSupabase
             .from('enrollments')
             .select('id')
-            .eq('user_id', paymentRecord.user_id)
+            .eq('user_id', resolvedUserId)
             .eq('program_id', paymentRecord.program_id)
             .limit(1)
             .maybeSingle()
 
           if (!existingEnrollment) {
             await adminSupabase.from('enrollments').insert({
-              user_id: paymentRecord.user_id,
+              user_id: resolvedUserId,
               program_id: paymentRecord.program_id,
               branch_id: null,
               status: 'active',

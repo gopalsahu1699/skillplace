@@ -11,17 +11,20 @@ import { getRecords } from '@/lib/admin-api'
 interface PurchaseRecord {
   id: string
   user_id: string
-  course_id: string
+  course_id: string | null
+  program_id: string | null
   amount: number
   currency: string | null
   razorpay_order_id: string | null
   razorpay_payment_id: string | null
   razorpay_signature: string | null
+  coupon_id: string | null
   status: 'pending' | 'completed' | 'failed' | 'refunded'
   created_at: string
   updated_at: string
   profiles: { full_name: string | null; email: string | null } | null
   courses: { title: string | null } | null
+  training_programs: { name: string | null } | null
 }
 
 function formatAmount(paise: number): string {
@@ -56,10 +59,10 @@ export default function AdminPaymentsPage() {
     setLoading(true)
     try {
       const data = await getRecords(
-        'purchases',
+        'payments',
         undefined,
         undefined,
-        '*,profiles(full_name,email),courses(title)'
+        '*,profiles(full_name,email),courses(title),training_programs(name)'
       )
       if (data) {
         setPurchases(
@@ -79,8 +82,9 @@ export default function AdminPaymentsPage() {
   const filteredPurchases = purchases.filter((p) => {
     const name = (p.profiles?.full_name || '').toLowerCase()
     const course = (p.courses?.title || '').toLowerCase()
+    const program = (p.training_programs?.name || '').toLowerCase()
     const term = search.toLowerCase()
-    return name.includes(term) || course.includes(term)
+    return name.includes(term) || course.includes(term) || program.includes(term)
   })
 
   const completedPurchases = purchases.filter((p) => p.status === 'completed')
@@ -101,11 +105,11 @@ export default function AdminPaymentsPage() {
     .reduce((sum, p) => sum + p.amount, 0)
 
   function exportToCSV() {
-    const headers = ['Student', 'Email', 'Course', 'Amount', 'Status', 'Date']
+    const headers = ['Student', 'Email', 'Course/Program', 'Amount', 'Status', 'Date']
     const rows = filteredPurchases.map((p) => [
       p.profiles?.full_name || '',
       p.profiles?.email || '',
-      p.courses?.title || '',
+      p.courses?.title || p.training_programs?.name || 'Free Enrollment',
       formatAmount(p.amount),
       p.status,
       new Date(p.created_at).toLocaleDateString(),
@@ -117,7 +121,7 @@ export default function AdminPaymentsPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `purchases-${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -182,7 +186,7 @@ export default function AdminPaymentsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search by student or course..."
+            placeholder="Search by student, course or program..."
             className="pl-10 border-slate-300"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -199,7 +203,7 @@ export default function AdminPaymentsPage() {
                   Student
                 </th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">
-                  Course
+                  Course / Program
                 </th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">
                   Amount
@@ -256,7 +260,7 @@ export default function AdminPaymentsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-700">
-                        {purchase.courses?.title || 'Unknown'}
+                        {purchase.courses?.title || purchase.training_programs?.name || 'Free Enrollment'}
                       </td>
                       <td className="px-5 py-3.5 text-sm font-bold text-slate-900">
                         {formatAmount(purchase.amount)}

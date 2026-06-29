@@ -116,38 +116,26 @@ export default function EnrollButton({
 
     setProcessing(true)
     setError('')
-    const { error: enrollError } = await supabase.from('course_enrollments').insert({
-      user_id: user.id,
-      course_id: courseId,
-      status: 'active',
+
+    // Use server API so coupon used_count increments via adminSupabase (RLS blocks client-side update)
+    const res = await fetch('/api/payments/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
     })
 
-    if (enrollError) {
-      setError('Failed to enroll. Please try again.')
+    const data = await res.json()
+
+    if (!res.ok || !data.success) {
+      setError(data.error || 'Failed to enroll. Please try again.')
       notify.enrollError()
       setProcessing(false)
       return
     }
 
-    // Increment coupon used_count if a coupon was applied
-    if (appliedCoupon) {
-      const { data: coupon } = await supabase
-        .from('coupons')
-        .select('used_count')
-        .eq('id', appliedCoupon.id)
-        .single()
-
-      if (coupon) {
-        await supabase
-          .from('coupons')
-          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('id', appliedCoupon.id)
-      }
-    }
-
     setEnrolled(true)
     notify.enrollSuccess(title)
-    window.location.href = `/courses/${courseSlug}/learn`
+    window.location.href = data.redirectUrl || `/courses/${courseSlug}/learn`
   }
 
   async function initiatePayment() {

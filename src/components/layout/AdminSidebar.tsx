@@ -3,33 +3,57 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog, Tag, Bell, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { EmployeePermission } from '@/types'
 
-const links = [
+interface NavLink {
+  href: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  permissionKey?: keyof EmployeePermission
+}
+
+const links: NavLink[] = [
   { href: '/admin-place', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin-place/courses', label: 'Courses', icon: BookOpen },
-  { href: '/admin-place/programs', label: 'Programs', icon: Briefcase },
-  { href: '/admin-place/content', label: 'Content', icon: FileText },
-  { href: '/admin-place/enrollments', label: 'Enrollments', icon: GraduationCap },
-  { href: '/admin-place/placements', label: 'Placements', icon: GraduationCap },
-  { href: '/admin-place/schedule', label: 'Schedule', icon: Calendar },
-  { href: '/admin-place/students', label: 'Students', icon: Users },
-  { href: '/admin-place/employees', label: 'Employees', icon: UserCog },
-  { href: '/admin-place/leads', label: 'Leads', icon: MessageSquare },
-  { href: '/admin-place/testimonials', label: 'Testimonials', icon: Star },
-  { href: '/admin-place/coupons', label: 'Coupons', icon: Tag },
-  { href: '/admin-place/notifications', label: 'Notifications', icon: Bell },
-  { href: '/admin-place/payments', label: 'Payments', icon: CreditCard },
+  { href: '/admin-place/courses', label: 'Courses', icon: BookOpen, permissionKey: 'can_manage_courses' },
+  { href: '/admin-place/programs', label: 'Programs', icon: Briefcase, permissionKey: 'can_manage_programs' },
+  { href: '/admin-place/content', label: 'Content', icon: FileText, permissionKey: 'can_manage_content' },
+  { href: '/admin-place/enrollments', label: 'Enrollments', icon: GraduationCap, permissionKey: 'can_manage_enrollments' },
+  { href: '/admin-place/placements', label: 'Placements', icon: GraduationCap, permissionKey: 'can_manage_enrollments' },
+  { href: '/admin-place/schedule', label: 'Schedule', icon: Calendar, permissionKey: 'can_manage_programs' },
+  { href: '/admin-place/students', label: 'Students', icon: Users, permissionKey: 'can_manage_students' },
+  { href: '/admin-place/employees', label: 'Employees', icon: UserCog, permissionKey: 'can_manage_employees' },
+  { href: '/admin-place/leads', label: 'Leads', icon: MessageSquare, permissionKey: 'can_manage_leads' },
+  { href: '/admin-place/testimonials', label: 'Testimonials', icon: Star, permissionKey: 'can_manage_courses' },
+  { href: '/admin-place/coupons', label: 'Coupons', icon: Tag, permissionKey: 'can_manage_courses' },
+  { href: '/admin-place/notifications', label: 'Notifications', icon: Bell, permissionKey: 'can_manage_content' },
+  { href: '/admin-place/payments', label: 'Payments', icon: CreditCard, permissionKey: 'can_manage_payments' },
 ]
 
-export default function AdminSidebar({ isAdmin, isOpen, onToggle }: { isAdmin?: boolean; isOpen?: boolean; onToggle?: () => void }) {
+interface AdminSidebarProps {
+  isAdmin?: boolean
+  permissions?: EmployeePermission | null
+  isOpen?: boolean
+  onToggle?: () => void
+}
+
+export default function AdminSidebar({ isAdmin, permissions, isOpen, onToggle }: AdminSidebarProps) {
   const pathname = usePathname()
+
+  // Admin sees all links; employees only see permitted ones
+  const visibleLinks = isAdmin || !permissions
+    ? links
+    : links.filter(link => {
+        // Dashboard always visible if user has any permission
+        if (link.href === '/admin-place') return true
+        if (!link.permissionKey) return true
+        return permissions[link.permissionKey] === true
+      })
 
   return (
     <aside className={cn(
       "sticky top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300",
       "md:translate-x-0",
-      isOpen ? "translate-x-0" : "-translate-x-full"
-    )}>
+      )}>
       <div className="p-6 border-b border-slate-200">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
@@ -52,7 +76,7 @@ export default function AdminSidebar({ isAdmin, isOpen, onToggle }: { isAdmin?: 
         </div>
       </div>
       <nav className="flex-1 p-3 space-y-1">
-        {links.map((link) => {
+        {visibleLinks.map((link) => {
           const Icon = link.icon
           const isActive = pathname === link.href
           return (

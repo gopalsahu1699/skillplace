@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 
@@ -31,6 +31,7 @@ function LoginForm() {
 
   const searchParams = useSearchParams()
   const redirectedFrom = searchParams.get('redirectedFrom') || '/'
+  const sessionExpired = searchParams.get('reason') === 'session_expired'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -173,6 +174,12 @@ function LoginForm() {
           </div>
 
           <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+            {sessionExpired && (
+              <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                <p className="text-sm text-amber-700">Your session expired. Please sign in again.</p>
+              </div>
+            )}
             {showReset ? (
               resetSent ? (
                 <div className="text-center py-4">

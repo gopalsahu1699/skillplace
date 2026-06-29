@@ -235,6 +235,13 @@ export default function EnrollPage() {
         throw new Error(orderData.error || 'Failed to create payment order')
       }
 
+      if (orderData.free) {
+        setStep('success')
+        toast.success('Enrollment confirmed!')
+        setSubmitting(false)
+        return
+      }
+
       const options = {
         key: orderData.key,
         amount: orderData.amount,
@@ -653,14 +660,34 @@ export default function EnrollPage() {
                     {step === 'payment' ? 'Back' : 'Cancel'}
                   </Button>
                   {step === 'info' ? (
-                    <Button
-                      onClick={() => setStep('payment')}
-                      disabled={!canProceed() || !formData.acceptTerms}
-                      className="bg-blue-600 hover:bg-blue-700 gap-1"
-                    >
-                      Proceed to Pay
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    displayPrice > 0 ? (
+                      <Button
+                        onClick={() => setStep('payment')}
+                        disabled={!canProceed() || !formData.acceptTerms}
+                        className="bg-blue-600 hover:bg-blue-700 gap-1"
+                      >
+                        Proceed to Pay
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={openRazorpay}
+                        disabled={submitting || !canProceed() || !formData.acceptTerms}
+                        className="bg-green-600 hover:bg-green-700 gap-1"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Enroll Free
+                          </>
+                        )}
+                      </Button>
+                    )
                   ) : (
                     <Button
                       onClick={openRazorpay}
