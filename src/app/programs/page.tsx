@@ -274,7 +274,7 @@ export default function ProgramsPage() {
                       href={`/programs/${program.slug}`}
                       className="w-full py-4 border-2 border-secondary text-secondary font-label-md rounded-lg hover:bg-secondary hover:text-on-primary transition-all text-center block mt-auto"
                     >
-                      Enrol Now
+                      view Details
                     </Link>
                   </div>
                 </div>

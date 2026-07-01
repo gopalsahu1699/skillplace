@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { validatePhoneServer } from '@/lib/validation/phone-server'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/rest\/v1\/?$/, '')
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -47,6 +48,18 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(body)) {
       const results = []
       for (const student of body) {
+        // Validate phone if provided
+        if (student.phone) {
+          const phoneValidation = validatePhoneServer(student.phone)
+          if (!phoneValidation.valid) {
+            return NextResponse.json(
+              { error: `Invalid phone for student ${student.full_name}: ${phoneValidation.error}` },
+              { status: 400 }
+            )
+          }
+          student.phone = phoneValidation.formatted
+        }
+
         const { data, error } = await adminSupabase
           .from('profiles')
           .insert({
@@ -66,6 +79,18 @@ export async function POST(request: NextRequest) {
         if (!error && data) results.push(data)
       }
       return NextResponse.json({ data: results })
+    }
+
+    // Validate phone if provided
+    if (body.phone) {
+      const phoneValidation = validatePhoneServer(body.phone)
+      if (!phoneValidation.valid) {
+        return NextResponse.json(
+          { error: phoneValidation.error || 'Invalid phone number' },
+          { status: 400 }
+        )
+      }
+      body.phone = phoneValidation.formatted
     }
 
     const { data, error } = await adminSupabase
@@ -99,6 +124,19 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
+
+    // Validate phone if provided
+    if (body.phone) {
+      const phoneValidation = validatePhoneServer(body.phone)
+      if (!phoneValidation.valid) {
+        return NextResponse.json(
+          { error: phoneValidation.error || 'Invalid phone number' },
+          { status: 400 }
+        )
+      }
+      body.phone = phoneValidation.formatted
+    }
+
     const { data, error } = await adminSupabase
       .from('profiles')
       .update({

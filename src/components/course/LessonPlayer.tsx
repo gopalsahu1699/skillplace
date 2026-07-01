@@ -19,6 +19,7 @@ import {
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import { cn } from '@/lib/utils'
+import LectureComingSoon from './LectureComingSoon'
 
 interface LessonData {
   id: string
@@ -143,6 +144,12 @@ export default function LessonPlayer({
   }
 
   if (lesson.content_type === 'video') {
+    const hasVideo = !!(lesson.video_id || lesson.video_url)
+
+    if (!hasVideo) {
+      return <LectureComingSoon contentType="video" lessonTitle={lesson.title} />
+    }
+
     return (
       <div>
         <div
@@ -247,6 +254,10 @@ export default function LessonPlayer({
   }
 
   if (lesson.content_type === 'pdf') {
+    if (!lesson.pdf_url) {
+      return <LectureComingSoon contentType="pdf" lessonTitle={lesson.title} />
+    }
+
     return (
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -254,37 +265,32 @@ export default function LessonPlayer({
             <FileText className="h-5 w-5 text-red-500" />
             <span className="font-medium text-slate-900">{lesson.title}</span>
           </div>
-          {lesson.pdf_url && (
-            <a
-              href={lesson.pdf_url}
-              download
-              className="text-sm text-blue-600 flex items-center gap-1 hover:underline"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </a>
-          )}
+          <a
+            href={lesson.pdf_url}
+            download
+            className="text-sm text-blue-600 flex items-center gap-1 hover:underline"
+          >
+            <Download className="h-4 w-4" />
+            Download
+          </a>
         </div>
-        {lesson.pdf_url ? (
-          <iframe
-            src={lesson.pdf_url}
-            className="w-full h-[70vh] border-0"
-            title={lesson.title}
-          />
-        ) : (
-          <div className="p-12 text-center text-slate-500">
-            <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-            <p>No PDF available for this lesson</p>
-          </div>
-        )}
+        <iframe
+          src={lesson.pdf_url}
+          className="w-full h-[70vh] border-0"
+          title={lesson.title}
+        />
       </div>
     )
+  }
+
+  if (!lesson.text_content) {
+    return <LectureComingSoon contentType="text" lessonTitle={lesson.title} />
   }
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6">
       <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-        {lesson.text_content || 'No content available for this lesson.'}
+        {lesson.text_content}
       </p>
     </div>
   )

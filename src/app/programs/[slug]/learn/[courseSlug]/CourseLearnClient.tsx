@@ -16,6 +16,7 @@ import { notify } from '@/lib/notifications'
 import LearningLayout from '@/components/course/LearningLayout'
 import LessonPlayer from '@/components/course/LessonPlayer'
 import TestPlayer from '@/components/course/TestPlayer'
+import LectureComingSoon from '@/components/course/LectureComingSoon'
 import { cn } from '@/lib/utils'
 import type { Test } from '@/types'
 
@@ -204,27 +205,31 @@ export default function CourseLearnClient({
       completedLessonIds={completedLessonIds}
       onLessonClick={handleLessonClick}
     >
-      {activeLesson && (
+      {activeLesson ? (
         <div className="max-w-4xl mx-auto">
-          {activeLesson.content_type === 'quiz' && currentTest ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
-              <div className="flex items-center gap-2 mb-6">
-                <HelpCircle className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-bold text-slate-900">
-                  {activeLesson.title || 'Quiz'}
-                </h3>
-                {completedTestIds.has(activeLesson.id) && (
-                  <Badge className="bg-green-100 text-green-700 border-0 ml-2">
-                    Passed
-                  </Badge>
-                )}
+          {activeLesson.content_type === 'quiz' ? (
+            currentTest ? (
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <HelpCircle className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {activeLesson.title || 'Quiz'}
+                  </h3>
+                  {completedTestIds.has(activeLesson.id) && (
+                    <Badge className="bg-green-100 text-green-700 border-0 ml-2">
+                      Passed
+                    </Badge>
+                  )}
+                </div>
+                <TestPlayer
+                  test={currentTest}
+                  lessonId={activeLesson.id}
+                  onComplete={handleTestComplete}
+                />
               </div>
-              <TestPlayer
-                test={currentTest}
-                lessonId={activeLesson.id}
-                onComplete={handleTestComplete}
-              />
-            </div>
+            ) : (
+              <LectureComingSoon contentType="quiz" lessonTitle={activeLesson.title} />
+            )
           ) : (
             <LessonPlayer
               lesson={activeLesson}
@@ -276,6 +281,10 @@ export default function CourseLearnClient({
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+      ) : (
+        <div className="max-w-4xl mx-auto">
+          <LectureComingSoon contentType="video" />
         </div>
       )}
     </LearningLayout>

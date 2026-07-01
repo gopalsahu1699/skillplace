@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import PhoneInput from '@/components/ui/phone-input'
+import { getFullPhone } from '@/lib/validation/phone'
 
 export default function ConsultationBooking() {
   const [name, setName] = useState('')
@@ -19,7 +21,7 @@ export default function ConsultationBooking() {
     setError('')
     setLoading(true)
 
-    const fullPhone = `${phoneCode}${phone.replace(/[\s\-()]/g, '')}`
+    const fullPhone = getFullPhone(phoneCode, phone)
     const details = `
 --- Consultation Booking Request ---
 Engineering Branch: ${branch.toUpperCase()}
@@ -152,27 +154,13 @@ Preferred Counseling Time: ${timeSlot.toUpperCase()} (Morning: 10AM-12PM, Aftern
                       </div>
                       <div>
                         <label htmlFor="booking_phone" className="block text-caption text-on-surface-variant font-semibold mb-1">Phone Number</label>
-                        <div className="flex">
-                          <select
-                            value={phoneCode}
-                            onChange={(e) => setPhoneCode(e.target.value)}
-                            className="px-2 py-3 bg-surface-container border border-r-0 border-border-subtle rounded-l-xl text-body-md text-on-surface focus:outline-none"
-                          >
-                            <option value="+91">+91</option>
-                            <option value="+1">+1</option>
-                            <option value="+44">+44</option>
-                          </select>
-                          <input
-                            id="booking_phone"
-                            type="tel"
-                            placeholder="Phone number"
-                            required
-                            pattern="^[0-9\s\-()]{7,12}$"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="flex-1 px-4 py-3 bg-surface-light border border-border-subtle rounded-r-xl text-body-md input-focus-ring text-on-surface"
-                          />
-                        </div>
+                        <PhoneInput
+                          phoneCode={phoneCode}
+                          phoneNumber={phone}
+                          onPhoneCodeChange={setPhoneCode}
+                          onPhoneNumberChange={setPhone}
+                          required
+                        />
                       </div>
                     </div>
 

@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { getProgramImage } from '@/lib/utils'
+import PhoneInput from '@/components/ui/phone-input'
+import { getFullPhone } from '@/lib/validation/phone'
 
 interface ProgramDetail {
   id: string
@@ -41,6 +43,7 @@ export default function ProgramDetailPage() {
 
   // Inquire form state
   const [inquireName, setInquireName] = useState('')
+  const [inquirePhoneCode, setInquirePhoneCode] = useState('+91')
   const [inquirePhone, setInquirePhone] = useState('')
   const [inquireSubmitted, setInquireSubmitted] = useState(false)
 
@@ -100,9 +103,10 @@ export default function ProgramDetailPage() {
   async function handleInquire(e: React.FormEvent) {
     e.preventDefault()
     if (!inquireName || !inquirePhone) return
+    const fullPhone = getFullPhone(inquirePhoneCode, inquirePhone)
     await supabase.from('leads').insert({
       name: inquireName,
-      phone: inquirePhone,
+      phone: fullPhone || inquirePhone,
       message: `Inquiry for Program: ${program?.name}`,
       source: 'program_detail_inquiry'
     })
@@ -461,13 +465,12 @@ export default function ProgramDetailPage() {
                   </div>
                   <div>
                     <label className="block text-caption font-bold mb-2 text-on-surface">Phone Number</label>
-                    <input
+                    <PhoneInput
+                      phoneCode={inquirePhoneCode}
+                      phoneNumber={inquirePhone}
+                      onPhoneCodeChange={setInquirePhoneCode}
+                      onPhoneNumberChange={setInquirePhone}
                       required
-                      type="tel"
-                      placeholder="+91 79878 14261"
-                      value={inquirePhone}
-                      onChange={(e) => setInquirePhone(e.target.value)}
-                      className="w-full bg-white border border-border-subtle rounded-lg px-4 py-3 focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-body-md"
                     />
                   </div>
                   <button type="submit" className="w-full bg-primary text-on-primary font-label-md py-4 rounded-xl hover:bg-opacity-90 active:scale-95 transition-all mt-4">

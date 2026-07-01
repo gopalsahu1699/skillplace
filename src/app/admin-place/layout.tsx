@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminSidebar from '@/components/layout/AdminSidebar'
+import AdminNavbar from '@/components/layout/AdminNavbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock, AlertTriangle, LogIn } from 'lucide-react'
@@ -236,45 +237,27 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/30 z-40 md:hidden" 
-          onClick={() => setSidebarOpen(false)} 
+    <div className="flex flex-col min-h-screen bg-slate-50">
+      <AdminNavbar />
+      <div className="flex flex-1">
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/30 z-40 md:hidden" 
+            onClick={() => setSidebarOpen(false)} 
+          />
+        )}
+        <AdminSidebar
+          isAdmin={adminUser.role === 'admin'}
+          permissions={adminUser.isEmployee ? adminUser.permissions : null}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
-      )}
-      <AdminSidebar
-        isAdmin={adminUser.role === 'admin'}
-        permissions={adminUser.isEmployee ? adminUser.permissions : null}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
-      <AdminContext.Provider value={{ isAdmin: adminUser.role === 'admin', permissions: adminUser.permissions || null }}>
-        <main className="flex-1 p-4 md:p-6 min-h-screen">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <button 
-              className="md:hidden p-2 rounded-lg hover:bg-slate-100"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-4 ml-auto">
-              <span className="text-sm text-slate-500 hidden sm:inline">
-                {adminUser.full_name || adminUser.email}
-                {adminUser.isEmployee && adminUser.role !== 'admin' && (
-                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    {adminUser.role}
-                  </span>
-                )}
-              </span>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="border-slate-300 hover:bg-slate-50">Logout</Button>
-            </div>
-          </div>
-          <PermissionGuard>{children}</PermissionGuard>
-        </main>
-      </AdminContext.Provider>
+        <AdminContext.Provider value={{ isAdmin: adminUser.role === 'admin', permissions: adminUser.permissions || null }}>
+          <main className="flex-1 p-4 md:p-6 min-h-[calc(100vh-3.5rem)]">
+            <PermissionGuard>{children}</PermissionGuard>
+          </main>
+        </AdminContext.Provider>
+      </div>
     </div>
   )
 }

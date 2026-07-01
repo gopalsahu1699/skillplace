@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
+import PhoneInput from '@/components/ui/phone-input'
+import { getFullPhone } from '@/lib/validation/phone'
 
 const PUBLIC_API_BASE = '/api/public'
 
@@ -69,6 +71,7 @@ export default function EnrollPage() {
   const [step, setStep] = useState<Step>('info')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [phoneValid, setPhoneValid] = useState<boolean>(true) // Track phone validation
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -167,11 +170,6 @@ export default function EnrollPage() {
     setLoading(false)
   }
 
-  function getFullPhone(): string {
-    const digits = formData.phoneNumber.replace(/[\s\-()]/g, '')
-    return `${formData.phoneCode}${digits}`
-  }
-
   function updateForm(updates: Partial<FormData>) {
     setFormData(prev => ({ ...prev, ...updates }))
   }
@@ -242,7 +240,7 @@ export default function EnrollPage() {
           programName: program.name,
           studentName: formData.fullName,
           email: formData.email,
-          phone: getFullPhone(),
+          phone: getFullPhone(formData.phoneCode, formData.phoneNumber),
           couponCode: appliedCoupon?.code || null,
         }),
       })
@@ -283,7 +281,7 @@ export default function EnrollPage() {
                 programId: program.id,
                 studentName: formData.fullName,
                 email: formData.email,
-                phone: getFullPhone(),
+                phone: getFullPhone(formData.phoneCode, formData.phoneNumber),
                 location: formData.location,
                 notes: formData.notes,
               }),
@@ -308,7 +306,7 @@ export default function EnrollPage() {
         prefill: {
           name: formData.fullName,
           email: formData.email,
-          contact: getFullPhone(),
+          contact: getFullPhone(formData.phoneCode, formData.phoneNumber),
         },
         theme: {
           color: '#2563eb',
@@ -330,7 +328,7 @@ export default function EnrollPage() {
     }
   }, [program, formData, appliedCoupon])
 
-  const canProceed = formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phoneNumber.trim() !== ''
+  const canProceed = formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phoneNumber.trim() !== '' && phoneValid
 
   const stepConfig = {
     info: { index: 0, label: 'Personal Info' },
@@ -478,37 +476,14 @@ export default function EnrollPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">Phone *</label>
-                    <div className="flex gap-2">
-                      <select
-                        value={formData.phoneCode}
-                        onChange={(e) => updateForm({ phoneCode: e.target.value })}
-                        className="w-[130px] shrink-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      >
-                        <option value="+91">+91 (IN)</option>
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+61">+61 (AU)</option>
-                        <option value="+971">+971 (UAE)</option>
-                        <option value="+65">+65 (SG)</option>
-                        <option value="+86">+86 (CN)</option>
-                        <option value="+81">+81 (JP)</option>
-                        <option value="+82">+82 (KR)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                        <option value="+966">+966 (SA)</option>
-                        <option value="+974">+974 (QA)</option>
-                        <option value="+973">+973 (BH)</option>
-                        <option value="+968">+968 (OM)</option>
-                        <option value="+965">+965 (KW)</option>
-                      </select>
-                      <Input
-                        type="tel"
-                        value={formData.phoneNumber}
-                        onChange={(e) => updateForm({ phoneNumber: e.target.value })}
-                        placeholder="98765 43210"
-                        className="border-slate-300"
-                      />
-                    </div>
+                    <PhoneInput
+                      phoneCode={formData.phoneCode}
+                      phoneNumber={formData.phoneNumber}
+                      onPhoneCodeChange={(code) => updateForm({ phoneCode: code })}
+                      onPhoneNumberChange={(num) => updateForm({ phoneNumber: num })}
+                      onValidationChange={setPhoneValid}
+                      required
+                    />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">Location</label>
@@ -557,7 +532,7 @@ export default function EnrollPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-slate-500">Phone</span>
-                      <span className="text-sm font-medium text-slate-900">{getFullPhone()}</span>
+                      <span className="text-sm font-medium text-slate-900">{getFullPhone(formData.phoneCode, formData.phoneNumber)}</span>
                     </div>
                     {formData.location && (
                       <div className="flex justify-between">

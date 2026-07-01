@@ -2,25 +2,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
-
-const COUNTRY_CODES = [
-  { code: '+91', country: 'IN', label: '+91' },
-  { code: '+1', country: 'US', label: '+1' },
-  { code: '+44', country: 'UK', label: '+44' },
-  { code: '+61', country: 'AU', label: '+61' },
-  { code: '+971', country: 'AE', label: '+971' },
-  { code: '+65', country: 'SG', label: '+65' },
-  { code: '+86', country: 'CN', label: '+86' },
-  { code: '+81', country: 'JP', label: '+81' },
-  { code: '+82', country: 'KR', label: '+82' },
-  { code: '+49', country: 'DE', label: '+49' },
-  { code: '+33', country: 'FR', label: '+33' },
-  { code: '+966', country: 'SA', label: '+966' },
-  { code: '+974', country: 'QA', label: '+974' },
-  { code: '+973', country: 'BH', label: '+973' },
-  { code: '+968', country: 'OM', label: '+968' },
-  { code: '+965', country: 'KW', label: '+965' },
-]
+import PhoneInput from '@/components/ui/phone-input'
+import { getFullPhone } from '@/lib/validation/phone'
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -38,7 +21,7 @@ export default function ContactPage() {
     setError('')
     setLoading(true)
 
-    const fullPhone = phoneNumber ? `${phoneCode}${phoneNumber.replace(/[\s\-()]/g, '')}` : null
+    const fullPhone = phoneNumber ? getFullPhone(phoneCode, phoneNumber) : null
 
     const { error: insertError } = await supabase.from('leads').insert({
       name,
@@ -162,31 +145,12 @@ export default function ContactPage() {
                   >
                     Phone Number
                   </label>
-                  <div className="flex">
-                    <select
-                      value={phoneCode}
-                      onChange={(e) => setPhoneCode(e.target.value)}
-                      onFocus={() => setFocusedField('phone')}
-                      onBlur={() => setFocusedField(null)}
-                      className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-border-subtle bg-surface-container text-on-surface-variant font-label-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                    >
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      id="phone"
-                      type="tel"
-                      placeholder="98765 43210"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      onFocus={() => setFocusedField('phone')}
-                      onBlur={() => setFocusedField(null)}
-                      className="flex-1 px-4 py-3 border border-border-subtle rounded-r-lg font-body-md bg-surface-light input-focus-ring transition-all"
-                    />
-                  </div>
+                  <PhoneInput
+                    phoneCode={phoneCode}
+                    phoneNumber={phoneNumber}
+                    onPhoneCodeChange={setPhoneCode}
+                    onPhoneNumberChange={setPhoneNumber}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">

@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
-import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Loader2 } from 'lucide-react'
+import { User, Mail, MapPin, Calendar, Camera, Save, Loader2 } from 'lucide-react'
+import PhoneInput from '@/components/ui/phone-input'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
@@ -253,40 +254,13 @@ export default function ProfilePage() {
               </div>
               <div>
                 <Label htmlFor="phone" className="text-slate-700">Phone</Label>
-                <div className="flex gap-2 mt-1.5">
-                  <select
-                    value={formData.phoneCode}
-                    onChange={(e) => setFormData({ ...formData, phoneCode: e.target.value })}
-                    className="w-[120px] shrink-0 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="+91">+91 (IN)</option>
-                    <option value="+1">+1 (US)</option>
-                    <option value="+44">+44 (UK)</option>
-                    <option value="+61">+61 (AU)</option>
-                    <option value="+971">+971 (UAE)</option>
-                    <option value="+65">+65 (SG)</option>
-                    <option value="+86">+86 (CN)</option>
-                    <option value="+81">+81 (JP)</option>
-                    <option value="+82">+82 (KR)</option>
-                    <option value="+49">+49 (DE)</option>
-                    <option value="+33">+33 (FR)</option>
-                    <option value="+966">+966 (SA)</option>
-                    <option value="+974">+974 (QA)</option>
-                    <option value="+973">+973 (BH)</option>
-                    <option value="+968">+968 (OM)</option>
-                    <option value="+965">+965 (KW)</option>
-                  </select>
-                  <div className="relative flex-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phoneNumber}
-                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      className="pl-10 border-slate-300"
-                      placeholder="98765 43210"
-                    />
-                  </div>
+                <div className="mt-1.5">
+                  <PhoneInput
+                    phoneCode={formData.phoneCode}
+                    phoneNumber={formData.phoneNumber}
+                    onPhoneCodeChange={(code) => setFormData({ ...formData, phoneCode: code })}
+                    onPhoneNumberChange={(num) => setFormData({ ...formData, phoneNumber: num })}
+                  />
                 </div>
               </div>
               <div>

@@ -12,6 +12,7 @@ import {
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import SecureVideoPlayer from '@/components/course/SecureVideoPlayer'
+import LectureComingSoon from '@/components/course/LectureComingSoon'
 import { cn } from '@/lib/utils'
 
 interface Lesson {
@@ -388,89 +389,103 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {activeLesson && (
+          {activeLesson ? (
             <div className="max-w-4xl mx-auto">
               {/* Video - Cloudflare Stream (video_id) or legacy URL fallback */}
               {activeLesson.content_type === 'video' && (
                 <div className="mb-6">
-                  <SecureVideoPlayer
-                    videoId={activeLesson.video_id || undefined}
-                    videoUrl={activeLesson.video_url || undefined}
-                    lessonId={activeLesson.id}
-                    courseId={course.id}
-                    studentName={user?.user_metadata?.full_name || user?.email || 'Student'}
-                    studentEmail={user?.email || ''}
-                    onProgress={(pct) => {
-                      if (pct > 0) {
-                        supabase.from('course_progress').upsert({
-                          user_id: user.id,
-                          course_id: course.id,
-                          lesson_id: activeLesson.id,
-                          completed: pct >= 90,
-                          completed_at: pct >= 90 ? new Date().toISOString() : null,
-                        })
-                      }
-                    }}
-                  />
+                  {activeLesson.video_id || activeLesson.video_url ? (
+                    <SecureVideoPlayer
+                      videoId={activeLesson.video_id || undefined}
+                      videoUrl={activeLesson.video_url || undefined}
+                      lessonId={activeLesson.id}
+                      courseId={course.id}
+                      studentName={user?.user_metadata?.full_name || user?.email || 'Student'}
+                      studentEmail={user?.email || ''}
+                      onProgress={(pct) => {
+                        if (pct > 0) {
+                          supabase.from('course_progress').upsert({
+                            user_id: user.id,
+                            course_id: course.id,
+                            lesson_id: activeLesson.id,
+                            completed: pct >= 90,
+                            completed_at: pct >= 90 ? new Date().toISOString() : null,
+                          })
+                        }
+                      }}
+                    />
+                  ) : (
+                    <LectureComingSoon contentType="video" lessonTitle={activeLesson.title} />
+                  )}
                 </div>
               )}
 
               {/* PDF */}
               {activeLesson.content_type === 'pdf' && (
-                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden mb-6">
-                  <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                    <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-red-500" /><span className="font-medium">{activeLesson.title}</span></div>
-                    {activeLesson.pdf_url && <a href={activeLesson.pdf_url} download className="text-sm text-blue-600 flex items-center gap-1"><Download className="h-4 w-4" /> Download</a>}
-                  </div>
+                <div className="mb-6">
                   {activeLesson.pdf_url ? (
-                    <iframe src={activeLesson.pdf_url} className="w-full border-0" style={{ height: '70vh' }} />
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-red-500" /><span className="font-medium">{activeLesson.title}</span></div>
+                        <a href={activeLesson.pdf_url} download className="text-sm text-blue-600 flex items-center gap-1"><Download className="h-4 w-4" /> Download</a>
+                      </div>
+                      <iframe src={activeLesson.pdf_url} className="w-full border-0" style={{ height: '70vh' }} />
+                    </div>
                   ) : (
-                    <div className="p-12 text-center text-slate-500"><FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" /><p>No PDF uploaded for this lesson</p></div>
+                    <LectureComingSoon contentType="pdf" lessonTitle={activeLesson.title} />
                   )}
                 </div>
               )}
 
               {/* Quiz */}
               {activeLesson.content_type === 'quiz' && (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
-                  <div className="flex items-center gap-2 mb-6"><HelpCircle className="h-5 w-5 text-blue-600" /><h3 className="text-lg font-bold">{activeLesson.title || 'Quiz'}</h3></div>
+                <div className="mb-6">
                   {quizQuestions.length > 0 ? (
-                    <div className="space-y-6">
-                      {quizQuestions.map((q, idx) => (
-                        <div key={q.id} className="border-b border-slate-100 pb-6">
-                          <p className="font-medium mb-3"><span className="text-blue-600 mr-2">Q{idx + 1}.</span>{q.question}</p>
-                          {q.options && (
-                            <div className="space-y-2">
-                              {JSON.parse(q.options as any).map((opt: string) => (
-                                <label key={opt} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${quizSubmitted ? (opt === q.correct_answer ? 'border-green-500 bg-green-50' : quizAnswers[q.id] === opt ? 'border-red-500 bg-red-50' : 'border-slate-200') : quizAnswers[q.id] === opt ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                                  <input type="radio" name={q.id} value={opt} checked={quizAnswers[q.id] === opt} onChange={() => !quizSubmitted && setQuizAnswers(p => ({ ...p, [q.id]: opt }))} disabled={quizSubmitted} className="sr-only" />
-                                  <div className={`h-4 w-4 rounded-full border-2 ${quizAnswers[q.id] === opt ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
-                                  <span className="text-sm">{opt}</span>
-                                  {quizSubmitted && opt === q.correct_answer && <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />}
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {!quizSubmitted ? (
-                        <Button onClick={submitQuiz} className="bg-blue-600 hover:bg-blue-700">Submit Quiz</Button>
-                      ) : (
-                        <div className="p-4 bg-blue-50 rounded-lg font-medium">
-                          Score: {quizQuestions.filter(q => quizAnswers[q.id] === q.correct_answer).length}/{quizQuestions.length}
-                        </div>
-                      )}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                      <div className="flex items-center gap-2 mb-6"><HelpCircle className="h-5 w-5 text-blue-600" /><h3 className="text-lg font-bold">{activeLesson.title || 'Quiz'}</h3></div>
+                      <div className="space-y-6">
+                        {quizQuestions.map((q, idx) => (
+                          <div key={q.id} className="border-b border-slate-100 pb-6">
+                            <p className="font-medium mb-3"><span className="text-blue-600 mr-2">Q{idx + 1}.</span>{q.question}</p>
+                            {q.options && (
+                              <div className="space-y-2">
+                                {JSON.parse(q.options as any).map((opt: string) => (
+                                  <label key={opt} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${quizSubmitted ? (opt === q.correct_answer ? 'border-green-500 bg-green-50' : quizAnswers[q.id] === opt ? 'border-red-500 bg-red-50' : 'border-slate-200') : quizAnswers[q.id] === opt ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                                    <input type="radio" name={q.id} value={opt} checked={quizAnswers[q.id] === opt} onChange={() => !quizSubmitted && setQuizAnswers(p => ({ ...p, [q.id]: opt }))} disabled={quizSubmitted} className="sr-only" />
+                                    <div className={`h-4 w-4 rounded-full border-2 ${quizAnswers[q.id] === opt ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
+                                    <span className="text-sm">{opt}</span>
+                                    {quizSubmitted && opt === q.correct_answer && <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />}
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {!quizSubmitted ? (
+                          <Button onClick={submitQuiz} className="bg-blue-600 hover:bg-blue-700">Submit Quiz</Button>
+                        ) : (
+                          <div className="p-4 bg-blue-50 rounded-lg font-medium">
+                            Score: {quizQuestions.filter(q => quizAnswers[q.id] === q.correct_answer).length}/{quizQuestions.length}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-slate-500 text-center py-8">No quiz questions available yet.</p>
+                    <LectureComingSoon contentType="quiz" lessonTitle={activeLesson.title} />
                   )}
                 </div>
               )}
 
               {/* Text */}
               {activeLesson.content_type === 'text' && (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
-                  <p className="text-slate-600">{activeLesson.text_content || 'No content available.'}</p>
+                <div className="mb-6">
+                  {activeLesson.text_content ? (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                      <p className="text-slate-600">{activeLesson.text_content}</p>
+                    </div>
+                  ) : (
+                    <LectureComingSoon contentType="text" lessonTitle={activeLesson.title} />
+                  )}
                 </div>
               )}
 
@@ -495,6 +510,10 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
                 )}
                 <Button onClick={() => currentIndex < allLessons.length - 1 && setActiveLesson(allLessons[currentIndex + 1])} disabled={currentIndex >= allLessons.length - 1}>Next →</Button>
               </div>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto">
+              <LectureComingSoon contentType="video" />
             </div>
           )}
         </main>

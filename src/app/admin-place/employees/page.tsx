@@ -14,6 +14,8 @@ import {
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
+import PhoneInput from '@/components/ui/phone-input'
+import { getFullPhone } from '@/lib/validation/phone'
 import type { Employee, EmployeePermission } from '@/types'
 
 interface EmployeeWithPermissions extends Employee {
@@ -84,10 +86,7 @@ export default function AdminEmployeesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const phoneDigits = formData.phone.replace(/[\s\-()]/g, '')
-    const fullPhone = formData.phoneCode && phoneDigits
-      ? `${formData.phoneCode}${phoneDigits}`
-      : formData.phone || null
+    const fullPhone = getFullPhone(formData.phoneCode, formData.phone) || formData.phone || null
 
     if (editingEmployee) {
       try {
@@ -311,34 +310,12 @@ export default function AdminEmployeesPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Phone</label>
-              <div className="flex gap-2">
-                <select
-                  value={formData.phoneCode || '+91'}
-                  onChange={(e) => setFormData({ ...formData, phoneCode: e.target.value })}
-                  className="w-[120px] shrink-0 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="+91">+91 (IN)</option>
-                  <option value="+1">+1 (US)</option>
-                  <option value="+44">+44 (UK)</option>
-                  <option value="+61">+61 (AU)</option>
-                  <option value="+971">+971 (UAE)</option>
-                  <option value="+65">+65 (SG)</option>
-                  <option value="+86">+86 (CN)</option>
-                  <option value="+81">+81 (JP)</option>
-                  <option value="+82">+82 (KR)</option>
-                  <option value="+49">+49 (DE)</option>
-                  <option value="+33">+33 (FR)</option>
-                  <option value="+966">+966 (SA)</option>
-                  <option value="+974">+974 (QA)</option>
-                  <option value="+973">+973 (BH)</option>
-                  <option value="+968">+968 (OM)</option>
-                  <option value="+965">+965 (KW)</option>
-                </select>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="9876543210"
-                  className="border-slate-300"
+              <div className="mt-1">
+                <PhoneInput
+                  phoneCode={formData.phoneCode || '+91'}
+                  phoneNumber={formData.phone}
+                  onPhoneCodeChange={(code) => setFormData({ ...formData, phoneCode: code })}
+                  onPhoneNumberChange={(num) => setFormData({ ...formData, phone: num })}
                 />
               </div>
             </div>

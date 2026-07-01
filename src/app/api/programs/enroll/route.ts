@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
+import { validatePhoneServer } from '@/lib/validation/phone-server'
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -41,18 +42,11 @@ export async function POST(request: Request) {
       )
     }
 
-    // Phone validation: accept international format like +91XXXXXXXXXX
-    const phoneDigits = phone.replace(/[\s\-()]/g, '')
-    if (phoneDigits.startsWith('91')) {
-      if (!/^[6-9]\d{9}$/.test(phoneDigits.slice(2))) {
-        return NextResponse.json(
-          { error: 'Invalid Indian phone number. Format: +91XXXXXXXXXX' },
-          { status: 400 }
-        )
-      }
-    } else if (!/^\d{7,12}$/.test(phoneDigits)) {
+    // Phone validation using centralized validation
+    const phoneValidation = validatePhoneServer(phone)
+    if (!phoneValidation.valid) {
       return NextResponse.json(
-        { error: 'Invalid phone number' },
+        { error: phoneValidation.error || 'Invalid phone number' },
         { status: 400 }
       )
     }

@@ -56,21 +56,10 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
 
   return (
     <aside className={cn(
-      "sticky top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300",
+      "sticky top-14 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300 overflow-y-auto",
       "md:translate-x-0",
-      isOpen ? "translate-x-0" : "-translate-x-full"
+      isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
     )}>
-      <div className="p-6 border-b border-slate-200">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm font-bold">S</span>
-          </div>
-          <div>
-            <span className="text-sm font-bold text-slate-900 block leading-tight">skillplace</span>
-            <span className="text-xs text-blue-600 font-semibold">STUDENT</span>
-          </div>
-        </Link>
-      </div>
       <nav className="flex-1 p-3 space-y-1">
         {links.map((link) => {
           const Icon = link.icon

@@ -17,7 +17,7 @@ export default function CareerGuidance() {
       <div className="max-w-container-max mx-auto">
         <SectionReveal className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
-            Complete Career Guidance
+            Complete Career Guidance with SkillPlace Academy
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
             SkillPlace Academy doesn't just teach skills — we help you navigate your entire career journey.

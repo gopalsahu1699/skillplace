@@ -164,13 +164,13 @@ export default function StudentJourney() {
         {/* Section header */}
         <SectionReveal className="text-center max-w-3xl mx-auto mb-14">
           <span className="inline-block px-4 py-1.5 rounded-full bg-secondary/10 text-secondary text-xs font-bold uppercase tracking-widest mb-4">
-            Your Path
+            Your career Path
           </span>
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
-            From Visitor to Engineer
+          Build Skills. Build Career.
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Every step is designed to take you closer to your dream career. No shortcuts — just proven methods that work.
+            From your first lesson to career growth — see how SkillPlace Academy transforms learners into professionals.
           </p>
         </SectionReveal>
 

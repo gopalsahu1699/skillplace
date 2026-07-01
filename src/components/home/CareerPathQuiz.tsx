@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import PhoneInput from '@/components/ui/phone-input'
+import { getFullPhone } from '@/lib/validation/phone'
 
 interface QuizAnswers {
   status: string
@@ -98,7 +100,7 @@ Preferred Learning Mode: ${answers.mode}
 Recommended Program: ${rec.title}
     `.trim()
 
-    const fullPhone = `${phoneCode}${phone.replace(/[\s\-()]/g, '')}`
+    const fullPhone = getFullPhone(phoneCode, phone)
 
     try {
       const { error: insertError } = await supabase.from('leads').insert({
@@ -343,26 +345,13 @@ Recommended Program: ${rec.title}
                       className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md input-focus-ring"
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={phoneCode}
-                      onChange={(e) => setPhoneCode(e.target.value)}
-                      className="w-20 px-2 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md focus:outline-none"
-                    >
-                      <option value="+91">+91</option>
-                      <option value="+1">+1</option>
-                      <option value="+44">+44</option>
-                    </select>
-                    <input
-                      type="tel"
-                      placeholder="WhatsApp / Phone Number"
-                      required
-                      pattern="^[0-9\s\-()]{7,12}$"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="flex-1 px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md input-focus-ring"
-                    />
-                  </div>
+                  <PhoneInput
+                    phoneCode={phoneCode}
+                    phoneNumber={phone}
+                    onPhoneCodeChange={setPhoneCode}
+                    onPhoneNumberChange={setPhone}
+                    required
+                  />
 
                   {error && <p className="text-caption text-error bg-error/10 p-2 rounded">{error}</p>}
 
