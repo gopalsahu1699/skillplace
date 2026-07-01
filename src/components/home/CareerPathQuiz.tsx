@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 import { getSupabaseImageUrl } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
 
@@ -25,7 +25,6 @@ export default function CareerPathQuiz() {
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [phoneCode, setPhoneCode] = useState('+91')
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -102,13 +101,13 @@ Preferred Learning Mode: ${answers.mode}
 Recommended Program: ${rec.title}
     `.trim()
 
-    const fullPhone = getFullPhone(phoneCode, phone)
+    const sanitized = sanitizePhone(phone)
 
     try {
       const { error: insertError } = await supabase.from('leads').insert({
         name,
         email,
-        phone: fullPhone,
+        phone: sanitized,
         message: quizSummary,
         source: 'quiz_path_finder'
       })
@@ -354,10 +353,8 @@ Recommended Program: ${rec.title}
                     />
                   </div>
                   <PhoneInput
-                    phoneCode={phoneCode}
-                    phoneNumber={phone}
-                    onPhoneCodeChange={setPhoneCode}
-                    onPhoneNumberChange={setPhone}
+                    value={phone}
+                    onChange={setPhone}
                     required
                   />
 
@@ -405,7 +402,7 @@ Recommended Program: ${rec.title}
                   <div>
                     <p className="font-bold text-on-surface text-sm">Next Step: Free Counselor Call</p>
                     <p className="text-caption text-on-surface-variant leading-relaxed">
-                      Our engineering career mentor will call you at <strong className="text-primary">{phoneCode} {phone}</strong> within 2 hours to walk through your study plan.
+                      Our engineering career mentor will call you at <strong className="text-primary">{displayPhone(phone)}</strong> within 2 hours to walk through your study plan.
                     </p>
                   </div>
                 </div>

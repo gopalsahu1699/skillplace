@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase/client'
 import { User, Mail, MapPin, Calendar, Camera, Save, Loader2 } from 'lucide-react'
 import { SafeImg } from '@/components/ui/safe-image'
 import PhoneInput from '@/components/ui/phone-input'
+import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
@@ -23,7 +24,6 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
     full_name: '',
-    phoneCode: '+91',
     phoneNumber: '',
     date_of_birth: '',
     gender: '',
@@ -51,20 +51,10 @@ export default function ProfilePage() {
 
     if (data) {
       setProfile(data)
-      // Parse phone: extract country code if present
-      let phoneCode = '+91'
-      let phoneNumber = data.phone || ''
-      if (phoneNumber) {
-        const match = phoneNumber.match(/^\+(\d{1,4})/)
-        if (match) {
-          phoneCode = `+${match[1]}`
-          phoneNumber = phoneNumber.slice(match[0].length)
-        }
-      }
+      const phoneDigits = (data.phone || '').replace(/[^\d]/g, '')
       setFormData({
         full_name: data.full_name || '',
-        phoneCode,
-        phoneNumber,
+        phoneNumber: phoneDigits,
         date_of_birth: data.date_of_birth || '',
         gender: data.gender || '',
         location: data.location || '',
@@ -82,9 +72,7 @@ export default function ProfilePage() {
     setSaving(true)
     setSuccess(false)
 
-    const fullPhone = formData.phoneNumber
-      ? `${formData.phoneCode}${formData.phoneNumber.replace(/[\s\-()]/g, '')}`
-      : null
+    const fullPhone = formData.phoneNumber ? sanitizePhone(formData.phoneNumber) : null
 
     const { error } = await supabase
       .from('profiles')
@@ -128,7 +116,7 @@ export default function ProfilePage() {
   // Profile completion calculation (8 editable fields)
   const completionFields = [
     { key: 'full_name', label: 'Full Name', value: formData.full_name },
-    { key: 'phone', label: 'Phone', value: formData.phoneNumber ? `${formData.phoneCode} ${formData.phoneNumber}` : '' },
+    { key: 'phone', label: 'Phone', value: formData.phoneNumber ? displayPhone(formData.phoneNumber) : '' },
     { key: 'date_of_birth', label: 'Date of Birth', value: formData.date_of_birth },
     { key: 'gender', label: 'Gender', value: formData.gender },
     { key: 'location', label: 'Location', value: formData.location },
@@ -257,10 +245,8 @@ export default function ProfilePage() {
                 <Label htmlFor="phone" className="text-slate-700">Phone</Label>
                 <div className="mt-1.5">
                   <PhoneInput
-                    phoneCode={formData.phoneCode}
-                    phoneNumber={formData.phoneNumber}
-                    onPhoneCodeChange={(code) => setFormData({ ...formData, phoneCode: code })}
-                    onPhoneNumberChange={(num) => setFormData({ ...formData, phoneNumber: num })}
+                    value={formData.phoneNumber}
+                    onChange={(num) => setFormData({ ...formData, phoneNumber: num })}
                   />
                 </div>
               </div>

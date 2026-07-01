@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 import {
   Search,
   Plus,
@@ -65,7 +65,6 @@ interface StudentForm {
   full_name: string
   email: string
   phone: string
-  phoneCode: string
   program_type: string
   branch_id: string
   batch_id: string
@@ -78,7 +77,6 @@ const EMPTY_FORM: StudentForm = {
   full_name: '',
   email: '',
   phone: '',
-  phoneCode: '+91',
   program_type: '',
   branch_id: '',
   batch_id: '',
@@ -174,21 +172,11 @@ export default function StudentsPage() {
   }
 
   const handleEdit = (student: Student) => {
-    // Parse phone: extract country code if present
-    let phoneCode = '+91'
-    let phone = student.phone || ''
-    if (phone) {
-      const match = phone.match(/^\+(\d{1,4})/)
-      if (match) {
-        phoneCode = `+${match[1]}`
-        phone = phone.slice(match[0].length)
-      }
-    }
+    const phoneDigits = (student.phone || '').replace(/[^\d]/g, '')
     setForm({
       full_name: student.full_name || '',
       email: student.email || '',
-      phone,
-      phoneCode,
+      phone: phoneDigits,
       program_type: student.program_type || '',
       branch_id: student.branch_id || '',
       batch_id: student.batch_id || '',
@@ -203,7 +191,7 @@ export default function StudentsPage() {
     if (!form.full_name.trim() || !form.email.trim()) return
     setSubmitting(true)
     try {
-      const fullPhone = getFullPhone(form.phoneCode, form.phone) || form.phone.trim() || null
+      const fullPhone = form.phone ? sanitizePhone(form.phone) || null : null
 
       const payload = {
         full_name: form.full_name.trim(),
@@ -380,10 +368,8 @@ export default function StudentsPage() {
                 <label className="text-sm font-medium text-slate-700">Phone</label>
                 <div className="mt-1">
                   <PhoneInput
-                    phoneCode={form.phoneCode || '+91'}
-                    phoneNumber={form.phone}
-                    onPhoneCodeChange={(code) => setForm({ ...form, phoneCode: code })}
-                    onPhoneNumberChange={(num) => setForm({ ...form, phone: num })}
+                    value={form.phone}
+                    onChange={(num) => setForm({ ...form, phone: num })}
                   />
                 </div>
               </div>
@@ -681,7 +667,7 @@ export default function StudentsPage() {
                         {student.email || '-'}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-600">
-                        {student.phone || '-'}
+                        {displayPhone(student.phone) || '-'}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-600">
                         {getBranchName(student) || '-'}

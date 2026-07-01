@@ -3,12 +3,11 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone } from '@/lib/validation/phone'
 
 export default function ConsultationBooking() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [phoneCode, setPhoneCode] = useState('+91')
   const [phone, setPhone] = useState('')
   const [branch, setBranch] = useState('civil')
   const [timeSlot, setTimeSlot] = useState('morning')
@@ -21,7 +20,7 @@ export default function ConsultationBooking() {
     setError('')
     setLoading(true)
 
-    const fullPhone = getFullPhone(phoneCode, phone)
+    const sanitized = sanitizePhone(phone)
     const details = `
 --- Consultation Booking Request ---
 Engineering Branch: ${branch.toUpperCase()}
@@ -32,7 +31,7 @@ Preferred Counseling Time: ${timeSlot.toUpperCase()} (Morning: 10AM-12PM, Aftern
       const { error: insertError } = await supabase.from('leads').insert({
         name,
         email,
-        phone: fullPhone,
+        phone: sanitized,
         message: details,
         source: 'consultation_booking'
       })
@@ -155,10 +154,8 @@ Preferred Counseling Time: ${timeSlot.toUpperCase()} (Morning: 10AM-12PM, Aftern
                       <div>
                         <label htmlFor="booking_phone" className="block text-caption text-on-surface-variant font-semibold mb-1">Phone Number</label>
                         <PhoneInput
-                          phoneCode={phoneCode}
-                          phoneNumber={phone}
-                          onPhoneCodeChange={setPhoneCode}
-                          onPhoneNumberChange={setPhone}
+                          value={phone}
+                          onChange={setPhone}
                           required
                         />
                       </div>

@@ -16,7 +16,7 @@ import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from 
 import { SafeImg } from '@/components/ui/safe-image'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone } from '@/lib/validation/phone'
 import type { Employee, EmployeePermission } from '@/types'
 
 interface EmployeeWithPermissions extends Employee {
@@ -37,7 +37,6 @@ export default function AdminEmployeesPage() {
     name: '',
     email: '',
     phone: '',
-    phoneCode: '+91',
     role: 'instructor' as string,
     department: '',
     bio: '',
@@ -87,7 +86,7 @@ export default function AdminEmployeesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const fullPhone = getFullPhone(formData.phoneCode, formData.phone) || formData.phone || null
+    const fullPhone = formData.phone ? sanitizePhone(formData.phone) || null : null
 
     if (editingEmployee) {
       try {
@@ -162,21 +161,11 @@ export default function AdminEmployeesPage() {
 
   function handleEdit(employee: EmployeeWithPermissions) {
     setEditingEmployee(employee)
-    // Parse phone: extract country code if present
-    let phoneCode = '+91'
-    let phone = employee.phone || ''
-    if (phone) {
-      const match = phone.match(/^\+(\d{1,4})/)
-      if (match) {
-        phoneCode = `+${match[1]}`
-        phone = phone.slice(match[0].length)
-      }
-    }
+    const phoneDigits = (employee.phone || '').replace(/[^\d]/g, '')
     setFormData({
       name: employee.name,
       email: employee.email,
-      phone,
-      phoneCode,
+      phone: phoneDigits,
       role: employee.role,
       department: employee.department || '',
       bio: employee.bio || '',
@@ -227,7 +216,6 @@ export default function AdminEmployeesPage() {
       name: '',
       email: '',
       phone: '',
-      phoneCode: '+91',
       role: 'instructor',
       department: '',
       bio: '',
@@ -313,10 +301,8 @@ export default function AdminEmployeesPage() {
               <label className="text-sm font-medium text-slate-700">Phone</label>
               <div className="mt-1">
                 <PhoneInput
-                  phoneCode={formData.phoneCode || '+91'}
-                  phoneNumber={formData.phone}
-                  onPhoneCodeChange={(code) => setFormData({ ...formData, phoneCode: code })}
-                  onPhoneNumberChange={(num) => setFormData({ ...formData, phone: num })}
+                  value={formData.phone}
+                  onChange={(num) => setFormData({ ...formData, phone: num })}
                 />
               </div>
             </div>

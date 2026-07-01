@@ -3,6 +3,7 @@ import { verifyPaymentSignature, fetchPayment } from '@/lib/razorpay'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
+import { validatePhoneServer } from '@/lib/validation/phone-server'
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -40,6 +41,9 @@ export async function POST(request: Request) {
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 })
     }
+
+    const phoneValidation = phone ? validatePhoneServer(phone) : null
+    const safePhone = phoneValidation?.formatted || phone
 
     const payment = await fetchPayment(razorpay_payment_id)
     if (payment.status !== 'captured') {
@@ -100,7 +104,7 @@ export async function POST(request: Request) {
           .from('profiles')
           .update({
             full_name: studentName,
-            phone,
+            phone: safePhone,
             updated_at: new Date().toISOString(),
           })
           .eq('id', profileId)
@@ -110,7 +114,7 @@ export async function POST(request: Request) {
           .insert({
             email,
             full_name: studentName,
-            phone,
+            phone: safePhone,
             role: 'student',
             is_active: true,
           })

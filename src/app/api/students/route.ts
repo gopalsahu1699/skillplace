@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(body)) {
       const results = []
       for (const student of body) {
-        // Validate phone if provided
         if (student.phone) {
           const phoneValidation = validatePhoneServer(student.phone)
           if (!phoneValidation.valid) {
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
               { status: 400 }
             )
           }
-          student.phone = phoneValidation.formatted
+          student.phone = phoneValidation.formatted || student.phone
         }
 
         const { data, error } = await adminSupabase
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: results })
     }
 
-    // Validate phone if provided
     if (body.phone) {
       const phoneValidation = validatePhoneServer(body.phone)
       if (!phoneValidation.valid) {
@@ -90,7 +88,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-      body.phone = phoneValidation.formatted
+      body.phone = phoneValidation.formatted || body.phone
     }
 
     const { data, error } = await adminSupabase
@@ -125,7 +123,6 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Validate phone if provided
     if (body.phone) {
       const phoneValidation = validatePhoneServer(body.phone)
       if (!phoneValidation.valid) {
@@ -134,7 +131,7 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         )
       }
-      body.phone = phoneValidation.formatted
+      body.phone = phoneValidation.formatted || body.phone
     }
 
     const { data, error } = await adminSupabase

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone } from '@/lib/validation/phone'
 import { SafeImg } from '@/components/ui/safe-image'
 
 interface ProgramDetail {
@@ -44,7 +44,6 @@ export default function ProgramDetailPage() {
 
   // Inquire form state
   const [inquireName, setInquireName] = useState('')
-  const [inquirePhoneCode, setInquirePhoneCode] = useState('+91')
   const [inquirePhone, setInquirePhone] = useState('')
   const [inquireSubmitted, setInquireSubmitted] = useState(false)
 
@@ -113,10 +112,10 @@ export default function ProgramDetailPage() {
   async function handleInquire(e: React.FormEvent) {
     e.preventDefault()
     if (!inquireName || !inquirePhone) return
-    const fullPhone = getFullPhone(inquirePhoneCode, inquirePhone)
+    const sanitized = sanitizePhone(inquirePhone)
     await supabase.from('leads').insert({
       name: inquireName,
-      phone: fullPhone || inquirePhone,
+      phone: sanitized || inquirePhone,
       message: `Inquiry for Program: ${program?.name}`,
       source: 'program_detail_inquiry'
     })
@@ -476,10 +475,8 @@ export default function ProgramDetailPage() {
                   <div>
                     <label className="block text-caption font-bold mb-2 text-on-surface">Phone Number</label>
                     <PhoneInput
-                      phoneCode={inquirePhoneCode}
-                      phoneNumber={inquirePhone}
-                      onPhoneCodeChange={setInquirePhoneCode}
-                      onPhoneNumberChange={setInquirePhone}
+                      value={inquirePhone}
+                      onChange={setInquirePhone}
                       required
                     />
                   </div>

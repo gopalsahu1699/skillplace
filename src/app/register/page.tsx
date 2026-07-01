@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import PhoneInput from '@/components/ui/phone-input'
-import { validatePhoneNumber, getFullPhone } from '@/lib/validation/phone'
+import { validatePhoneStrict, displayPhone } from '@/lib/validation/phone'
 import { GraduationCap, User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle, XCircle, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
@@ -16,7 +16,6 @@ export default function RegisterPage() {
   const router = useRouter()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
-  const [phoneCode, setPhoneCode] = useState('+91')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -41,10 +40,7 @@ export default function RegisterPage() {
       return
     }
 
-    // Validate phone number using libphonenumber-js
-    const fullPhone = getFullPhone(phoneCode, phoneNumber)
-    const phoneValidation = validatePhoneNumber(fullPhone, phoneCode)
-
+    const phoneValidation = validatePhoneStrict(phoneNumber)
     if (!phoneValidation.valid) {
       setError(phoneValidation.error || 'Please enter a valid phone number')
       setLoading(false)
@@ -57,7 +53,7 @@ export default function RegisterPage() {
       options: {
         data: {
           full_name: fullName,
-          phone: fullPhone,
+          phone: phoneNumber,
         },
       },
     })
@@ -74,7 +70,7 @@ export default function RegisterPage() {
         id: data.user.id,
         email,
         full_name: fullName,
-        phone: fullPhone,
+        phone: phoneNumber,
         role: 'student',
       })
 
@@ -205,10 +201,8 @@ export default function RegisterPage() {
               <div>
                 <Label htmlFor="phone" className="text-slate-700">Phone</Label>
                 <PhoneInput
-                  phoneCode={phoneCode}
-                  phoneNumber={phoneNumber}
-                  onPhoneCodeChange={setPhoneCode}
-                  onPhoneNumberChange={setPhoneNumber}
+                  value={phoneNumber}
+                  onChange={setPhoneNumber}
                   required
                 />
               </div>

@@ -1,146 +1,159 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Input } from '@/components/ui/input'
-import { Check, XCircle } from 'lucide-react'
-import {
-  COUNTRY_CODES,
-  validatePhoneNumber,
-  getCountryMaxDigits,
-} from '@/lib/validation/phone'
+import { useState, useRef, useEffect, useId, forwardRef } from 'react'
+import { sanitizePhone, validatePhone } from '@/lib/validation/phone'
+import { Check, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface PhoneInputProps {
-  phoneCode: string
-  phoneNumber: string
-  onPhoneCodeChange: (code: string) => void
-  onPhoneNumberChange: (number: string) => void
-  onValidationChange?: (isValid: boolean) => void
-  placeholder?: string
+  value: string
+  onChange: (value: string) => void
+  error?: string
   required?: boolean
+  disabled?: boolean
+  placeholder?: string
+  id?: string
+  label?: string
   className?: string
-  errorClassName?: string
+  onValidationChange?: (isValid: boolean) => void
 }
 
-export default function PhoneInput({
-  phoneCode,
-  phoneNumber,
-  onPhoneCodeChange,
-  onPhoneNumberChange,
-  onValidationChange,
-  placeholder,
-  required = false,
-  className = '',
-  errorClassName = '',
-}: PhoneInputProps) {
-  const [phoneValid, setPhoneValid] = useState<boolean | null>(null)
-  const [phoneError, setPhoneError] = useState<string>('')
-  const phoneNumberRef = useRef(phoneNumber)
+const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function PhoneInput(
+  {
+    value,
+    onChange,
+    error: externalError,
+    required = false,
+    disabled = false,
+    placeholder = '9876543210',
+    id: externalId,
+    label = 'Phone Number',
+    className,
+    onValidationChange,
+  },
+  ref
+) {
+  const generatedId = useId()
+  const inputId = externalId || generatedId
+  const errorId = `${inputId}-error`
+  const [touched, setTouched] = useState(false)
+  const [internalError, setInternalError] = useState('')
+  const internalRef = useRef<HTMLInputElement>(null)
+
+  const displayError = externalError || (touched ? internalError : '')
+  const hasValue = value.length > 0
+  const isValid =
+    hasValue && value.length === 10 && !internalError && !externalError
 
   useEffect(() => {
-    phoneNumberRef.current = phoneNumber
-  }, [phoneNumber])
-
-  const maxLength = getCountryMaxDigits(phoneCode)
-
-  // Validate phone on change
-  function validatePhone(num: string): boolean {
-    const result = validatePhoneNumber(num, phoneCode)
-    if (!result.valid) {
-      setPhoneError(result.error || '')
-      return false
-    }
-    setPhoneError('')
-    return true
-  }
-
-  function handlePhoneChange(value: string) {
-    // Allow only digits, spaces, hyphens, parentheses for flexibility
-    const cleaned = value.replace(/[^\d\s\-()]/g, '')
-    const digitsOnly = cleaned.replace(/[\s\-()]/g, '')
-
-    // Enforce max length
-    if (digitsOnly.length > maxLength) {
-      return
-    }
-
-    onPhoneNumberChange(cleaned)
-
-    if (digitsOnly.length > 0) {
-      const valid = validatePhone(digitsOnly)
-      setPhoneValid(valid)
-      onValidationChange?.(valid)
+    if (value.length > 0) {
+      const result = validatePhone(value)
+      const err = result.valid ? '' : result.error || ''
+      setInternalError(err)
+      onValidationChange?.(result.valid && !externalError)
     } else {
-      setPhoneValid(null)
-      setPhoneError(required ? 'Phone number is required' : '')
-      onValidationChange?.(true)
+      setInternalError('')
+      onValidationChange?.(!required)
+    }
+  }, [value, externalError, required, onValidationChange])
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value
+    const digits = raw.replace(/[^\d]/g, '')
+    if (digits.length <= 10) {
+      onChange(digits)
     }
   }
 
-  // Get hint for placeholder based on country
-  const getHint = () => {
-    if (phoneCode === '+91') return '9876543210'
-    if (phoneCode === '+1') return '(555) 123-4567'
-    if (phoneCode === '+44') return '7911123456'
-    if (phoneCode === '+65') return '81234567'
-    if (phoneCode === '+971') return '501234567'
-    return 'Phone number'
+  function handlePaste(e: React.ClipboardEvent) {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text')
+    const sanitized = sanitizePhone(pasted)
+    if (sanitized) {
+      onChange(sanitized)
+      setTouched(true)
+    }
   }
 
-  // Handle country change - re-validate phone number
-  function handleCountryChange(newCode: string) {
-    onPhoneCodeChange(newCode)
-    const digits = phoneNumber.replace(/[\s\-()]/g, '')
-    if (digits.length > 0) {
-      const valid = validatePhone(digits)
-      setPhoneValid(valid)
-      onValidationChange?.(valid)
+  function handleBlur() {
+    setTouched(true)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+      e.preventDefault()
+    }
+  }
+
+  function handleWheel(e: React.WheelEvent) {
+    if (
+      internalRef.current &&
+      document.activeElement === internalRef.current
+    ) {
+      e.preventDefault()
     }
   }
 
   return (
-    <div>
-      <div className="flex gap-2">
-        <select
-          value={phoneCode}
-          onChange={(e) => handleCountryChange(e.target.value)}
-          className="w-[130px] shrink-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+    <div className={cn('w-full', className)}>
+      {label && (
+        <label
+          htmlFor={inputId}
+          className="mb-1.5 block text-sm font-medium text-slate-700"
         >
-          {COUNTRY_CODES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-        <div className="relative flex-1">
-          <Input
-            type="tel"
-            placeholder={placeholder || getHint()}
-            value={phoneNumber}
-            onChange={(e) => handlePhoneChange(e.target.value)}
-            className={`pl-4 pr-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500 ${
-              phoneValid === false ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : ''
-            } ${className} ${errorClassName}`}
-            required={required}
-            maxLength={maxLength}
-          />
-          {phoneValid !== null && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              {phoneValid ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="h-4 w-4 text-red-400" />
-              )}
-            </div>
+          {label}
+          {required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
+      <div className="relative">
+        <input
+          ref={(node) => {
+            internalRef.current = node
+            if (typeof ref === 'function') ref(node)
+            else if (ref) ref.current = node
+          }}
+          id={inputId}
+          type="text"
+          inputMode="numeric"
+          autoComplete="tel"
+          value={value}
+          onChange={handleChange}
+          onPaste={handlePaste}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onWheel={handleWheel}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          maxLength={10}
+          aria-invalid={!!displayError}
+          aria-describedby={displayError ? errorId : undefined}
+          className={cn(
+            'h-8 w-full min-w-0 rounded-lg border bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+            displayError
+              ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20'
+              : isValid
+                ? 'border-green-400 focus-visible:border-green-500 focus-visible:ring-green-500/50'
+                : 'border-input focus-visible:border-ring focus-visible:ring-ring/50'
           )}
-        </div>
+        />
+        {touched && hasValue && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            {isValid ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <X className="h-4 w-4 text-destructive" />
+            )}
+          </div>
+        )}
       </div>
-      {phoneValid === false && phoneError && (
-        <p className="text-xs text-red-500 mt-1">{phoneError}</p>
+      {displayError && (
+        <p id={errorId} className="mt-1 text-xs text-destructive" role="alert">
+          {displayError}
+        </p>
       )}
     </div>
   )
-}
+})
 
-// Re-export utilities for backward compatibility
-export { getFullPhone } from '@/lib/validation/phone'
-export { COUNTRY_CODES } from '@/lib/validation/phone'
+export default PhoneInput

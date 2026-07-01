@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { displayPhone } from '@/lib/validation/phone'
 
 interface StudentRecord {
   id: string
@@ -426,7 +427,7 @@ export default function AdminPlacementsPage() {
                       </p>
                       <p className="text-xs text-slate-500 truncate">
                         {selectedStudent.email}
-                        {selectedStudent.phone && ` • ${selectedStudent.phone}`}
+                        {selectedStudent.phone && ` • ${displayPhone(selectedStudent.phone)}`}
                       </p>
                     </div>
                     <button
@@ -472,7 +473,7 @@ export default function AdminPlacementsPage() {
                               </p>
                               <p className="text-xs text-slate-500 truncate">
                                 {student.email}
-                                {student.phone && ` • ${student.phone}`}
+                                {student.phone && ` • ${displayPhone(student.phone)}`}
                               </p>
                             </div>
                           </button>

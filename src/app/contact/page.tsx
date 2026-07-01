@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone } from '@/lib/validation/phone'
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -11,7 +11,6 @@ export default function ContactPage() {
   const [error, setError] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [phoneCode, setPhoneCode] = useState('+91')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [message, setMessage] = useState('')
   const [focusedField, setFocusedField] = useState<string | null>(null)
@@ -21,7 +20,7 @@ export default function ContactPage() {
     setError('')
     setLoading(true)
 
-    const fullPhone = phoneNumber ? getFullPhone(phoneCode, phoneNumber) : null
+    const fullPhone = phoneNumber ? sanitizePhone(phoneNumber) : null
 
     const { error: insertError } = await supabase.from('leads').insert({
       name,
@@ -89,7 +88,7 @@ export default function ContactPage() {
                 <h3 className="font-headline-md text-headline-md text-success-green mb-2">Message Sent!</h3>
                 <p className="text-on-surface-variant mb-8">Thank you for contacting us. We&apos;ll get back to you within 24 hours.</p>
                 <button
-                  onClick={() => { setSubmitted(false); setName(''); setEmail(''); setPhoneCode('+91'); setPhoneNumber(''); setMessage('') }}
+                  onClick={() => { setSubmitted(false); setName(''); setEmail(''); setPhoneNumber(''); setMessage('') }}
                   className="border-2 border-secondary text-secondary px-8 py-3 rounded-lg font-label-md hover:bg-secondary hover:text-on-primary transition-all"
                 >
                   Send Another Message
@@ -146,10 +145,8 @@ export default function ContactPage() {
                     Phone Number
                   </label>
                   <PhoneInput
-                    phoneCode={phoneCode}
-                    phoneNumber={phoneNumber}
-                    onPhoneCodeChange={setPhoneCode}
-                    onPhoneNumberChange={setPhoneNumber}
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
                   />
                 </div>
 

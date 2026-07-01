@@ -42,7 +42,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Phone validation using centralized validation
     const phoneValidation = validatePhoneServer(phone)
     if (!phoneValidation.valid) {
       return NextResponse.json(
@@ -50,6 +49,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+    const safePhone = phoneValidation.formatted || phone
 
     const { data: program } = await adminSupabase
       .from('training_programs')
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
             .from('profiles')
             .update({
               full_name: studentName,
-              phone,
+              phone: safePhone,
               updated_at: new Date().toISOString(),
             })
             .eq('id', profileId)
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
             .insert({
               email,
               full_name: studentName,
-              phone,
+              phone: safePhone,
               role: 'student',
               is_active: true,
             })
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
       program_name: programName || program.name,
       student_name: studentName,
       email,
-      phone,
+      phone: safePhone,
     }
     if (couponId) {
       orderNotes.coupon_id = couponId

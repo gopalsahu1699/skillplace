@@ -18,6 +18,7 @@ import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admi
 import { notify } from '@/lib/notifications'
 import { ArrowLeft, Plus, Trash2, Users, Calendar, BookOpen, Eye } from 'lucide-react'
 import Link from 'next/link'
+import { displayPhone } from '@/lib/validation/phone'
 
 interface BatchInfo {
   id: string
@@ -278,7 +279,7 @@ export default function BatchDetailPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-sm text-slate-500">{student.email}</td>
-                    <td className="px-5 py-3.5 text-sm text-slate-500">{student.phone || '—'}</td>
+                    <td className="px-5 py-3.5 text-sm text-slate-500">{displayPhone(student.phone) || '—'}</td>
                     <td className="px-5 py-3.5 text-sm text-slate-500">{student.enrollments?.length || 0}</td>
                     <td className="px-5 py-3.5">
                       <Badge variant={student.is_active ? 'default' : 'destructive'} className={student.is_active ? 'bg-green-100 text-green-700 border-0' : 'bg-red-100 text-red-700 border-0'}>
@@ -389,7 +390,7 @@ export default function BatchDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wide">Phone</p>
-                  <p className="text-sm font-medium text-slate-900">{detailStudent.phone || 'N/A'}</p>
+                  <p className="text-sm font-medium text-slate-900">{displayPhone(detailStudent.phone) || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wide">Status</p>

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Search } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { displayPhone } from '@/lib/validation/phone'
 
 interface Lead {
   id: string
@@ -94,7 +95,7 @@ export default function AdminLeadsPage() {
                 <tr key={lead.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-3.5 text-sm font-medium text-slate-900">{lead.name}</td>
                   <td className="px-5 py-3.5 text-sm text-slate-500">{lead.email}</td>
-                  <td className="px-5 py-3.5 text-sm text-slate-500">{lead.phone || 'N/A'}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-500">{displayPhone(lead.phone) || 'N/A'}</td>
                   <td className="px-5 py-3.5 text-sm text-slate-500">{lead.source}</td>
                   <td className="px-5 py-3.5">
                     <Badge className={`${statusColors[lead.status]} border-0`}>{lead.status}</Badge>

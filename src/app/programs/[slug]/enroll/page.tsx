@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import PhoneInput from '@/components/ui/phone-input'
-import { getFullPhone } from '@/lib/validation/phone'
+import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
 const PUBLIC_API_BASE = '/api/public'
 
@@ -46,7 +46,6 @@ interface Course {
 interface FormData {
   fullName: string
   email: string
-  phoneCode: string
   phoneNumber: string
   location: string
   notes: string
@@ -75,7 +74,6 @@ export default function EnrollPage() {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
-    phoneCode: '+91',
     phoneNumber: '',
     location: '',
     notes: '',
@@ -112,22 +110,12 @@ export default function EnrollPage() {
           .single()
 
         if (profile) {
-          // Parse phone: extract country code if present
-          let phoneCode = '+91'
-          let phoneNumber = profile.phone || ''
-          if (phoneNumber) {
-            const match = phoneNumber.match(/^\+(\d{1,4})/)
-            if (match) {
-              phoneCode = `+${match[1]}`
-              phoneNumber = phoneNumber.slice(match[0].length)
-            }
-          }
+          const phoneDigits = (profile.phone || '').replace(/[^\d]/g, '')
           setFormData(prev => ({
             ...prev,
             fullName: profile.full_name || prev.fullName,
             email: profile.email || prev.email,
-            phoneCode,
-            phoneNumber,
+            phoneNumber: phoneDigits,
           }))
         } else {
           // Fallback to auth user email if no profile
@@ -240,7 +228,7 @@ export default function EnrollPage() {
           programName: program.name,
           studentName: formData.fullName,
           email: formData.email,
-          phone: getFullPhone(formData.phoneCode, formData.phoneNumber),
+          phone: sanitizePhone(formData.phoneNumber),
           couponCode: appliedCoupon?.code || null,
         }),
       })
@@ -281,7 +269,7 @@ export default function EnrollPage() {
                 programId: program.id,
                 studentName: formData.fullName,
                 email: formData.email,
-                phone: getFullPhone(formData.phoneCode, formData.phoneNumber),
+                phone: sanitizePhone(formData.phoneNumber),
                 location: formData.location,
                 notes: formData.notes,
               }),
@@ -306,7 +294,7 @@ export default function EnrollPage() {
         prefill: {
           name: formData.fullName,
           email: formData.email,
-          contact: getFullPhone(formData.phoneCode, formData.phoneNumber),
+          contact: sanitizePhone(formData.phoneNumber),
         },
         theme: {
           color: '#2563eb',
@@ -477,10 +465,8 @@ export default function EnrollPage() {
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">Phone *</label>
                     <PhoneInput
-                      phoneCode={formData.phoneCode}
-                      phoneNumber={formData.phoneNumber}
-                      onPhoneCodeChange={(code) => updateForm({ phoneCode: code })}
-                      onPhoneNumberChange={(num) => updateForm({ phoneNumber: num })}
+                      value={formData.phoneNumber}
+                      onChange={(num) => updateForm({ phoneNumber: num })}
                       onValidationChange={setPhoneValid}
                       required
                     />
@@ -532,7 +518,7 @@ export default function EnrollPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-slate-500">Phone</span>
-                      <span className="text-sm font-medium text-slate-900">{getFullPhone(formData.phoneCode, formData.phoneNumber)}</span>
+                      <span className="text-sm font-medium text-slate-900">{displayPhone(formData.phoneNumber)}</span>
                     </div>
                     {formData.location && (
                       <div className="flex justify-between">
