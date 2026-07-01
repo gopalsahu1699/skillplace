@@ -140,8 +140,14 @@ Recommended Program: ${rec.title}
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-3">
             Find Your Ideal Engineering Career Path
           </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant">
+          <p className="font-body-md text-body-md text-on-surface-variant mb-4">
             Take our 2-minute quiz to analyze your background and match with the highest-paying courses and placements in Bilaspur.
+          </p>
+          <p className="text-sm text-on-surface-variant">
+            <span className="inline-flex items-center gap-1 text-secondary font-semibold">
+              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: '"FILL" 1' }}>group</span>
+              1,200+ students found their path through this quiz
+            </span>
           </p>
         </div>
 

@@ -9,6 +9,7 @@ const partners = [
     name: 'Autommensor Automation Pvt Ltd',
     short: 'Autommensor',
     desc: 'Industrial automation & control systems',
+    type: 'Training Partner',
     logo: getSupabaseImageUrl('partner-autommensor.png'),
     color: 'bg-blue-600',
   },
@@ -16,6 +17,7 @@ const partners = [
     name: 'Dozert AI',
     short: 'Dozert',
     desc: 'AI-powered technology solutions',
+    type: 'Technology Partner',
     logo: getSupabaseImageUrl('partner-dozert-ai.png'),
     color: 'bg-violet-600',
   },
@@ -23,6 +25,7 @@ const partners = [
     name: 'Himanshu Construction',
     short: 'Himanshu',
     desc: 'Civil construction & infrastructure',
+    type: 'Hiring Partner',
     logo: getSupabaseImageUrl('partner-himanshu-construction.png'),
     color: 'bg-amber-600',
   },
@@ -30,7 +33,7 @@ const partners = [
 
 function PartnerLogo({ partner }: { partner: typeof partners[0] }) {
   return (
-    <div className="mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 border border-border-subtle rounded-2xl bg-white p-3 max-w-[140px] min-w-[80px]">
+    <div className="mx-auto mb-4 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 border border-border-subtle rounded-2xl bg-white p-4 max-w-[140px] min-w-[80px] group-hover:scale-105 grayscale group-hover:grayscale-0">
       <SafeImg
         src={partner.logo}
         alt={`${partner.name} logo`}
@@ -38,8 +41,8 @@ function PartnerLogo({ partner }: { partner: typeof partners[0] }) {
         height={80}
         className="object-contain w-auto h-auto max-w-[120px] max-h-[60px]"
         fallback={
-          <div className={`w-20 h-20 rounded-2xl ${partner.color} flex items-center justify-center`}>
-            <span className="text-white font-bold text-2xl">{partner.short[0]}</span>
+          <div className={`w-16 h-16 rounded-2xl ${partner.color} flex items-center justify-center`}>
+            <span className="text-white font-bold text-xl">{partner.short[0]}</span>
           </div>
         }
       />
@@ -65,11 +68,15 @@ export default function IndustryPartners() {
   }
 
   return (
-    <section className="py-section-gap px-margin-mobile md:px-margin-desktop bg-surface-container-low">
+    <section className="py-section-gap px-margin-mobile md:px-margin-desktop bg-surface-container-low overflow-hidden">
       <div className="max-w-container-max mx-auto">
         <SectionReveal className="text-center max-w-3xl mx-auto mb-12">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-secondary/10 text-secondary text-xs font-bold uppercase tracking-widest mb-4">
+            Trusted Partners
+          </span>
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
-            Industry Partners
+            Companies That Trust{' '}
+            <span className="gradient-text">SkillPlace</span>
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
             We collaborate with leading companies to ensure our curriculum stays current and our students get real industry exposure.
@@ -82,14 +89,14 @@ export default function IndustryPartners() {
             {partners.map((partner, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-2xl border border-border-subtle p-8 text-center card-shadow hover:border-secondary/30 transition-all duration-300 group"
+                className="bg-white rounded-2xl border border-border-subtle p-8 text-center card-shadow hover:border-secondary/30 transition-all duration-300 group hover:-translate-y-1"
               >
                 <PartnerLogo partner={partner} />
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{partner.name}</h3>
                 <p className="text-body-md text-on-surface-variant mb-4">{partner.desc}</p>
-                <span className="inline-flex items-center gap-1 text-caption font-bold text-secondary uppercase tracking-wider">
-                  <span className="material-symbols-outlined text-[16px]">handshake</span>
-                  Industry Partner
+                <span className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-secondary/10 text-secondary">
+                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>handshake</span>
+                  {partner.type}
                 </span>
               </div>
             ))}
@@ -112,9 +119,9 @@ export default function IndustryPartners() {
                 <PartnerLogo partner={partner} />
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{partner.name}</h3>
                 <p className="text-body-md text-on-surface-variant mb-4">{partner.desc}</p>
-                <span className="inline-flex items-center gap-1 text-caption font-bold text-secondary uppercase tracking-wider">
-                  <span className="material-symbols-outlined text-[16px]">handshake</span>
-                  Industry Partner
+                <span className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-secondary/10 text-secondary">
+                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>handshake</span>
+                  {partner.type}
                 </span>
               </div>
             ))}

@@ -1,21 +1,20 @@
 import Link from 'next/link'
 import { getCourses, getTestimonials, getTrainingPrograms } from '@/lib/supabase/queries'
 import ScrollProgress from '@/components/home/ScrollProgress'
+import HeroSection from '@/components/home/HeroSection'
 import TrustIndicators from '@/components/home/TrustIndicators'
 import WhyChooseUs from '@/components/home/WhyChooseUs'
 import StudentJourney from '@/components/home/StudentJourney'
+import CareerPathQuiz from '@/components/home/CareerPathQuiz'
 import CareerOpportunities from '@/components/home/CareerOpportunities'
-import CareerGuidance from '@/components/home/CareerGuidance'
-import IndustryPartners from '@/components/home/IndustryPartners'
+import OurTrainingProgram from '@/components/home/OurTrainingProgram'
+import JobCoursesSection from '@/components/home/JobCoursesSection'
 import MeetMentors from '@/components/home/MeetMentors'
+import IndustryPartners from '@/components/home/IndustryPartners'
 import TestimonialSection from '@/components/home/TestimonialSection'
+import CareerGuidance from '@/components/home/CareerGuidance'
 import FAQ from '@/components/home/FAQ'
 import FinalCTA from '@/components/home/FinalCTA'
-import OurTrainingProgram from '@/components/home/OurTrainingProgram'
-import HeroSection from '@/components/home/HeroSection'
-import CareerPathQuiz from '@/components/home/CareerPathQuiz'
-import ConsultationBooking from '@/components/home/ConsultationBooking'
-import JobCoursesSection from '@/components/home/JobCoursesSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,57 +56,42 @@ export default async function Home() {
       <ScrollProgress />
 
       {/* ═══════════════════════════════════════════
-          1. HERO SECTION 
+          1. HERO SECTION — ATTENTION
           ═══════════════════════════════════════════ */}
       <HeroSection />
 
-
-
       {/* ═══════════════════════════════════════════
-          3. WHY CHOOSE SKILLPLACE ACADEMY
-          ═══════════════════════════════════════════ */}
-      <WhyChooseUs />
-
-            {/* ═══════════════════════════════════════════
-          2. TRUST INDICATORS
+          2. TRUST INDICATORS — TRUST (stat counters)
           ═══════════════════════════════════════════ */}
       <TrustIndicators />
 
-    
+      {/* ═══════════════════════════════════════════
+          3. WHY CHOOSE SKILLPLACE — INTEREST (comparison)
+          ═══════════════════════════════════════════ */}
+      <WhyChooseUs />
 
       {/* ═══════════════════════════════════════════
-          4. STUDENT JOURNEY TIMELINE
+          4. STUDENT JOURNEY — DESIRE (reduce uncertainty)
           ═══════════════════════════════════════════ */}
       <StudentJourney />
-    {/* ═══════════════════════════════════════════
-          3.5 INTERACTIVE CAREER PATH FINDER QUIZ
+
+      {/* ═══════════════════════════════════════════
+          5. CAREER PATH QUIZ — ENGAGEMENT (lead capture)
           ═══════════════════════════════════════════ */}
       <CareerPathQuiz />
 
       {/* ═══════════════════════════════════════════
-          6. CAREER OPPORTUNITIES
+          6. CAREER OPPORTUNITIES — DESIRE (outcomes + salary)
           ═══════════════════════════════════════════ */}
       <CareerOpportunities />
 
-    
+      {/* ═══════════════════════════════════════════
+          7. TRAINING PROGRAMS — DESIRE (learning paths)
+          ═══════════════════════════════════════════ */}
+      <OurTrainingProgram trainingPrograms={trainingPrograms} />
 
       {/* ═══════════════════════════════════════════
-          7. CAREER GUIDANCE
-          ═══════════════════════════════════════════ */}
-      <CareerGuidance />
-
-      {/* ═══════════════════════════════════════════
-          7.5 BOOK A FREE CAREER CONSULTATION
-          ═══════════════════════════════════════════ */}
-      {/* <ConsultationBooking /> */}
-
-      {/* ═══════════════════════════════════════════
-          8. OUR TRAINING PROGRAMS 
-          ═══════════════════════════════════════════ */}
-    <OurTrainingProgram trainingPrograms={trainingPrograms} />
-  
-      {/* ═══════════════════════════════════════════
-          9. JOB-ORIENTED COURSES (Desktop Bento & Mobile Tabs)
+          8. JOB-ORIENTED COURSES — INTEREST (curriculum detail)
           ═══════════════════════════════════════════ */}
       <JobCoursesSection
         civilList={civilList}
@@ -118,37 +102,32 @@ export default async function Home() {
       />
 
       {/* ═══════════════════════════════════════════
-          10. INDUSTRY PARTNERS
-          ═══════════════════════════════════════════ */}
-      <IndustryPartners />
-
-      {/* ═══════════════════════════════════════════
-          11. MEET OUR MENTORS
+          9. MEET OUR MENTORS — PROOF (people trust people)
           ═══════════════════════════════════════════ */}
       <MeetMentors />
 
       {/* ═══════════════════════════════════════════
-          12. STUDENT SUCCESS
+          10. INDUSTRY PARTNERS — PROOF (company logos)
           ═══════════════════════════════════════════ */}
-      {/* <StudentSuccess /> */}
+      <IndustryPartners />
 
       {/* ═══════════════════════════════════════════
-          13. WHY STUDENTS TRUST US (Stats)
+          11. TESTIMONIALS — PROOF (student stories)
           ═══════════════════════════════════════════ */}
-      {/* <WhyTrustUs /> */}
+      <TestimonialSection testimonials={testimonialsList} />
 
       {/* ═══════════════════════════════════════════
-          14. TESTIMONIALS
+          12. CAREER GUIDANCE — DECISION (complete support)
           ═══════════════════════════════════════════ */}
-   <TestimonialSection testimonials={testimonialsList} />
+      <CareerGuidance />
 
       {/* ═══════════════════════════════════════════
-          15. FAQ
+          13. FAQ — OBJECTION HANDLING
           ═══════════════════════════════════════════ */}
       <FAQ />
 
       {/* ═══════════════════════════════════════════
-          16. FINAL CTA
+          14. FINAL CTA — ENROLLMENT
           ═══════════════════════════════════════════ */}
       <FinalCTA />
     </>

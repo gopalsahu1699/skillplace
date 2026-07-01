@@ -28,6 +28,7 @@ export default function RegisterPage() {
   const passwordStrength = password.length === 0 ? 0 : passwordValidation.errors.length === 0 ? 4 : passwordValidation.errors.length <= 2 ? 3 : passwordValidation.errors.length <= 3 ? 2 : 1
   const strengthColors = ['bg-slate-200', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500']
   const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong']
+  const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':\\"\\|,.<>\/?~]/
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -247,7 +248,7 @@ export default function RegisterPage() {
                         { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
                         { label: 'One lowercase letter', met: /[a-z]/.test(password) },
                         { label: 'One number', met: /[0-9]/.test(password) },
-                        { label: 'One special character', met: /[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~]/.test(password) },
+                        { label: 'One special character', met: specialCharRegex.test(password) },
                       ].map((req) => (
                         <div key={req.label} className="flex items-center gap-1.5">
                           {req.met ? (

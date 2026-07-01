@@ -53,7 +53,7 @@ export default function JobCoursesSection({
         {/* 1. DESKTOP VIEW: Bento Grid */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Civil Bento */}
-          <div className="md:col-span-8 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow">
+          <div className="md:col-span-8 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-secondary/30 hover:-translate-y-1 transition-all duration-300">
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-headline-md text-headline-md text-primary">Civil Engineering</h3>
@@ -95,7 +95,7 @@ export default function JobCoursesSection({
           </div>
 
           {/* Electrical Bento */}
-          <div className="md:col-span-4 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow">
+          <div className="md:col-span-4 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-sky-300 hover:-translate-y-1 transition-all duration-300">
             <div>
               <h3 className="font-headline-md text-headline-md text-primary mb-6">Electrical</h3>
               <ul className="space-y-3 mb-8">
@@ -110,7 +110,7 @@ export default function JobCoursesSection({
           </div>
 
           {/* Electronics Bento */}
-          <div className="md:col-span-5 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow">
+          <div className="md:col-span-5 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300">
             <div>
               <h3 className="font-headline-md text-headline-md text-primary mb-6">Electronics &amp; Automation</h3>
               <div className="flex flex-wrap gap-2 mb-8">

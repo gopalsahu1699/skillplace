@@ -21,6 +21,22 @@ const faqItems = [
     q: 'Is placement support available?',
     a: 'Absolutely. We provide 100% placement assistance including resume building, interview preparation, mock interviews, and direct connections with hiring partners.',
   },
+  {
+    q: 'What if I don\'t get placed?',
+    a: 'We stand behind our training. Our placement team works actively with 50+ hiring partners. With a 87% placement rate, we are confident in our process. If you follow our guidance, you will get placed.',
+  },
+  {
+    q: 'Can I pay in installments?',
+    a: 'Yes! We offer flexible EMI options for all programs. You can split your fees into easy monthly installments. Contact our admissions team for details.',
+  },
+  {
+    q: 'Are the classes online or offline?',
+    a: 'We offer all three modes — 100% Offline (at our Bilaspur campus), 100% Online (live + recorded), and Hybrid (online lectures + weekend labs). Choose what fits your schedule.',
+  },
+  {
+    q: 'How long are the programs?',
+    a: 'Program durations range from 12 to 48 weeks depending on the discipline and depth. Most core engineering programs run 24-36 weeks with 3-4 sessions per week.',
+  },
 ]
 
 export default function FAQ() {
@@ -34,11 +50,14 @@ export default function FAQ() {
     <section className="py-section-gap px-margin-mobile md:px-margin-desktop bg-surface">
       <div className="max-w-3xl mx-auto">
         <SectionReveal className="text-center mb-12">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-secondary/10 text-secondary text-xs font-bold uppercase tracking-widest mb-4">
+            FAQ
+          </span>
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
             Frequently Asked Questions
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Got questions? We've got answers. If you don't find what you're looking for, reach out to us.
+            Got questions? We&apos;ve got answers. If you don&apos;t find what you&apos;re looking for, reach out to us.
           </p>
         </SectionReveal>
 
@@ -47,7 +66,7 @@ export default function FAQ() {
             {faqItems.map((item, idx) => (
               <div key={idx} className="faq-accordion-item">
                 <button
-                  className="w-full flex items-center justify-between p-6 text-left hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:ring-inset"
+                  className="w-full flex items-center justify-between p-6 text-left hover:bg-surface-container-low/50 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:ring-inset"
                   onClick={() => toggle(idx)}
                   aria-expanded={openIndex === idx}
                   aria-controls={`faq-panel-${idx}`}
@@ -70,7 +89,7 @@ export default function FAQ() {
                   data-open={openIndex === idx}
                 >
                   <div>
-                    <p className="px-6 pb-6 text-body-md text-on-surface-variant">{item.a}</p>
+                    <p className="px-6 pb-6 text-body-md text-on-surface-variant leading-relaxed">{item.a}</p>
                   </div>
                 </div>
               </div>
@@ -79,7 +98,7 @@ export default function FAQ() {
         </SectionReveal>
 
         <SectionReveal>
-          <div className="text-center mt-10">
+          <div className="text-center mt-10 space-y-4">
             <Link
               href="/faq"
               className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-primary-container text-on-primary-container font-bold text-label-md hover:bg-primary/10 transition-all group"
@@ -89,6 +108,12 @@ export default function FAQ() {
                 arrow_forward
               </span>
             </Link>
+            <p className="text-sm text-on-surface-variant">
+              Still have questions?{' '}
+              <Link href="/contact" className="text-secondary font-bold hover:underline">
+                Talk to our team
+              </Link>
+            </p>
           </div>
         </SectionReveal>
       </div>

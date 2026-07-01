@@ -17,45 +17,49 @@ export default function FinalCTA() {
           {/* Content */}
           <div className="relative z-10 p-12 md:p-20 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 mb-8">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-sm font-semibold text-emerald-800">Limited Seats Available</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-sm font-semibold text-emerald-800">Limited Seats for 2026 Batch</span>
             </div>
 
             <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-6 leading-tight">
-              Ready to Build Your
-              <br />
-              <span className="gradient-text">Dream Career?</span>
+              Ready to Build the Career{' '}
+              <br className="hidden sm:block" />
+              <span className="gradient-text">You Deserve?</span>
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-2xl mx-auto">
-              Don't just earn a certificate. Build skills that companies value. Join 2,000+ students who transformed their future.
+              Don&apos;t just earn a certificate. Build skills that companies value. Join 2,000+ students who transformed their future with SkillPlace Academy.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/register"
-                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-10 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-600/25"
+                className="shimmer-btn bg-gradient-to-r from-blue-600 to-blue-500 text-white px-10 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-600/25 hover:shadow-xl hover:-translate-y-0.5 duration-300"
               >
-                Enroll Today
-                <span className="material-symbols-outlined">arrow_forward</span>
+                Start Learning Today
+                <span className="material-symbols-outlined" style={{ fontVariationSettings: '"FILL" 1' }}>arrow_forward</span>
               </Link>
               <Link
-                href="/courses"
-                className="bg-white border border-border-subtle text-on-surface px-8 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-surface-container-low transition-all"
+                href="/contact"
+                className="bg-white border border-border-subtle text-on-surface px-8 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-surface-container-low hover:border-secondary/25 transition-all duration-300"
               >
-                View All Courses
+                Book Free Career Consultation
               </Link>
             </div>
 
-            {/* Trust line */}
-            <div className="mt-8 flex items-center justify-center gap-6 flex-wrap text-sm text-on-surface-variant">
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
-                No payment required to explore
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
-                EMI options available
-              </span>
+            {/* Trust stats */}
+            <div className="mt-10 flex items-center justify-center gap-8 flex-wrap">
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
+                <span><strong className="text-on-surface">2,000+</strong> students trained</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
+                <span><strong className="text-on-surface">87%</strong> placement rate</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
+                <span>EMI options available</span>
+              </div>
             </div>
           </div>
         </div>
