@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getR2Url } from '@/lib/cloudflare-r2'
+import { generatePlaybackUrl } from '@/lib/cloudflare-r2'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 /**
  * GET /api/video/r2-playback
- * Returns the R2 public URL for a lesson video.
- * Checks enrollment before allowing access.
- * Query: ?lessonId=xxx&userId=xxx&courseId=xxx
+ * Returns a presigned R2 playback URL for a lesson video (valid 1 hour).
+ * The presigned URL includes authentication tokens so the browser can
+ * stream directly from R2 with full range request support for seeking.
+ *
+ * Query: ?lessonId=xxx&courseId=xxx&userId=xxx
+ *
+ * Returns JSON: { playbackUrl, filename, type, expiresIn }
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -45,11 +49,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Video not found' }, { status: 404 })
   }
 
-  const playbackUrl = getR2Url(lesson.r2_source_key)
+  try {
+    // Generate a presigned URL (valid 1 hour) that allows direct browser access
+    const playbackUrl = await generatePlaybackUrl(lesson.r2_source_key, 3600)
 
-  return NextResponse.json({
-    playbackUrl,
-    filename: lesson.r2_original_filename,
-    type: 'r2',
-  })
+    return NextResponse.json({
+      playbackUrl,
+      filename: lesson.r2_original_filename,
+      type: 'r2',
+      expiresIn: 3600,
+    })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to generate playback URL'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

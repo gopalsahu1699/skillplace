@@ -87,16 +87,28 @@ export async function getFeaturedTrainingPrograms() {
 }
 
 export async function getProgramCourses(programId: string) {
-  const { data, error } = await adminSupabase
+  const { data: links, error: linksError } = await adminSupabase
     .from('program_courses')
-    .select('*, courses(*)')
+    .select('id, program_id, course_id, order_index')
     .eq('program_id', programId)
     .order('order_index', { ascending: true })
 
-  if (error) {
+  if (linksError || !links || links.length === 0) {
     return []
   }
-  return data || []
+
+  const courseIds = links.map((l) => l.course_id).filter(Boolean)
+  const { data: courses } = await adminSupabase
+    .from('courses')
+    .select('id, title, slug, duration_hours, level, is_active')
+    .in('id', courseIds)
+
+  const courseMap = new Map((courses || []).map((c) => [c.id, c]))
+
+  return links.map((l) => ({
+    ...l,
+    courses: courseMap.get(l.course_id) || null,
+  }))
 }
 
 export async function getTestimonials() {

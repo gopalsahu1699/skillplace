@@ -145,6 +145,7 @@ export interface Lesson {
   video_url: string | null
   video_id: string | null
   video_duration: number | null
+  r2_source_key: string | null
   pdf_url: string | null
   text_content: string | null
   duration_minutes: number | null

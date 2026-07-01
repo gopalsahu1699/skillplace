@@ -1,74 +1,75 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import {
   Play, ChevronRight, ChevronDown, BookOpen, FileText,
-  HelpCircle, CheckCircle, Download, Edit3, Save, Lock, ShoppingCart, Menu
+  HelpCircle, CheckCircle, Download, Edit3, Save, Lock, ShoppingCart, Menu, X,
+  AlertCircle, Loader2
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import SecureVideoPlayer from '@/components/course/SecureVideoPlayer'
 import LectureComingSoon from '@/components/course/LectureComingSoon'
+import ErrorBoundary from '@/components/course/ErrorBoundary'
 import { cn } from '@/lib/utils'
+import type { Course, Module, Lesson, Test, TestQuestion } from '@/types'
 
-interface Lesson {
-  id: string
-  title: string
-  content_type: 'video' | 'pdf' | 'quiz' | 'text'
-  video_url: string | null
-  video_id: string | null
-  pdf_url: string | null
-  text_content: string | null
-  is_free: boolean
-  duration_minutes: number | null
-}
-
-interface Module {
-  id: string
-  title: string
-  description: string | null
-  lessons: Lesson[]
-}
-
-interface QuizQuestion {
-  id: string
-  question: string
-  question_type: string
-  options: string[] | null
-  correct_answer: string
-}
-
-export default function CourseLearnClient({ course, modules: initialModules, enrollmentCount }: {
-  course: any
-  modules: Module[]
+interface CourseLearnClientProps {
+  course: Course & { branches?: unknown }
+  modules: (Module & { lessons: Lesson[] })[]
   enrollmentCount: number
-}) {
-  const [modules] = useState<Module[]>(initialModules)
-  const [activeLesson, setActiveLesson] = useState<Lesson | null>(initialModules?.[0]?.lessons?.[0] || null)
+}
+
+export default function CourseLearnClient({ course, modules: initialModules, enrollmentCount }: CourseLearnClientProps) {
+  const modulesRef = useRef(initialModules)
+  const modules = modulesRef.current
+
+  const [activeLesson, setActiveLesson] = useState<Lesson | null>(
+    initialModules?.[0]?.lessons?.[0] || null
+  )
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(initialModules?.map((m: Module) => m.id) || []))
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(
+    new Set(initialModules?.map((m) => m.id) || [])
+  )
   const [notes, setNotes] = useState('')
+  const [notesDirty, setNotesDirty] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({})
   const [quizSubmitted, setQuizSubmitted] = useState(false)
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [quizScore, setQuizScore] = useState<{ correct: number; total: number } | null>(null)
+  const [quizQuestions, setQuizQuestions] = useState<TestQuestion[]>([])
+  const [currentTest, setCurrentTest] = useState<Test | null>(null)
+  const [user, setUser] = useState<Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user']>(null)
   const [enrolled, setEnrolled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
+  const [resumePosition, setResumePosition] = useState(0)
 
-  // Auth & enrollment check (all client-side using localStorage)
+  const notesSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const activeLessonIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    activeLessonIdRef.current = activeLesson?.id || null
+  }, [activeLesson?.id])
+
   useEffect(() => {
     async function checkAuth() {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      setUser(currentUser)
+      try {
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser()
+        if (error || !currentUser) {
+          setUser(null)
+          setAuthChecked(true)
+          setLoading(false)
+          return
+        }
 
-      if (currentUser) {
-        // Check enrollment
+        setUser(currentUser)
+
         const { data: enrollment } = await supabase
           .from('course_enrollments')
           .select('id')
@@ -77,143 +78,271 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
           .maybeSingle()
 
         setEnrolled(!!enrollment)
+      } catch {
+        setUser(null)
+      } finally {
+        setLoading(false)
+        setAuthChecked(true)
       }
-      setLoading(false)
     }
 
     checkAuth()
 
-    // Listen for auth state changes (after login redirect)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
-      if (session?.user) {
-        // Re-check enrollment after login
-        supabase
-          .from('course_enrollments')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .eq('course_id', course.id)
-          .single()
-          .then(({ data }) => {
-            setEnrolled(!!data)
-            setLoading(false)
-          })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const newUser = session?.user || null
+      setUser(newUser)
+      if (newUser) {
+        try {
+          const { data } = await supabase
+            .from('course_enrollments')
+            .select('id')
+            .eq('user_id', newUser.id)
+            .eq('course_id', course.id)
+            .maybeSingle()
+          setEnrolled(!!data)
+        } catch {
+          // ignore
+        }
       }
     })
 
     return () => subscription.unsubscribe()
   }, [course.id])
 
-  // Fetch progress when user is available
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('course_progress')
-      .select('lesson_id')
-      .eq('user_id', user.id)
-      .eq('course_id', course.id)
-      .eq('completed', true)
-      .then(({ data }) => {
-        if (data) setCompletedLessons(new Set(data.map((d: any) => d.lesson_id)))
-      })
-  }, [user, course.id])
 
-  // Fetch notes when active lesson changes
+    const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id))
+    if (allLessonIds.length === 0) return
+
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('lesson_progress')
+          .select('lesson_id')
+          .eq('user_id', user.id)
+          .eq('is_completed', true)
+          .in('lesson_id', allLessonIds)
+        if (data) setCompletedLessons(new Set(data.map((d) => d.lesson_id)))
+      } catch {}
+    })()
+  }, [user, modules])
+
   useEffect(() => {
-    if (!activeLesson || !user) return
-    supabase
-      .from('user_notes')
-      .select('content')
-      .eq('user_id', user.id)
-      .eq('lesson_id', activeLesson.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setNotes(data.content)
-      })
+    if (!activeLesson || !user) {
+      setNotes('')
+      setNotesDirty(false)
+      return
+    }
+
+    const lessonId = activeLesson.id
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('user_notes')
+          .select('content')
+          .eq('user_id', user.id)
+          .eq('lesson_id', lessonId)
+          .maybeSingle()
+        if (!cancelled && activeLessonIdRef.current === lessonId) {
+          setNotes(data?.content || '')
+          setNotesDirty(false)
+        }
+      } catch {}
+    })()
+
+    return () => { cancelled = true }
   }, [activeLesson?.id, user])
 
-  // Fetch quiz questions
   useEffect(() => {
     if (!activeLesson || activeLesson.content_type !== 'quiz') {
       setQuizQuestions([])
+      setCurrentTest(null)
       return
     }
-    supabase
-      .from('tests')
-      .select('id')
-      .eq('lesson_id', activeLesson.id)
-      .eq('is_active', true)
-      .single()
-      .then(({ data: test }) => {
-        if (test) {
-          supabase
-            .from('test_questions')
-            .select('*')
-            .eq('test_id', test.id)
-            .order('order_index')
-            .then(({ data }) => {
-              if (data) setQuizQuestions(data)
-            })
-        }
-      })
+
+    ;(async () => {
+      try {
+        const { data: test } = await supabase
+          .from('tests')
+          .select('*')
+          .eq('lesson_id', activeLesson.id)
+          .eq('is_active', true)
+          .maybeSingle()
+        if (!test) return
+        setCurrentTest(test)
+        const { data } = await supabase
+          .from('test_questions')
+          .select('*')
+          .eq('test_id', test.id)
+          .order('order_index', { ascending: true })
+        if (data) setQuizQuestions(data)
+      } catch {}
+    })()
   }, [activeLesson?.id, activeLesson?.content_type])
 
-  async function markComplete() {
-    if (!activeLesson || !user) return
-    await supabase.from('course_progress').upsert({
-      user_id: user.id,
-      course_id: course.id,
-      lesson_id: activeLesson.id,
-      completed: true,
-      completed_at: new Date().toISOString(),
-    })
-    setCompletedLessons(prev => new Set([...prev, activeLesson.id]))
-    notify.lessonComplete(activeLesson.title)
-  }
+  useEffect(() => {
+    if (!activeLesson || !user || activeLesson.content_type !== 'video') {
+      setResumePosition(0)
+      return
+    }
 
-  async function saveNotes() {
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('lesson_progress')
+          .select('watched_seconds')
+          .eq('user_id', user.id)
+          .eq('lesson_id', activeLesson.id)
+          .maybeSingle()
+        if (!cancelled && data?.watched_seconds) {
+          setResumePosition(data.watched_seconds)
+        }
+      } catch {}
+    })()
+
+    return () => { cancelled = true }
+  }, [activeLesson?.id, user?.id])
+
+  useEffect(() => {
+    return () => {
+      if (notesSaveTimeoutRef.current) {
+        clearTimeout(notesSaveTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const saveNotesImmediate = useCallback(async (content: string) => {
     if (!activeLesson || !user) return
-    await supabase.from('user_notes').upsert({
-      user_id: user.id,
-      lesson_id: activeLesson.id,
-      content: notes,
-      updated_at: new Date().toISOString(),
-    })
+    try {
+      await supabase.from('user_notes').upsert({
+        user_id: user.id,
+        lesson_id: activeLesson.id,
+        content,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,lesson_id' })
+    } catch {
+      // Silent fail for notes
+    }
+  }, [activeLesson?.id, user?.id])
+
+  const debouncedSaveNotes = useCallback((content: string) => {
+    setNotesDirty(true)
+    if (notesSaveTimeoutRef.current) {
+      clearTimeout(notesSaveTimeoutRef.current)
+    }
+    notesSaveTimeoutRef.current = setTimeout(() => {
+      saveNotesImmediate(content)
+      setNotesDirty(false)
+    }, 1500)
+  }, [saveNotesImmediate])
+
+  const markComplete = useCallback(async () => {
+    if (!activeLesson || !user) return
+    try {
+      await supabase.from('lesson_progress').upsert({
+        user_id: user.id,
+        lesson_id: activeLesson.id,
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,lesson_id' })
+      setCompletedLessons((prev) => new Set([...prev, activeLesson.id]))
+      notify.lessonComplete(activeLesson.title)
+    } catch {
+      notify.genericError('Failed to mark lesson complete')
+    }
+  }, [activeLesson?.id, user?.id])
+
+  const handleSaveNotes = useCallback(async () => {
+    if (notesSaveTimeoutRef.current) {
+      clearTimeout(notesSaveTimeoutRef.current)
+    }
+    setNotesDirty(false)
+    await saveNotesImmediate(notes)
     notify.noteSaved()
-  }
+  }, [notes, saveNotesImmediate])
 
-  function submitQuiz() {
-    setQuizSubmitted(true)
+  const submitQuiz = useCallback(async () => {
+    if (!activeLesson || !user || quizSubmitted) return
+
     const total = quizQuestions.length
-    const correct = quizQuestions.filter(q => quizAnswers[q.id] === q.correct_answer).length
+    const correct = quizQuestions.filter((q) => quizAnswers[q.id] === q.correct_answer).length
     const score = total > 0 ? Math.round((correct / total) * 100) : 0
-    notify.quizSubmitted(score)
-  }
+    const passed = score >= (currentTest?.passing_score || 60)
 
-  function getYouTubeEmbed(url: string) {
-    const match = url?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/)
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null
-  }
+    try {
+      await supabase.from('test_attempts').insert({
+        user_id: user.id,
+        test_id: currentTest?.id || '',
+        answers: quizAnswers,
+        score,
+        passed,
+        completed_at: new Date().toISOString(),
+      })
 
-  const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0)
+      setQuizSubmitted(true)
+      setQuizScore({ correct, total })
+
+      if (passed) {
+        notify.quizSubmitted(score)
+        markComplete()
+      } else {
+        notify.quizFailed()
+      }
+    } catch {
+      notify.genericError('Failed to submit quiz')
+    }
+  }, [activeLesson?.id, user?.id, quizQuestions, quizAnswers, quizSubmitted, currentTest?.id, currentTest?.passing_score, markComplete])
+
+  const allLessons = modules.flatMap((m) => m.lessons)
+  const totalLessons = allLessons.length
   const progressPercent = totalLessons > 0 ? Math.round((completedLessons.size / totalLessons) * 100) : 0
-  const allLessons = modules.flatMap(m => m.lessons)
-  const currentIndex = allLessons.findIndex(l => l.id === activeLesson?.id)
+  const currentIndex = allLessons.findIndex((l) => l.id === activeLesson?.id)
 
-  function toggleModule(moduleId: string) {
-    setExpandedModules(prev => {
+  // Infer content_type from available fields when content_type is null/undefined
+  const getContentType = useCallback((lesson: Lesson): string => {
+    if (lesson.content_type) return lesson.content_type
+    if (lesson.video_url || lesson.video_id) return 'video'
+    if (lesson.pdf_url) return 'pdf'
+    if (lesson.text_content) return 'text'
+    return 'video' // default to video
+  }, [])
+
+  const toggleModule = useCallback((moduleId: string) => {
+    setExpandedModules((prev) => {
       const n = new Set(prev)
       if (n.has(moduleId)) n.delete(moduleId)
       else n.add(moduleId)
       return n
     })
-  }
+  }, [])
 
-  // Auth guard — show overlay instead of redirecting
+  const goToLesson = useCallback((lesson: Lesson) => {
+    if (notesSaveTimeoutRef.current) {
+      clearTimeout(notesSaveTimeoutRef.current)
+      if (notesDirty && activeLessonIdRef.current) {
+        saveNotesImmediate(notes)
+      }
+    }
+    setActiveLesson(lesson)
+    setSidebarOpen(false)
+    setQuizAnswers({})
+    setQuizSubmitted(false)
+    setQuizScore(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [notesDirty, notes, saveNotesImmediate])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4" />
+          <p className="text-sm text-slate-500">Loading course...</p>
+        </div>
       </div>
     )
   }
@@ -230,15 +359,18 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
           <Link href={`/login?redirectedFrom=/courses/${course.slug}/learn`}>
             <Button size="lg" className="bg-blue-600 hover:bg-blue-700 w-full">Sign In</Button>
           </Link>
-          <p className="text-xs text-slate-400 mt-4">Don't have an account? <Link href="/register" className="text-blue-600 hover:underline">Register</Link></p>
+          <p className="text-xs text-slate-400 mt-4">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="text-blue-600 hover:underline">Register</Link>
+          </p>
         </div>
       </div>
     )
   }
 
-  // Enrollment guard — show overlay for paid courses
   if (!enrolled && course.price > 0) {
     const finalPrice = course.discount_price || course.price
+
     const handlePayment = async () => {
       try {
         const res = await fetch('/api/payments/create-order', {
@@ -261,21 +393,27 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
             name: 'Skillplace Academy',
             description: course.title,
             order_id: data.orderId,
-            handler: async function (response: any) {
-              const verifyRes = await fetch('/api/payments/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                }),
-              })
-              const verifyData = await verifyRes.json()
-              if (verifyData.success) {
-                setEnrolled(true)
-                notify.paymentSuccess()
-                window.location.href = verifyData.redirectUrl
+            handler: async function (response: {
+              razorpay_order_id: string
+              razorpay_payment_id: string
+              razorpay_signature: string
+            }) {
+              try {
+                const verifyRes = await fetch('/api/payments/verify', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(response),
+                })
+                const verifyData = await verifyRes.json()
+                if (verifyData.success) {
+                  setEnrolled(true)
+                  notify.paymentSuccess()
+                  window.location.href = verifyData.redirectUrl
+                } else {
+                  notify.paymentError('Payment verification failed')
+                }
+              } catch {
+                notify.paymentError()
               }
             },
             prefill: {
@@ -283,14 +421,25 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
               email: user?.email || '',
             },
             theme: { color: '#2563eb' },
+            modal: {
+              ondismiss: () => notify.paymentCancelled(),
+            },
           }
-          const script = document.createElement('script')
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-          script.onload = () => {
-            const rzp = new (window as any).Razorpay(options)
+
+          const RazorpayCtor = (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay
+
+          if (!document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
+            const script = document.createElement('script')
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+            script.onload = () => {
+              const rzp = new RazorpayCtor(options)
+              rzp.open()
+            }
+            document.body.appendChild(script)
+          } else {
+            const rzp = new RazorpayCtor(options)
             rzp.open()
           }
-          document.body.appendChild(script)
         }
       } catch {
         notify.paymentError()
@@ -312,11 +461,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
               <>₹{course.price.toLocaleString()}</>
             )}
           </p>
-          <Button
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700 w-full"
-            onClick={handlePayment}
-          >
+          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 w-full" onClick={handlePayment}>
             Enroll Now — ₹{finalPrice.toLocaleString()}
           </Button>
           <Link href={`/courses/${course.slug}`}>
@@ -327,197 +472,384 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     )
   }
 
-  // Main learning interface (user is logged in and enrolled or free course)
+  const contentIcon = (type: string) => {
+    switch (type) {
+      case 'video': return <Play className="h-4 w-4" />
+      case 'pdf': return <FileText className="h-4 w-4" />
+      case 'quiz': return <HelpCircle className="h-4 w-4" />
+      default: return <BookOpen className="h-4 w-4" />
+    }
+  }
+
+  const getContentTypeForLesson = useCallback((lesson: Lesson): string => {
+    if (lesson.content_type) return lesson.content_type
+    if (lesson.video_url || lesson.video_id) return 'video'
+    if (lesson.pdf_url) return 'pdf'
+    if (lesson.text_content) return 'text'
+    return 'video'
+  }, [])
+
   return (
-    <div className="bg-slate-50 min-h-screen">
-      {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-3 md:px-6 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <button 
-              className="md:hidden p-2 rounded-lg hover:bg-slate-100 shrink-0"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <Menu className="h-5 w-5 text-slate-600" />
-            </button>
-            <div className="min-w-0">
-              <h1 className="text-base md:text-lg font-bold text-slate-900 truncate">{course.title}</h1>
-              <p className="text-xs md:text-sm text-slate-500 truncate">{activeLesson?.title || 'Select a lesson'}</p>
+    <ErrorBoundary fallbackTitle="Course content error" fallbackMessage="Failed to load course content. Please try again.">
+      <div className="bg-slate-50 min-h-screen">
+        <div className="bg-white border-b border-slate-200 px-3 md:px-6 py-3 sticky top-0 z-30">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-slate-100 shrink-0"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+              >
+                {sidebarOpen ? <X className="h-5 w-5 text-slate-600" /> : <Menu className="h-5 w-5 text-slate-600" />}
+              </button>
+              <div className="min-w-0">
+                <Link href={`/courses/${course.slug}`} className="text-xs text-slate-400 hover:text-blue-600 transition-colors">
+                  {course.title}
+                </Link>
+                <p className="text-sm font-semibold text-slate-900 truncate">{activeLesson?.title || 'Select a lesson'}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 md:gap-3 shrink-0">
-            <span className="text-xs md:text-sm text-slate-500 hidden sm:inline">{completedLessons.size}/{totalLessons}</span>
-            <div className="w-20 md:w-32"><Progress value={progressPercent} className="h-2" /></div>
+            <div className="flex items-center gap-2 md:gap-3 shrink-0">
+              <span className="text-xs md:text-sm text-slate-500 hidden sm:inline">
+                {completedLessons.size}/{totalLessons} completed
+              </span>
+              <div className="w-20 md:w-32"><Progress value={progressPercent} className="h-2" /></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/30 z-20 md:hidden" 
-          onClick={() => setSidebarOpen(false)} 
-        />
-      )}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/30 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
-      <div className="flex" style={{ height: 'calc(100vh - 73px)' }}>
-        {/* Sidebar */}
-        <aside className={cn(
-          "fixed md:static inset-y-0 left-0 z-30 w-80 bg-white border-r border-slate-200 overflow-y-auto flex-shrink-0 transition-transform duration-300 md:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
-          {modules.map((module) => (
-            <div key={module.id} className="border-b border-slate-100">
-              <button className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-slate-50" onClick={() => toggleModule(module.id)}>
-                <ChevronRight className={`h-4 w-4 text-slate-400 transition-transform ${expandedModules.has(module.id) ? 'rotate-90' : ''}`} />
-                <span className="text-sm font-semibold text-slate-800">{module.title}</span>
-              </button>
-              {expandedModules.has(module.id) && module.lessons.map((lesson) => (
-                <button
-                  key={lesson.id}
-                  className={`w-full flex items-center gap-3 px-6 py-2.5 text-left text-sm ${activeLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
-                  onClick={() => { setActiveLesson(lesson); setSidebarOpen(false) }}
-                >
-                  {completedLessons.has(lesson.id) ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" /> : <BookOpen className="h-4 w-4 shrink-0 text-slate-400" />}
-                  <span className="truncate">{lesson.title}</span>
-                  {lesson.is_free && <Badge className="text-[10px] bg-green-100 text-green-700 border-0 h-4 ml-auto">Free</Badge>}
-                </button>
-              ))}
+        <div className="flex" style={{ height: 'calc(100vh - 53px)' }}>
+          <aside className={cn(
+            "fixed md:static inset-y-0 left-0 z-30 w-80 bg-white border-r border-slate-200 overflow-y-auto flex-shrink-0 transition-transform duration-300 md:translate-x-0",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}>
+            <div className="p-3 border-b border-slate-100">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-slate-500">PROGRESS</span>
+                <span className="text-xs font-bold text-blue-600">{progressPercent}%</span>
+              </div>
+              <Progress value={progressPercent} className="h-1.5" />
             </div>
-          ))}
-        </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {activeLesson ? (
-            <div className="max-w-4xl mx-auto">
-              {/* Video - Cloudflare Stream (video_id) or legacy URL fallback */}
-              {activeLesson.content_type === 'video' && (
-                <div className="mb-6">
-                  {activeLesson.video_id || activeLesson.video_url ? (
-                    <SecureVideoPlayer
-                      videoId={activeLesson.video_id || undefined}
-                      videoUrl={activeLesson.video_url || undefined}
-                      lessonId={activeLesson.id}
-                      courseId={course.id}
-                      studentName={user?.user_metadata?.full_name || user?.email || 'Student'}
-                      studentEmail={user?.email || ''}
-                      onProgress={(pct) => {
-                        if (pct > 0) {
-                          supabase.from('course_progress').upsert({
-                            user_id: user.id,
-                            course_id: course.id,
-                            lesson_id: activeLesson.id,
-                            completed: pct >= 90,
-                            completed_at: pct >= 90 ? new Date().toISOString() : null,
-                          })
-                        }
-                      }}
-                    />
-                  ) : (
-                    <LectureComingSoon contentType="video" lessonTitle={activeLesson.title} />
-                  )}
-                </div>
-              )}
-
-              {/* PDF */}
-              {activeLesson.content_type === 'pdf' && (
-                <div className="mb-6">
-                  {activeLesson.pdf_url ? (
-                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-red-500" /><span className="font-medium">{activeLesson.title}</span></div>
-                        <a href={activeLesson.pdf_url} download className="text-sm text-blue-600 flex items-center gap-1"><Download className="h-4 w-4" /> Download</a>
-                      </div>
-                      <iframe src={activeLesson.pdf_url} className="w-full border-0" style={{ height: '70vh' }} />
+            {modules.map((module) => {
+              const moduleCompleted = module.lessons.filter((l) => completedLessons.has(l.id)).length
+              return (
+                <div key={module.id} className="border-b border-slate-100">
+                  <button
+                    className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+                    onClick={() => toggleModule(module.id)}
+                    aria-expanded={expandedModules.has(module.id)}
+                  >
+                    <ChevronRight className={cn(
+                      "h-4 w-4 text-slate-400 transition-transform shrink-0",
+                      expandedModules.has(module.id) && "rotate-90"
+                    )} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold text-slate-800 block truncate">{module.title}</span>
+                      <span className="text-xs text-slate-400">{moduleCompleted}/{module.lessons.length} lessons</span>
                     </div>
-                  ) : (
-                    <LectureComingSoon contentType="pdf" lessonTitle={activeLesson.title} />
-                  )}
-                </div>
-              )}
-
-              {/* Quiz */}
-              {activeLesson.content_type === 'quiz' && (
-                <div className="mb-6">
-                  {quizQuestions.length > 0 ? (
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
-                      <div className="flex items-center gap-2 mb-6"><HelpCircle className="h-5 w-5 text-blue-600" /><h3 className="text-lg font-bold">{activeLesson.title || 'Quiz'}</h3></div>
-                      <div className="space-y-6">
-                        {quizQuestions.map((q, idx) => (
-                          <div key={q.id} className="border-b border-slate-100 pb-6">
-                            <p className="font-medium mb-3"><span className="text-blue-600 mr-2">Q{idx + 1}.</span>{q.question}</p>
-                            {q.options && (
-                              <div className="space-y-2">
-                                {JSON.parse(q.options as any).map((opt: string) => (
-                                  <label key={opt} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${quizSubmitted ? (opt === q.correct_answer ? 'border-green-500 bg-green-50' : quizAnswers[q.id] === opt ? 'border-red-500 bg-red-50' : 'border-slate-200') : quizAnswers[q.id] === opt ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                                    <input type="radio" name={q.id} value={opt} checked={quizAnswers[q.id] === opt} onChange={() => !quizSubmitted && setQuizAnswers(p => ({ ...p, [q.id]: opt }))} disabled={quizSubmitted} className="sr-only" />
-                                    <div className={`h-4 w-4 rounded-full border-2 ${quizAnswers[q.id] === opt ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
-                                    <span className="text-sm">{opt}</span>
-                                    {quizSubmitted && opt === q.correct_answer && <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />}
-                                  </label>
-                                ))}
+                  </button>
+                  {expandedModules.has(module.id) && (
+                    <div className="pb-1">
+                      {module.lessons.map((lesson) => {
+                        const isActive = activeLesson?.id === lesson.id
+                        const isComplete = completedLessons.has(lesson.id)
+                        return (
+                          <button
+                            key={lesson.id}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-6 py-2.5 text-left text-sm transition-all",
+                              isActive
+                                ? 'bg-blue-50 text-blue-700 font-medium border-r-2 border-blue-600'
+                                : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                            onClick={() => goToLesson(lesson)}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            {isComplete ? (
+                              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                            ) : (
+                              <div className={cn(
+                                "h-4 w-4 rounded-full border-2 shrink-0 flex items-center justify-center",
+                                isActive ? 'border-blue-600' : 'border-slate-300'
+                              )}>
+                                {isActive && <div className="h-2 w-2 rounded-full bg-blue-600" />}
                               </div>
                             )}
+                            <span className="truncate flex-1">{lesson.title}</span>
+                            {lesson.is_free && (
+                              <Badge className="text-[10px] bg-green-100 text-green-700 border-0 h-4 ml-auto">Free</Badge>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </aside>
+
+          <main className="flex-1 overflow-y-auto p-4 md:p-8">
+            {activeLesson ? (
+              <div className="max-w-4xl mx-auto">
+                {(getContentType(activeLesson) === 'video') && (
+                  <div className="mb-6">
+                    {activeLesson.video_id || activeLesson.video_url || activeLesson.r2_source_key ? (
+                      <SecureVideoPlayer
+                        videoId={activeLesson.video_id || undefined}
+                        videoUrl={activeLesson.video_url || undefined}
+                        r2SourceKey={activeLesson.r2_source_key}
+                        lessonId={activeLesson.id}
+                        courseId={course.id}
+                        studentName={user?.user_metadata?.full_name || user?.email || 'Student'}
+                        studentEmail={user?.email || ''}
+                        onProgress={async (pct) => {
+                          if (pct > 0) {
+                            try {
+                              await supabase.from('lesson_progress').upsert({
+                                user_id: user.id,
+                                lesson_id: activeLesson.id,
+                                is_completed: pct >= 90,
+                                watched_seconds: Math.round((pct / 100) * 600),
+                                completed_at: pct >= 90 ? new Date().toISOString() : null,
+                              }, { onConflict: 'user_id,lesson_id' })
+                            } catch {}
+
+                            if (pct >= 90) {
+                              setCompletedLessons((prev) => new Set([...prev, activeLesson.id]))
+                            }
+                          }
+                        }}
+                      />
+                    ) : (
+                      <LectureComingSoon contentType="video" lessonTitle={activeLesson.title} />
+                    )}
+                  </div>
+                )}
+
+                {getContentType(activeLesson) === 'pdf' && (
+                  <div className="mb-6">
+                    {activeLesson.pdf_url ? (
+                      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-red-500" />
+                            <span className="font-medium">{activeLesson.title}</span>
                           </div>
-                        ))}
-                        {!quizSubmitted ? (
-                          <Button onClick={submitQuiz} className="bg-blue-600 hover:bg-blue-700">Submit Quiz</Button>
-                        ) : (
-                          <div className="p-4 bg-blue-50 rounded-lg font-medium">
-                            Score: {quizQuestions.filter(q => quizAnswers[q.id] === q.correct_answer).length}/{quizQuestions.length}
+                          <a href={activeLesson.pdf_url} download className="text-sm text-blue-600 flex items-center gap-1 hover:underline">
+                            <Download className="h-4 w-4" /> Download
+                          </a>
+                        </div>
+                        <iframe src={activeLesson.pdf_url} className="w-full border-0" style={{ height: '70vh' }} title={activeLesson.title} />
+                      </div>
+                    ) : (
+                      <LectureComingSoon contentType="pdf" lessonTitle={activeLesson.title} />
+                    )}
+                  </div>
+                )}
+
+                {getContentType(activeLesson) === 'quiz' && (
+                  <div className="mb-6">
+                    {quizQuestions.length > 0 ? (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                        <div className="flex items-center gap-2 mb-6">
+                          <HelpCircle className="h-5 w-5 text-blue-600" />
+                          <h3 className="text-lg font-bold">{activeLesson.title || 'Quiz'}</h3>
+                          {quizSubmitted && quizScore && (
+                            <Badge className={cn(
+                              "ml-2 border-0",
+                              (quizScore.correct / quizScore.total) >= (currentTest?.passing_score || 60) / 100
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            )}>
+                              {quizScore.correct}/{quizScore.total}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="space-y-6">
+                          {quizQuestions.map((q, idx) => {
+                            let options: string[] = []
+                            try {
+                              options = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || [])
+                            } catch {
+                              options = []
+                            }
+                            return (
+                              <div key={q.id} className="border-b border-slate-100 pb-6 last:border-0">
+                                <p className="font-medium mb-3">
+                                  <span className="text-blue-600 mr-2">Q{idx + 1}.</span>
+                                  {q.question}
+                                </p>
+                                <div className="space-y-2">
+                                  {options.map((opt: string) => (
+                                    <label
+                                      key={opt}
+                                      className={cn(
+                                        "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                                        quizSubmitted
+                                          ? opt === q.correct_answer
+                                            ? 'border-green-500 bg-green-50'
+                                            : quizAnswers[q.id] === opt
+                                              ? 'border-red-500 bg-red-50'
+                                              : 'border-slate-200'
+                                          : quizAnswers[q.id] === opt
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-slate-200 hover:border-slate-300'
+                                      )}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={q.id}
+                                        value={opt}
+                                        checked={quizAnswers[q.id] === opt}
+                                        onChange={() => !quizSubmitted && setQuizAnswers((p) => ({ ...p, [q.id]: opt }))}
+                                        disabled={quizSubmitted}
+                                        className="sr-only"
+                                      />
+                                      <div className={cn(
+                                        "h-4 w-4 rounded-full border-2 shrink-0",
+                                        quizAnswers[q.id] === opt ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                                      )} />
+                                      <span className="text-sm">{opt}</span>
+                                      {quizSubmitted && opt === q.correct_answer && <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />}
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                          <div className="flex items-center gap-3 pt-2">
+                            {!quizSubmitted ? (
+                              <Button
+                                onClick={submitQuiz}
+                                className="bg-blue-600 hover:bg-blue-700"
+                                disabled={Object.keys(quizAnswers).length < quizQuestions.length}
+                              >
+                                Submit Quiz
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setQuizAnswers({})
+                                  setQuizSubmitted(false)
+                                  setQuizScore(null)
+                                }}
+                                className="border-slate-300"
+                              >
+                                Retake Quiz
+                              </Button>
+                            )}
                           </div>
-                        )}
+                        </div>
+                      </div>
+                    ) : (
+                      <LectureComingSoon contentType="quiz" lessonTitle={activeLesson.title} />
+                    )}
+                  </div>
+                )}
+
+                {getContentType(activeLesson) === 'text' && (
+                  <div className="mb-6">
+                    {activeLesson.text_content ? (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{activeLesson.text_content}</p>
+                      </div>
+                    ) : (
+                      <LectureComingSoon contentType="text" lessonTitle={activeLesson.title} />
+                    )}
+                  </div>
+                )}
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+                  <button
+                    className="flex items-center gap-2 text-sm font-medium mb-3 text-slate-700 hover:text-blue-600 transition-colors"
+                    onClick={() => setShowNotes(!showNotes)}
+                    aria-expanded={showNotes}
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {showNotes ? 'Hide Notes' : 'Personal Notes'}
+                    {notesDirty && <span className="h-2 w-2 rounded-full bg-amber-400" />}
+                  </button>
+                  {showNotes && (
+                    <div>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => {
+                          setNotes(e.target.value)
+                          debouncedSaveNotes(e.target.value)
+                        }}
+                        placeholder="Write your notes here... (auto-saves)"
+                        className="w-full h-32 p-3 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        aria-label="Lesson notes"
+                      />
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-slate-400">
+                          {notesDirty ? 'Saving...' : 'Auto-saved'}
+                        </span>
+                        <Button size="sm" onClick={handleSaveNotes} className="bg-blue-600 hover:bg-blue-700" disabled={!notesDirty}>
+                          <Save className="h-3 w-3 mr-1" /> Save Now
+                        </Button>
                       </div>
                     </div>
-                  ) : (
-                    <LectureComingSoon contentType="quiz" lessonTitle={activeLesson.title} />
                   )}
                 </div>
-              )}
 
-              {/* Text */}
-              {activeLesson.content_type === 'text' && (
-                <div className="mb-6">
-                  {activeLesson.text_content ? (
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
-                      <p className="text-slate-600">{activeLesson.text_content}</p>
-                    </div>
-                  ) : (
-                    <LectureComingSoon contentType="text" lessonTitle={activeLesson.title} />
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-200">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => currentIndex > 0 && goToLesson(allLessons[currentIndex - 1])}
+                    disabled={currentIndex <= 0}
+                    className="border-slate-300"
+                  >
+                    ← Previous
+                  </Button>
+                  {!completedLessons.has(activeLesson.id) && activeLesson.content_type !== 'quiz' && (
+                    <Button size="sm" onClick={markComplete} className="bg-green-600 hover:bg-green-700 gap-2">
+                      <CheckCircle className="h-4 w-4" /> Mark Complete
+                    </Button>
                   )}
+                  {completedLessons.has(activeLesson.id) && activeLesson.content_type !== 'quiz' && (
+                    <Badge className="bg-green-100 text-green-700 border-0 gap-1">
+                      <CheckCircle className="h-3 w-3" /> Completed
+                    </Badge>
+                  )}
+                  <Button
+                    onClick={() => currentIndex < allLessons.length - 1 && goToLesson(allLessons[currentIndex + 1])}
+                    disabled={currentIndex >= allLessons.length - 1}
+                    size="sm"
+                  >
+                    Next →
+                  </Button>
                 </div>
-              )}
 
-              {/* Notes */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
-                <button className="flex items-center gap-2 text-sm font-medium mb-3" onClick={() => setShowNotes(!showNotes)}>
-                  <Edit3 className="h-4 w-4" /> {showNotes ? 'Hide Notes' : 'Personal Notes'}
-                </button>
-                {showNotes && (
-                  <div>
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Write your notes..." className="w-full h-32 p-3 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <Button size="sm" onClick={saveNotes} className="mt-2 bg-blue-600 hover:bg-blue-700"><Save className="h-3 w-3 mr-1" /> Save</Button>
+                {progressPercent === 100 && (
+                  <div className="mt-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 text-center">
+                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                    <h3 className="text-lg font-bold text-green-800 mb-1">Course Completed!</h3>
+                    <p className="text-sm text-green-600 mb-4">Congratulations on completing all lessons.</p>
+                    <Link href={`/courses/${course.slug}`}>
+                      <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-100">
+                        View Certificate
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </div>
-
-              {/* Navigation */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-200">
-                <Button variant="outline" size="sm" onClick={() => currentIndex > 0 && setActiveLesson(allLessons[currentIndex - 1])} disabled={currentIndex <= 0}>← Previous</Button>
-                {!completedLessons.has(activeLesson?.id) && activeLesson?.content_type !== 'quiz' && (
-                  <Button size="sm" onClick={markComplete} className="bg-green-600 hover:bg-green-700"><CheckCircle className="h-4 w-4 mr-2" /> Mark Complete</Button>
-                )}
-                <Button onClick={() => currentIndex < allLessons.length - 1 && setActiveLesson(allLessons[currentIndex + 1])} disabled={currentIndex >= allLessons.length - 1}>Next →</Button>
+            ) : (
+              <div className="max-w-4xl mx-auto">
+                <LectureComingSoon contentType="video" />
               </div>
-            </div>
-          ) : (
-            <div className="max-w-4xl mx-auto">
-              <LectureComingSoon contentType="video" />
-            </div>
-          )}
-        </main>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }

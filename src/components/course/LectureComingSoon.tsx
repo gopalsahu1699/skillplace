@@ -18,35 +18,35 @@ const contentConfig: Record<
   video: {
     icon: Play,
     label: 'Video',
-    message: 'Video content is being prepared. Check back soon!',
+    message: 'Lecture video will be available soon.',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
   },
   pdf: {
     icon: FileText,
     label: 'PDF Document',
-    message: 'PDF document is being prepared. Check back soon!',
+    message: 'PDF document will be available soon.',
     color: 'text-red-500',
     bgColor: 'bg-red-50',
   },
   quiz: {
     icon: HelpCircle,
     label: 'Quiz',
-    message: 'Quiz questions are being prepared. Check back soon!',
+    message: 'Quiz will be available soon.',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
   },
   text: {
     icon: BookOpen,
     label: 'Reading Material',
-    message: 'Reading material is being prepared. Check back soon!',
+    message: 'Reading material will be available soon.',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
   },
   assignment: {
     icon: PenTool,
     label: 'Assignment',
-    message: 'Assignment details are being prepared. Check back soon!',
+    message: 'Assignment will be available soon.',
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
   },
@@ -78,7 +78,7 @@ export default function LectureComingSoon({
         </div>
 
         <h3 className="text-lg font-bold text-slate-900 mb-1">
-          {config.label} Coming Soon
+          {config.label}
         </h3>
 
         {lessonTitle && (

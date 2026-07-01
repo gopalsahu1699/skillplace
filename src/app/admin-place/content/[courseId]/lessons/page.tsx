@@ -16,6 +16,7 @@ interface DbLesson {
   module_id: string
   title: string
   content: string | null
+  content_type: string | null
   video_url: string | null
   video_id: string | null
   r2_source_key: string | null
@@ -67,6 +68,7 @@ export default function LessonsPage() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadedKey, setUploadedKey] = useState<string | null>(null)
   const [uploadedFilename, setUploadedFilename] = useState<string | null>(null)
+  const [uploadedPlaybackUrl, setUploadedPlaybackUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchModules = useCallback(async () => {
@@ -137,6 +139,7 @@ export default function LessonsPage() {
     setUploadError(null)
     setUploadedKey(null)
     setUploadedFilename(null)
+    setUploadedPlaybackUrl(null)
   }
 
   const MULTIPART_THRESHOLD = 500 * 1024 * 1024 // 500MB — use multipart above this
@@ -184,7 +187,7 @@ export default function LessonsPage() {
         throw new Error(errData.error || 'Failed to get upload URL')
       }
 
-      const { uploadUrl, key } = await res.json()
+      const { uploadUrl, key, playbackUrl } = await res.json()
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
@@ -202,6 +205,7 @@ export default function LessonsPage() {
 
       setUploadedKey(key)
       setUploadedFilename(filename)
+      setUploadedPlaybackUrl(playbackUrl)
       setVideoUploadState('ready')
       setUploadProgress(100)
       toast.success('Video uploaded to R2!')
@@ -214,7 +218,7 @@ export default function LessonsPage() {
   async function handleMultipartUpload(file: File, filename: string, lessonId: string) {
     try {
       // Step 1: Initiate multipart upload
-      const initRes = await fetch('/api/video/multipart/init', {
+      const initRes = await fetch('/api/video/multipart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename, contentType: file.type, lessonId }),
@@ -232,7 +236,7 @@ export default function LessonsPage() {
 
       // Helper: upload a single part
       async function uploadPart(file: File, key: string, uploadId: string, partNumber: number, chunkSize: number) {
-        const urlRes = await fetch(`/api/video/multipart/url?key=${encodeURIComponent(key)}&uploadId=${uploadId}&partNumber=${partNumber}`)
+        const urlRes = await fetch(`/api/video/multipart?key=${encodeURIComponent(key)}&uploadId=${uploadId}&partNumber=${partNumber}`)
         if (!urlRes.ok) throw new Error(`Failed to get URL for part ${partNumber}`)
         const { url } = await urlRes.json()
         const start = (partNumber - 1) * chunkSize
@@ -257,7 +261,7 @@ export default function LessonsPage() {
       }
 
       // Step 3: Complete multipart upload
-      const completeRes = await fetch('/api/video/multipart/complete', {
+      const completeRes = await fetch('/api/video/multipart', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, uploadId, parts }),
@@ -267,8 +271,11 @@ export default function LessonsPage() {
         throw new Error('Failed to complete upload')
       }
 
+      const { playbackUrl } = await completeRes.json()
+
       setUploadedKey(key)
       setUploadedFilename(filename)
+      setUploadedPlaybackUrl(playbackUrl)
       setVideoUploadState('ready')
       setUploadProgress(100)
       toast.success(`Video uploaded! (${(file.size / 1024 / 1024 / 1024).toFixed(1)}GB across ${totalParts} chunks)`)
@@ -296,6 +303,7 @@ export default function LessonsPage() {
       const payload: Record<string, unknown> = {
         title: formData.title.trim(),
         content: formData.content.trim() || null,
+        content_type: 'video',
         duration_minutes: formData.duration_minutes || null,
         is_free: formData.is_free,
       }
@@ -304,10 +312,37 @@ export default function LessonsPage() {
       if (uploadedKey && videoUploadState === 'ready') {
         payload.r2_source_key = uploadedKey
         payload.r2_original_filename = uploadedFilename
-        payload.video_url = null // Clear legacy URL since we use R2
+        payload.video_url = uploadedPlaybackUrl || null
       } else if (formData.video_url.trim()) {
         // Legacy: plain video URL
         payload.video_url = formData.video_url.trim() || null
+      }
+
+      if (editingLesson) {
+        await updateRecord('lessons', editingLesson.id, payload)
+        notify.lessonUpdated()
+      } else {
+        await createRecord('lessons', {
+          ...payload,
+          module_id: selectedModuleId,
+          order_index: lessons.length + 1,
+          is_active: true,
+        })
+        notify.lessonCreated()
+      }
+
+      // If video was uploaded to R2, store the key
+      if (uploadedKey && videoUploadState === 'ready') {
+        payload.content_type = 'video'
+        payload.r2_source_key = uploadedKey
+        payload.r2_original_filename = uploadedFilename
+        payload.video_url = uploadedPlaybackUrl || null
+      } else if (formData.video_url.trim()) {
+        // Legacy: plain video URL
+        payload.content_type = 'video'
+        payload.video_url = formData.video_url.trim() || null
+      } else {
+        payload.content_type = 'text'
       }
 
       if (editingLesson) {

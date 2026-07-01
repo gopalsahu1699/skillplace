@@ -115,7 +115,7 @@ export default function LessonEditorPage() {
         throw new Error(err.error || 'Failed to get upload URL')
       }
 
-      const { uploadUrl, key } = await presignRes.json()
+      const { uploadUrl, key, playbackUrl } = await presignRes.json()
 
       // Step 2: Upload directly to R2 via presigned URL (with progress)
       await new Promise<void>((resolve, reject) => {
@@ -138,6 +138,8 @@ export default function LessonEditorPage() {
         }
 
         xhr.onerror = () => reject(new Error('Upload failed'))
+        xhr.ontimeout = () => reject(new Error('Upload timed out'))
+        xhr.timeout = 3600000
         xhr.send(file)
       })
 
@@ -146,7 +148,7 @@ export default function LessonEditorPage() {
         r2_source_key: key,
         r2_original_filename: file.name,
         stream_status: 'uploaded',
-        video_url: `r2://${key}`,
+        video_url: playbackUrl,
       })
 
       setUploadState('ready')

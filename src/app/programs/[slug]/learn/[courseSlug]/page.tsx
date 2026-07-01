@@ -31,7 +31,6 @@ export default async function CourseLearnPage({
     notFound()
   }
 
-  // Check enrollment: either at program level or course level
   const { data: enrollment } = await adminSupabase
     .from('enrollments')
     .select('id')
@@ -40,22 +39,27 @@ export default async function CourseLearnPage({
     .in('status', ['active', 'completed'])
     .maybeSingle()
 
-  // Also check course-level enrollment
-  const { data: courseEnrollment } = !enrollment ? await adminSupabase
-    .from('enrollments')
-    .select('id')
-    .eq('user_id', user.id)
-    .in('status', ['active', 'completed'])
-    .in('course_id', (
-      await adminSupabase
-        .from('program_courses')
-        .select('course_id')
-        .eq('program_id', program.id)
-    ).data?.map((pc: any) => pc.course_id) || []
-    ).maybeSingle() : { data: null }
+  if (!enrollment) {
+    const { data: courseIds } = await adminSupabase
+      .from('program_courses')
+      .select('course_id')
+      .eq('program_id', program.id)
 
-  if (!enrollment && !courseEnrollment) {
-    redirect(`/programs/${slug}`)
+    if (courseIds && courseIds.length > 0) {
+      const { data: courseEnrollment } = await adminSupabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('status', ['active', 'completed'])
+        .in('course_id', courseIds.map((pc) => pc.course_id))
+        .maybeSingle()
+
+      if (!courseEnrollment) {
+        redirect(`/programs/${slug}`)
+      }
+    } else {
+      redirect(`/programs/${slug}`)
+    }
   }
 
   const { data: course } = await adminSupabase
@@ -82,22 +86,32 @@ export default async function CourseLearnPage({
     thumbnail_url: (m.thumbnail_url as string) || null,
     order_index: (m.order_index as number) || 0,
     lessons: ((m.lessons as Record<string, unknown>[]) || [])
-      .map((l) => ({
-        id: l.id as string,
-        module_id: l.module_id as string,
-        title: l.title as string,
-        content_type: l.content_type as 'video' | 'pdf' | 'quiz' | 'text',
-        video_url: (l.video_url as string) || null,
-        video_id: (l.video_id as string) || null,
-        video_duration: (l.video_duration as number) || null,
-        pdf_url: (l.pdf_url as string) || null,
-        text_content: (l.text_content as string) || null,
-        duration_minutes: (l.duration_minutes as number) || null,
-        order_index: (l.order_index as number) || 0,
-        is_free: (l.is_free as boolean) || false,
-        description: (l.description as string) || null,
-        is_downloadable: (l.is_downloadable as boolean) || false,
-      }))
+      .map((l) => {
+        let contentType = l.content_type as string
+        if (!contentType) {
+          if (l.video_url || l.video_id || l.r2_source_key) contentType = 'video'
+          else if (l.pdf_url) contentType = 'pdf'
+          else if (l.text_content) contentType = 'text'
+          else contentType = 'video'
+        }
+        return {
+          id: l.id as string,
+          module_id: l.module_id as string,
+          title: l.title as string,
+          content_type: contentType,
+          video_url: (l.video_url as string) || null,
+          video_id: (l.video_id as string) || null,
+          r2_source_key: (l.r2_source_key as string) || null,
+          video_duration: (l.video_duration as number) || null,
+          pdf_url: (l.pdf_url as string) || null,
+          text_content: (l.text_content as string) || null,
+          duration_minutes: (l.duration_minutes as number) || null,
+          order_index: (l.order_index as number) || 0,
+          is_free: (l.is_free as boolean) || false,
+          description: (l.description as string) || null,
+          is_downloadable: (l.is_downloadable as boolean) || false,
+        }
+      })
       .sort((a, b) => a.order_index - b.order_index),
   }))
 
@@ -108,6 +122,8 @@ export default async function CourseLearnPage({
       course={course}
       modules={sortedModules}
       userId={user.id}
+      userName={user.user_metadata?.full_name || user.email || 'Student'}
+      userEmail={user.email || ''}
     />
   )
 }

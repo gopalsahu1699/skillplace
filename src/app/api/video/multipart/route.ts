@@ -6,6 +6,7 @@ import {
   completeMultipartUpload,
   abortMultipartUpload,
   getR2Key,
+  getR2Url,
   getPartCount,
   CHUNK_SIZE,
 } from '@/lib/cloudflare-r2'
@@ -104,7 +105,8 @@ export async function PUT(request: NextRequest) {
     }
 
     const result = await completeMultipartUpload(key, uploadId, parts)
-    return NextResponse.json({ success: true, location: result.location })
+    const playbackUrl = getR2Url(key)
+    return NextResponse.json({ success: true, location: result.location, playbackUrl })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })

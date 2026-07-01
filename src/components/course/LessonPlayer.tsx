@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -27,6 +27,7 @@ interface LessonData {
   content_type: string
   video_url: string | null
   video_id: string | null
+  r2_source_key: string | null
   pdf_url: string | null
   text_content: string | null
   duration_minutes: number | null
@@ -60,6 +61,7 @@ export default function LessonPlayer({
   hasNext,
 }: LessonPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const lastProgressRef = useRef(0)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -75,30 +77,56 @@ export default function LessonPlayer({
     }
   }, [])
 
-  const resetControlsTimeout = () => {
+  const resetControlsTimeout = useCallback(() => {
     setShowControls(true)
     if (controlsTimeout.current) clearTimeout(controlsTimeout.current)
     if (playing) {
       controlsTimeout.current = setTimeout(() => setShowControls(false), 3000)
     }
-  }
+  }, [playing])
 
-  const handleTimeUpdate = () => {
+  const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return
+    const currentTime = videoRef.current.currentTime
     const pct = Math.round(
-      (videoRef.current.currentTime / videoRef.current.duration) * 100
+      (currentTime / videoRef.current.duration) * 100
     )
     setProgress(pct)
-    setCurrentTime(videoRef.current.currentTime)
-  }
+    setCurrentTime(currentTime)
 
-  const handleLoadedMetadata = () => {
+    if (pct !== lastProgressRef.current) {
+      lastProgressRef.current = pct
+      if (pct >= 90 && !isCompleted) {
+        ;(async () => {
+          try {
+            await supabase.from('lesson_progress').upsert({
+              user_id: userId,
+              lesson_id: lesson.id,
+              is_completed: true,
+              watched_seconds: Math.round(currentTime),
+              completed_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,lesson_id' })
+            onComplete(lesson.id)
+          } catch {}
+        })()
+      } else if (pct > 0 && pct % 25 === 0) {
+        supabase.from('lesson_progress').upsert({
+          user_id: userId,
+          lesson_id: lesson.id,
+          is_completed: false,
+          watched_seconds: Math.round(currentTime),
+        }, { onConflict: 'user_id,lesson_id' })
+      }
+    }
+  }, [isCompleted, userId, lesson.id, onComplete])
+
+  const handleLoadedMetadata = useCallback(() => {
     if (!videoRef.current) return
     setDuration(videoRef.current.duration)
     setLoading(false)
-  }
+  }, [])
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (!videoRef.current) return
     if (videoRef.current.paused) {
       videoRef.current.play()
@@ -108,53 +136,65 @@ export default function LessonPlayer({
       videoRef.current.pause()
       setPlaying(false)
     }
-  }
+  }, [resetControlsTimeout])
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (!videoRef.current) return
     videoRef.current.muted = !videoRef.current.muted
     setMuted(videoRef.current.muted)
-  }
+  }, [])
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!videoRef.current) return
     const time = (Number(e.target.value) / 100) * videoRef.current.duration
     videoRef.current.currentTime = time
     setProgress(Number(e.target.value))
-  }
+  }, [])
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const m = Math.floor(seconds / 60)
     const s = Math.floor(seconds % 60)
     return `${m}:${s.toString().padStart(2, '0')}`
-  }
+  }, [])
 
-  const markComplete = async () => {
-    await supabase.from('lesson_progress').upsert(
-      {
-        user_id: userId,
-        lesson_id: lesson.id,
-        is_completed: true,
-        completed_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,lesson_id' }
-    )
-    notify.lessonComplete(lesson.title)
-    onComplete(lesson.id)
-  }
+  const markComplete = useCallback(async () => {
+    try {
+      await supabase.from('lesson_progress').upsert(
+        {
+          user_id: userId,
+          lesson_id: lesson.id,
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,lesson_id' }
+      )
+      notify.lessonComplete(lesson.title)
+      onComplete(lesson.id)
+    } catch {
+      notify.genericError('Failed to mark lesson complete')
+    }
+  }, [userId, lesson.id, lesson.title, onComplete])
 
   if (lesson.content_type === 'video') {
-    const hasVideo = !!(lesson.video_id || lesson.video_url)
+    const hasVideo = !!(lesson.video_id || lesson.video_url || lesson.r2_source_key)
 
     if (!hasVideo) {
       return <LectureComingSoon contentType="video" lessonTitle={lesson.title} />
     }
+
+    const videoSource = lesson.r2_source_key
+      ? `/api/video/r2-playback?lessonId=${lesson.id}`
+      : lesson.video_url?.startsWith('r2://')
+        ? `/api/video/r2-playback?lessonId=${lesson.id}`
+        : lesson.video_url
 
     return (
       <div>
         <div
           className="relative bg-slate-900 rounded-2xl overflow-hidden select-none group"
           onMouseMove={resetControlsTimeout}
+          role="region"
+          aria-label="Video player"
         >
           <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-red-600/90 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
             Protected
@@ -173,8 +213,8 @@ export default function LessonPlayer({
             onLoadStart={() => setLoading(true)}
             onClick={togglePlay}
           >
-            {lesson.video_url && (
-              <source src={lesson.video_url} type="video/mp4" />
+            {videoSource && (
+              <source src={videoSource} type="video/mp4" />
             )}
           </video>
 
@@ -189,7 +229,7 @@ export default function LessonPlayer({
               className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 cursor-pointer"
               onClick={togglePlay}
             >
-              <div className="h-16 w-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors">
+              <div className="h-16 w-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all">
                 <Play className="h-7 w-7 text-slate-900 ml-1" fill="currentColor" />
               </div>
             </div>
@@ -209,29 +249,16 @@ export default function LessonPlayer({
                 value={progress}
                 onChange={handleSeek}
                 className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full"
+                aria-label="Video progress"
               />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={togglePlay}
-                  className="text-white hover:text-blue-400 transition-colors"
-                >
-                  {playing ? (
-                    <Pause className="h-5 w-5" />
-                  ) : (
-                    <Play className="h-5 w-5" />
-                  )}
+                <button onClick={togglePlay} className="text-white hover:text-blue-400 transition-colors" aria-label={playing ? 'Pause' : 'Play'}>
+                  {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                 </button>
-                <button
-                  onClick={toggleMute}
-                  className="text-white hover:text-blue-400 transition-colors"
-                >
-                  {muted ? (
-                    <VolumeX className="h-5 w-5" />
-                  ) : (
-                    <Volume2 className="h-5 w-5" />
-                  )}
+                <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors" aria-label={muted ? 'Unmute' : 'Mute'}>
+                  {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </button>
                 <span className="text-white/70 text-xs font-mono">
                   {formatTime(currentTime)} / {formatTime(duration)}
@@ -239,10 +266,7 @@ export default function LessonPlayer({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-white/50 text-xs">{progress}%</span>
-                <button
-                  onClick={() => videoRef.current?.requestFullscreen()}
-                  className="text-white hover:text-blue-400 transition-colors"
-                >
+                <button onClick={() => videoRef.current?.requestFullscreen()} className="text-white hover:text-blue-400 transition-colors" aria-label="Fullscreen">
                   <Maximize className="h-4 w-4" />
                 </button>
               </div>
@@ -281,6 +305,10 @@ export default function LessonPlayer({
         />
       </div>
     )
+  }
+
+  if (lesson.content_type === 'quiz') {
+    return <LectureComingSoon contentType="quiz" lessonTitle={lesson.title} />
   }
 
   if (!lesson.text_content) {

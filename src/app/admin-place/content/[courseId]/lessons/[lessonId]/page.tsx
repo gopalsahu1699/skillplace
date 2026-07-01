@@ -101,7 +101,7 @@ export default function LessonDetailPage() {
         const err = await presignRes.json()
         throw new Error(err.error || 'Failed to get upload URL')
       }
-      const { uploadUrl, key } = await presignRes.json()
+      const { uploadUrl, key, playbackUrl } = await presignRes.json()
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.open('PUT', uploadUrl, true)
@@ -111,6 +111,8 @@ export default function LessonDetailPage() {
         }
         xhr.onload = () => { xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`)) }
         xhr.onerror = () => reject(new Error('Upload failed'))
+        xhr.ontimeout = () => reject(new Error('Upload timed out'))
+        xhr.timeout = 3600000
         xhr.send(file)
       })
       // Save R2 key to lesson record
@@ -118,7 +120,7 @@ export default function LessonDetailPage() {
         r2_source_key: key,
         r2_original_filename: file.name,
         stream_status: 'uploaded',
-        video_url: `r2://${key}`,
+        video_url: playbackUrl,
       })
       setUploadState('ready')
       fetchLesson()
@@ -138,6 +140,7 @@ export default function LessonDetailPage() {
       await updateRecord('lessons', lessonId, {
         title: formData.title.trim(),
         content: formData.content.trim() || null,
+        content_type: 'video',
         video_url: formData.video_url.trim() || null,
         duration_minutes: formData.duration_minutes || null,
         is_free: formData.is_free,

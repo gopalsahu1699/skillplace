@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateUploadUrl, getR2Key } from '@/lib/cloudflare-r2'
+import { generateUploadUrl, getR2Key, getR2Url } from '@/lib/cloudflare-r2'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 /**
@@ -60,9 +60,13 @@ export async function POST(request: NextRequest) {
     // Generate presigned URL (valid for 1 hour)
     const uploadUrl = await generateUploadUrl(key, contentType, 3600)
 
+    // Build the public playback URL so the client can store it
+    const playbackUrl = getR2Url(key)
+
     return NextResponse.json({
       uploadUrl,
       key,
+      playbackUrl,
       expiresIn: 3600,
     })
   } catch (err: unknown) {

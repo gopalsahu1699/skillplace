@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import ErrorBoundary from '@/components/course/ErrorBoundary'
 import { cn } from '@/lib/utils'
 
 interface ProgramLesson {
@@ -95,6 +96,7 @@ export default function ProgramLearnClient({
   }
 
   return (
+    <ErrorBoundary fallbackTitle="Program content error" fallbackMessage="Failed to load program content.">
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -224,5 +226,6 @@ export default function ProgramLearnClient({
         )}
       </div>
     </div>
+    </ErrorBoundary>
   )
 }

@@ -1,20 +1,13 @@
 'use client'
 
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-
-interface LessonContentSkeletonProps {
-  className?: string
-}
-
-export default function LessonContentSkeleton({ className }: LessonContentSkeletonProps) {
+export default function LessonContentSkeleton() {
   return (
-    <div className={cn('space-y-4', className)}>
-      <Skeleton className="w-full aspect-video rounded-2xl" />
+    <div className="max-w-4xl mx-auto animate-pulse">
+      <div className="bg-slate-200 rounded-2xl aspect-video mb-6" />
       <div className="space-y-3">
-        <Skeleton className="h-5 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
+        <div className="h-4 bg-slate-200 rounded w-3/4" />
+        <div className="h-4 bg-slate-200 rounded w-1/2" />
+        <div className="h-4 bg-slate-200 rounded w-5/6" />
       </div>
     </div>
   )

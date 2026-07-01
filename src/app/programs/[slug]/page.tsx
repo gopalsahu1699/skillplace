@@ -74,11 +74,20 @@ export default function ProgramDetailPage() {
 
       const { data: programCourses } = await supabase
         .from('program_courses')
-        .select('courses(*)')
+        .select('course_id')
         .eq('program_id', programs.id)
-        .order('sort_order', { ascending: true })
+        .order('order_index', { ascending: true })
 
-      setCourses((programCourses || []).map((pc: any) => pc.courses).filter(Boolean))
+      const courseIds = (programCourses || []).map((pc: any) => pc.course_id).filter(Boolean)
+      if (courseIds.length > 0) {
+        const { data: coursesData } = await supabase
+          .from('courses')
+          .select('id, title, slug, duration_hours, level')
+          .in('id', courseIds)
+
+        const courseMap = new Map((coursesData || []).map((c) => [c.id, c]))
+        setCourses(courseIds.map((id) => courseMap.get(id)).filter(Boolean) as Course[])
+      }
     } catch {
       setError('Failed to load program. Please try again.')
     }

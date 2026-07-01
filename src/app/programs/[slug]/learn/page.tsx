@@ -5,38 +5,6 @@ import ProgramLearnClient from './ProgramLearnClient'
 
 export const dynamic = 'force-dynamic'
 
-interface CourseSummary {
-  id: string
-  title: string
-  slug: string
-}
-
-interface LessonSummary {
-  id: string
-  module_id: string
-  title: string
-  content_type: string
-  order_index: number
-  duration_minutes: number | null
-}
-
-interface ModuleSummary {
-  id: string
-  course_id: string
-  title: string
-  description: string | null
-  thumbnail_url: string | null
-  order_index: number
-  lessons: LessonSummary[]
-}
-
-interface CourseWithModules {
-  id: string
-  title: string
-  slug: string
-  modules: ModuleSummary[]
-}
-
 export default async function ProgramLearnPage({
   params,
 }: {
@@ -63,7 +31,6 @@ export default async function ProgramLearnPage({
     notFound()
   }
 
-  // Check enrollment: either at program level or course level
   const { data: enrollment } = await adminSupabase
     .from('enrollments')
     .select('id')
@@ -72,48 +39,63 @@ export default async function ProgramLearnPage({
     .in('status', ['active', 'completed'])
     .maybeSingle()
 
-  // Also check if user enrolled in any course of this program
-  const { data: courseEnrollment } = !enrollment ? await adminSupabase
-    .from('enrollments')
-    .select('id')
-    .eq('user_id', user.id)
-    .in('status', ['active', 'completed'])
-    .in('course_id', (
-      await adminSupabase
-        .from('program_courses')
-        .select('course_id')
-        .eq('program_id', program.id)
-    ).data?.map((pc: any) => pc.course_id) || []
-    ).maybeSingle() : { data: null }
+  if (!enrollment) {
+    const { data: courseIds } = await adminSupabase
+      .from('program_courses')
+      .select('course_id')
+      .eq('program_id', program.id)
 
-  if (!enrollment && !courseEnrollment) {
-    redirect(`/programs/${slug}`)
+    if (courseIds && courseIds.length > 0) {
+      const { data: courseEnrollment } = await adminSupabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .in('status', ['active', 'completed'])
+        .in('course_id', courseIds.map((pc) => pc.course_id))
+        .maybeSingle()
+
+      if (!courseEnrollment) {
+        redirect(`/programs/${slug}`)
+      }
+    } else {
+      redirect(`/programs/${slug}`)
+    }
   }
 
-  adminSupabase.from('user_activity').insert({
-    user_id: user.id,
-    action: 'page_view',
-    resource: `/programs/${slug}/learn`,
-  }).then(() => {}, () => {})
-
-  const { data: programCourses } = await adminSupabase
+  const { data: programCourseLinks } = await adminSupabase
     .from('program_courses')
-    .select('courses(*), course_id')
+    .select('course_id')
     .eq('program_id', program.id)
     .order('order_index', { ascending: true })
 
-  const courses: CourseSummary[] = (programCourses || [])
-    .map((pc: { courses: Record<string, unknown> | Record<string, unknown>[] | null }) => {
-      if (!pc.courses) return null
-      const c = Array.isArray(pc.courses) ? pc.courses[0] : pc.courses
-      if (!c) return null
-      return { id: c.id as string, title: c.title as string, slug: c.slug as string }
-    })
-    .filter(Boolean) as CourseSummary[]
+  const courseIds = (programCourseLinks || []).map((pc) => pc.course_id).filter(Boolean)
 
-  const courseIds = courses.map((c) => c.id)
+  const { data: coursesData } = courseIds.length > 0
+    ? await adminSupabase
+        .from('courses')
+        .select('id, title, slug')
+        .in('id', courseIds)
+    : { data: null }
 
-  let modulesData: ModuleSummary[] = []
+  const courses = (coursesData || [])
+    .map((c) => ({ id: c.id, title: c.title, slug: c.slug }))
+
+  let modulesData: {
+    id: string
+    course_id: string
+    title: string
+    description: string | null
+    thumbnail_url: string | null
+    order_index: number
+    lessons: {
+      id: string
+      module_id: string
+      title: string
+      content_type: string
+      order_index: number
+      duration_minutes: number | null
+    }[]
+  }[] = []
 
   if (courseIds.length > 0) {
     const { data: mods } = await adminSupabase
@@ -142,7 +124,7 @@ export default async function ProgramLearnPage({
     }))
   }
 
-  const coursesWithModules: CourseWithModules[] = courses.map((course) => ({
+  const coursesWithModules = courses.map((course) => ({
     ...course,
     modules: modulesData.filter((m) => m.course_id === course.id),
   }))
