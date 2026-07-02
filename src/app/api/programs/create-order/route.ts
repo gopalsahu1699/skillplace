@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { razorpay, RAZORPAY_KEY_ID } from '@/lib/razorpay'
 import { adminSupabase } from '@/lib/supabase/admin'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
 

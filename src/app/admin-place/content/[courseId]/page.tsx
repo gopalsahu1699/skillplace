@@ -93,7 +93,7 @@ export default function CourseContentEditorPage() {
   }, [courseId])
 
   useEffect(() => {
-    fetchCourse()
+    Promise.resolve().then(() => fetchCourse())
   }, [fetchCourse])
 
   if (loading) {

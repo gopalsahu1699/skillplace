@@ -119,7 +119,7 @@ export default function BulkCertificateIssuer({ open, onClose, onComplete }: Bul
       }))
       // Deduplicate by user_id (keep first entry per student)
       const seen = new Set<string>()
-      const deduped = rawEnrollments.filter((e: any) => {
+      const deduped = rawEnrollments.filter((e: { user_id: string }) => {
         if (seen.has(e.user_id)) return false
         seen.add(e.user_id)
         return true

@@ -41,7 +41,7 @@ export default async function WhyTrustUs() {
             Why Students Trust Us
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Numbers don't lie. Here's the impact SkillPlace Academy has made on engineering careers.
+            Numbers don&apos;t lie. Here&apos;s the impact SkillPlace Academy has made on engineering careers.
           </p>
         </SectionReveal>
 

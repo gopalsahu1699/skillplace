@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,8 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Star, Trash2, Eye, EyeOff, Plus, Edit, X } from 'lucide-react'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
+import { Star, Trash2, Eye, EyeOff, Plus, Edit } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 
@@ -65,7 +66,7 @@ export default function AdminTestimonialsPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    Promise.resolve().then(() => fetchData())
   }, [fetchData])
 
   function openCreate() {
@@ -487,36 +488,13 @@ export default function AdminTestimonialsPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Testimonial</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">
-                {deletingTestimonial?.student_name}
-              </span>
-              's testimonial? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Testimonial"
+        itemName={deletingTestimonial?.student_name || 'this item'}
+      />
     </div>
   )
 }

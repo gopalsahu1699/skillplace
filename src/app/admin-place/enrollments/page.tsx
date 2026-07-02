@@ -27,10 +27,6 @@ export default function AdminEnrollmentsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
   async function fetchData() {
     setLoading(true)
     const data = await getRecords('enrollments', undefined, undefined, 'profiles(*),training_programs(*),branches(*)')
@@ -40,6 +36,10 @@ export default function AdminEnrollmentsPage() {
     )
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchData())
+  }, [])
 
   async function updateStatus(id: string, status: string) {
     await updateRecord('enrollments', id, { status })

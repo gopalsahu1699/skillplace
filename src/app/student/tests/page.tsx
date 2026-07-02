@@ -1,8 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Clock, CheckCircle, XCircle, ClipboardList } from 'lucide-react'
+import { Clock, ClipboardList } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
 interface Test {
@@ -19,10 +18,6 @@ export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchTests()
-  }, [])
-
   async function fetchTests() {
     const { data, error } = await supabase
       .from('tests')
@@ -34,6 +29,10 @@ export default function TestsPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchTests())
+  }, [])
 
   return (
     <div>

@@ -10,7 +10,7 @@ function handleSessionExpired() {
   }
 }
 
-async function adminFetch(method: string, table: string, id?: string, body?: any) {
+async function adminFetch(method: string, table: string, id?: string, body?: unknown) {
   const params = new URLSearchParams({ table })
   if (id) params.set('id', id)
 
@@ -75,7 +75,7 @@ export async function getRecord(table: string, id: string, join?: string) {
   return json.data
 }
 
-export async function createRecord(table: string, data: any) {
+export async function createRecord(table: string, data: unknown) {
   const res = await fetch(`${API_BASE}?table=${table}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -90,7 +90,7 @@ export async function createRecord(table: string, data: any) {
   return json.data
 }
 
-export async function updateRecord(table: string, id: string, data: any) {
+export async function updateRecord(table: string, id: string, data: unknown) {
   const res = await fetch(`${API_BASE}?table=${table}&id=${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

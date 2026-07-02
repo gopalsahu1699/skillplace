@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
-import { checkRateLimitDB, logLoginAttempt } from '@/lib/rate-limit'
+import { checkRateLimitDB, logLoginAttempt, getRateLimitHeaders } from '@/lib/rate-limit'
 import crypto from 'crypto'
 
 export async function POST(request: Request) {
@@ -8,10 +8,11 @@ export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1'
 
   const rateCheck = await checkRateLimitDB(ip, 5, 15 * 60 * 1000)
+  const rateHeaders = getRateLimitHeaders(rateCheck)
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: 'Too many attempts. Try again in 15 minutes.' },
-      { status: 429 }
+      { status: 429, headers: rateHeaders }
     )
   }
 
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
   await logLoginAttempt(email, ip, !error, error?.message)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 })
+    return NextResponse.json({ error: error.message }, { status: 401, headers: rateHeaders })
   }
 
   if (data.user) {
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
       login_method: 'email',
     }).then(() => {}, () => {})
 
-    const response = NextResponse.json({ success: true, user: data.user, session: data.session })
+    const response = NextResponse.json({ success: true, user: data.user, session: data.session }, { headers: rateHeaders })
 
     // Set access token cookie so server-side API routes can verify admin sessions
     if (data.session?.access_token) {
@@ -70,5 +71,5 @@ export async function POST(request: Request) {
     return response
   }
 
-  return NextResponse.json({ success: true, user: data.user })
+  return NextResponse.json({ success: true, user: data.user }, { headers: rateHeaders })
 }

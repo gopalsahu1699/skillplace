@@ -63,11 +63,11 @@ export default async function AdminDashboard() {
                   <div key={e.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-blue-600">{((e.profiles as any)?.full_name || 'U').charAt(0)}</span>
+                        <span className="text-sm font-bold text-blue-600">{((e.profiles as { full_name: string })?.full_name || 'U').charAt(0)}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{(e.profiles as any)?.full_name || 'Unknown'}</p>
-                        <p className="text-xs text-slate-500">{(e.training_programs as any)?.name || 'Unknown Program'}</p>
+                        <p className="text-sm font-medium text-slate-900">{(e.profiles as { full_name: string })?.full_name || 'Unknown'}</p>
+                        <p className="text-xs text-slate-500">{(e.training_programs as { name: string })?.name || 'Unknown Program'}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -96,7 +96,7 @@ export default async function AdminDashboard() {
                         <CreditCard className="h-4 w-4 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{(p.profiles as any)?.full_name || 'Unknown'}</p>
+                        <p className="text-sm font-medium text-slate-900">{(p.profiles as { full_name: string })?.full_name || 'Unknown'}</p>
                         <p className="text-xs text-slate-500">{new Date(p.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>

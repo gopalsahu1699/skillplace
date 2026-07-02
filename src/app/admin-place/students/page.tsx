@@ -6,14 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
-import PhoneInput from '@/components/ui/phone-input'
+import dynamic from 'next/dynamic'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
+
+const StudentFormDialog = dynamic(() => import('@/components/admin/StudentFormDialog'), { ssr: false })
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 import {
   Search,
   Plus,
   Pencil,
   Trash2,
-  X,
   Loader2,
   Users,
   ChevronLeft,
@@ -138,7 +140,7 @@ export default function StudentsPage() {
   }
 
   useEffect(() => {
-    Promise.all([fetchStudents(), fetchBranches(), fetchBatches()])
+    Promise.resolve().then(() => Promise.all([fetchStudents(), fetchBranches(), fetchBatches()]))
   }, [])
 
   const programTypes = Array.from(
@@ -162,7 +164,8 @@ export default function StudentsPage() {
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   useEffect(() => {
-    setPage(0)
+    const timeout = setTimeout(() => setPage(0), 0)
+    return () => clearTimeout(timeout)
   }, [search, filterBranch, filterBatch, filterProgram])
 
   const resetForm = () => {
@@ -328,161 +331,26 @@ export default function StudentsPage() {
         </Button>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div
-            className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">
-                {editingId ? 'Edit Student' : 'Add Student'}
-              </h2>
-              <Button variant="ghost" size="icon-sm" onClick={resetForm}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700">Full Name *</label>
-                <Input
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  placeholder="Enter full name"
-                  className="border-slate-300 mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Email *</label>
-                <Input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Enter email"
-                  className="border-slate-300 mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Phone</label>
-                <div className="mt-1">
-                  <PhoneInput
-                    value={form.phone}
-                    onChange={(num) => setForm({ ...form, phone: num })}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Program Type</label>
-                <Input
-                  value={form.program_type}
-                  onChange={(e) => setForm({ ...form, program_type: e.target.value })}
-                  placeholder="e.g. Online Course, Offline, Hybrid"
-                  className="border-slate-300 mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Branch</label>
-                <select
-                  value={form.branch_id}
-                  onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select Branch</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Batch</label>
-                <select
-                  value={form.batch_id}
-                  onChange={(e) => setForm({ ...form, batch_id: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-slate-700">Active</label>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, is_active: !form.is_active })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    form.is_active ? 'bg-blue-600' : 'bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      form.is_active ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 pt-2">
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingId ? 'Update' : 'Create'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-slate-300"
-                  onClick={resetForm}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <StudentFormDialog
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        formData={form as unknown as Record<string, unknown>}
+        onChange={(data) => setForm(data as unknown as StudentForm)}
+        submitting={submitting}
+        editingStudent={editingId}
+        branches={branches}
+        batches={batches}
+        onSubmit={handleSubmit}
+      />
 
-      {deleteConfirmId && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div
-            className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-bold text-slate-900 mb-2">Delete Student</h2>
-            <p className="text-sm text-slate-600 mb-6">
-              Are you sure you want to delete this student? This action cannot be undone.
-            </p>
-            <div className="flex items-center gap-2 justify-end">
-              <Button
-                variant="outline"
-                className="border-slate-300"
-                onClick={() => setDeleteConfirmId(null)}
-                disabled={deleting}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                className="bg-red-600 hover:bg-red-700"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminDeleteDialog
+        open={!!deleteConfirmId}
+        onOpenChange={(open) => { if (!open) setDeleteConfirmId(null) }}
+        onConfirm={handleDelete}
+        title="Student"
+        itemName={students.find((s) => s.id === deleteConfirmId)?.full_name || 'this student'}
+        loading={deleting}
+      />
 
       <div className="flex items-center gap-4 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -601,6 +469,7 @@ export default function StudentsPage() {
           </div>
         ) : (
           <>
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
@@ -722,33 +591,34 @@ export default function StudentsPage() {
                 ))}
               </tbody>
             </table>
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200">
-                <p className="text-sm text-slate-500">
-                  Page {page + 1} of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-300"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-300"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200">
+              <p className="text-sm text-slate-500">
+                Page {page + 1} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-300"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-300"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-            )}
+            </div>
+          )}
           </>
         )}
       </div>

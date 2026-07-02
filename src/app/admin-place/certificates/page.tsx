@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Download, Layers, Users, UserCheck } from 'lucide-react'
 import Link from 'next/link'
 import { getRecords } from '@/lib/admin-api'
-import CertificateGenerator from '@/components/admin/CertificateGenerator'
-import QuickIssueBatch from '@/components/admin/QuickIssueBatch'
-import QuickIssueStudent from '@/components/admin/QuickIssueStudent'
+import dynamic from 'next/dynamic'
+
+const CertificateGenerator = dynamic(() => import('@/components/admin/CertificateGenerator'), { ssr: false })
+const QuickIssueBatch = dynamic(() => import('@/components/admin/QuickIssueBatch'), { ssr: false })
+const QuickIssueStudent = dynamic(() => import('@/components/admin/QuickIssueStudent'), { ssr: false })
 import { CERTIFICATE_TYPES, type CertificateRecord } from '@/lib/certificate-types'
 
 type Certificate = CertificateRecord

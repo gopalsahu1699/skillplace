@@ -14,18 +14,44 @@ interface SecureVideoPlayerProps {
   courseId: string
   studentName: string
   studentEmail: string
+  studentId?: string
+  courseName?: string
   onProgress?: (percent: number) => void
   resumePosition?: number
 }
 
+interface PlaybackTokenResponse {
+  token: string
+  streamUrl: string
+  lessonId: string
+  courseId: string
+  courseTitle?: string
+  lessonTitle?: string
+  expiresIn: number
+  source: { type: 'stream' | 'r2' | 'none' }
+}
+
+const WATERMARK_POSITIONS = [
+  { x: 10, y: 10 },
+  { x: 60, y: 15 },
+  { x: 15, y: 70 },
+  { x: 65, y: 75 },
+  { x: 30, y: 40 },
+  { x: 50, y: 10 },
+  { x: 10, y: 50 },
+  { x: 55, y: 60 },
+]
+
 export default function SecureVideoPlayer({
   videoUrl,
-  videoId,
-  r2SourceKey,
+  videoId: _videoId,
+  r2SourceKey: _r2SourceKey,
   lessonId,
   courseId,
   studentName,
   studentEmail,
+  studentId,
+  courseName,
   onProgress,
   resumePosition = 0,
 }: SecureVideoPlayerProps) {
@@ -34,134 +60,149 @@ export default function SecureVideoPlayer({
   const hlsRef = useRef<Hls | null>(null)
   const lastProgressRef = useRef(0)
   const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tokenRefreshInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const [effectiveUrl, setEffectiveUrl] = useState<string | null>(null)
+  const [streamUrl, setStreamUrl] = useState<string | null>(null)
   const [playbackMode, setPlaybackMode] = useState<'hls' | 'direct' | 'none'>('none')
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [watermarkPos, setWatermarkPos] = useState({ x: 20, y: 20 })
+  const [watermarkPos, setWatermarkPos] = useState(WATERMARK_POSITIONS[0])
+  const [watermarkIdx, setWatermarkIdx] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [noVideo, setNoVideo] = useState(false)
   const [showTabWarning, setShowTabWarning] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [courseTitle, setCourseTitle] = useState(courseName || '')
+  const [watermarkTime, setWatermarkTime] = useState(new Date())
 
-  // Resolve the video source URL
-  useEffect(() => {
-    if (videoId) {
-      setPlaybackMode('hls')
-      return
-    }
-
-    if (!lessonId) {
-      setNoVideo(true)
-      setLoading(false)
-      return
-    }
-
-    let cancelled = false
-
-    async function resolveUrl() {
-      try {
-        setLoading(true)
-        setNoVideo(false)
-
-        // If we have a direct non-R2 URL (e.g., YouTube), use it directly
-        if (videoUrl && !videoUrl.includes('r2.cloudflarestorage.com') && !videoUrl.startsWith('/api/')) {
-          setEffectiveUrl(videoUrl)
-          setPlaybackMode('direct')
-          setLoading(false)
-          return
-        }
-
-        // For R2 videos or when no URL is provided, get a presigned URL from our API
-        const res = await fetch(`/api/video/r2-playback?lessonId=${lessonId}`, {
-          credentials: 'include',
-        })
-
-        if (cancelled) return
-
-        if (res.ok) {
-          const data = await res.json()
-          if (data.playbackUrl) {
-            setEffectiveUrl(data.playbackUrl)
-            setPlaybackMode('direct')
-            return
-          }
-        }
-
-        if (res.status === 404) {
-          setNoVideo(true)
+  const resolvePlaybackToken = useCallback(async (): Promise<PlaybackTokenResponse | null> => {
+    try {
+      const res = await fetch(`/api/video/playback-token?lessonId=${lessonId}`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setError('Access denied. Please sign in and ensure you are enrolled.')
         } else {
           setError('Failed to load video')
         }
-      } catch {
-        if (!cancelled) {
-          setError('Failed to load video')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
+        setLoading(false)
+        return null
       }
+      const data: PlaybackTokenResponse & { error?: string } = await res.json()
+      if (data.error) {
+        setError(data.error)
+        setLoading(false)
+        return null
+      }
+      if (data.courseTitle) setCourseTitle(data.courseTitle)
+      return data
+    } catch {
+      setError('Failed to load video')
+      setLoading(false)
+      return null
+    }
+  }, [lessonId])
+
+  useEffect(() => {
+    let cancelled = false
+    const retryCount = 0
+    const maxRetries = 2
+
+    async function initPlayback() {
+      setLoading(true)
+      setError('')
+      setNoVideo(false)
+
+      if (!lessonId) {
+        setNoVideo(true)
+        setLoading(false)
+        return
+      }
+
+      if (videoUrl && !videoUrl.includes('r2.cloudflarestorage.com') && !videoUrl.startsWith('/api/')) {
+        setStreamUrl(videoUrl)
+        setPlaybackMode('direct')
+        setLoading(false)
+        return
+      }
+
+      const tokenData = await resolvePlaybackToken()
+      if (cancelled || !tokenData) return
+
+      if (tokenData.source.type === 'none') {
+        setNoVideo(true)
+        setLoading(false)
+        return
+      }
+
+      setStreamUrl(tokenData.streamUrl)
+      setPlaybackMode(tokenData.source.type === 'stream' ? 'hls' : 'direct')
+      setLoading(false)
     }
 
-    resolveUrl()
+    initPlayback()
 
-    return () => { cancelled = true }
-  }, [videoId, lessonId, videoUrl])
+    const refreshInterval = setInterval(async () => {
+      if (cancelled) return
+      const tokenData = await resolvePlaybackToken()
+      if (!cancelled && tokenData) {
+        setStreamUrl(tokenData.streamUrl)
+      }
+    }, 45000)
 
-  // HLS initialization
+    tokenRefreshInterval.current = refreshInterval
+
+    return () => {
+      cancelled = true
+      if (refreshInterval) clearInterval(refreshInterval)
+    }
+  }, [lessonId, videoUrl, resolvePlaybackToken])
+
   useEffect(() => {
-    if (playbackMode !== 'hls' || !videoId || !videoRef.current) return
+    if (playbackMode !== 'hls' || !streamUrl || !videoRef.current) {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+      return
+    }
 
     let destroyed = false
     const video = videoRef.current
+    const url: string = streamUrl
 
-    async function loadSignedUrl() {
-      try {
-        setLoading(true)
-        const res = await fetch(`/api/video/${videoId}?courseId=${courseId}`, {
-          credentials: 'include',
+    function loadHls() {
+      if (Hls.isSupported()) {
+        if (hlsRef.current) {
+          hlsRef.current.destroy()
+        }
+        const hls = new Hls({
+          xhrSetup: (xhr) => {
+            xhr.withCredentials = false
+          },
         })
-        const data = await res.json()
-
-        if (destroyed) return
-
-        if (!res.ok || data.error) {
-          setError(data.error || 'Failed to load video')
-          return
-        }
-
-        const { playbackUrl } = data
-
-        if (Hls.isSupported()) {
-          const hls = new Hls({
-            xhrSetup: (xhr) => {
-              xhr.withCredentials = false
-            },
-          })
-          hlsRef.current = hls
-          hls.loadSource(playbackUrl)
-          hls.attachMedia(video)
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            setLoading(false)
-          })
-          hls.on(Hls.Events.ERROR, (_event, errData) => {
-            if (errData.fatal) {
-              setError('Failed to load video stream')
-            }
-          })
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = playbackUrl
-        }
-      } catch {
-        if (!destroyed) setError('Failed to load video')
+        hlsRef.current = hls
+        hls.loadSource(url)
+        hls.attachMedia(video)
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (!destroyed) setLoading(false)
+        })
+        hls.on(Hls.Events.ERROR, (_event, errData) => {
+          if (errData.fatal && !destroyed) {
+            setError('Failed to load video stream')
+          }
+        })
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url
       }
     }
 
-    loadSignedUrl()
+    loadHls()
 
     return () => {
       destroyed = true
@@ -170,20 +211,17 @@ export default function SecureVideoPlayer({
         hlsRef.current = null
       }
     }
-  }, [playbackMode, videoId, courseId])
+  }, [playbackMode, streamUrl])
 
-  // Watermark animation
   useEffect(() => {
     const interval = setInterval(() => {
-      setWatermarkPos({
-        x: Math.random() * 60 + 10,
-        y: Math.random() * 60 + 10,
-      })
-    }, 10000)
+      setWatermarkIdx((prev) => (prev + 1) % WATERMARK_POSITIONS.length)
+      setWatermarkPos(WATERMARK_POSITIONS[(watermarkIdx + 1) % WATERMARK_POSITIONS.length])
+      setWatermarkTime(new Date())
+    }, 8000)
     return () => clearInterval(interval)
-  }, [])
+  }, [watermarkIdx])
 
-  // Tab switch detection
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && videoRef.current && !videoRef.current.paused) {
@@ -195,7 +233,6 @@ export default function SecureVideoPlayer({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
-  // Security: disable context menu and devtools keys
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -204,7 +241,9 @@ export default function SecureVideoPlayer({
     const preventKeys = (e: KeyboardEvent) => {
       if (
         e.key === 'F12' ||
-        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key))
+        e.key === 'PrintScreen' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) ||
+        (e.ctrlKey && e.key === 'u')
       ) {
         e.preventDefault()
       }
@@ -282,19 +321,28 @@ export default function SecureVideoPlayer({
     return `${m}:${s.toString().padStart(2, '0')}`
   }, [])
 
-  // Cleanup controls timeout on unmount
   useEffect(() => {
     return () => {
       if (controlsTimeout.current) clearTimeout(controlsTimeout.current)
+      if (tokenRefreshInterval.current) clearInterval(tokenRefreshInterval.current)
     }
   }, [])
 
-  // No video available
+  const formatWatermarkTime = (date: Date) => {
+    return date.toLocaleString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  }
+
   if (noVideo) {
     return <LectureComingSoon contentType="video" />
   }
 
-  // Error state
   if (error) {
     return (
       <div className="bg-slate-900 rounded-2xl aspect-video flex items-center justify-center">
@@ -334,17 +382,21 @@ export default function SecureVideoPlayer({
           transform: 'translate(-50%, -50%) rotate(-15deg)',
         }}
       >
-        <div className="bg-black/40 backdrop-blur-sm text-white/80 text-sm font-medium px-4 py-2 rounded-lg border border-white/10 whitespace-nowrap">
-          <div className="font-bold">{studentName}</div>
-          <div className="text-xs opacity-70">{studentEmail}</div>
+        <div className="bg-black/50 backdrop-blur-sm text-white/85 text-xs font-medium px-3 py-2 rounded-lg border border-white/10 whitespace-nowrap leading-relaxed">
+          <div className="font-bold text-sm">{studentName}</div>
+          <div className="opacity-80">{studentEmail}</div>
+          <div className="opacity-60 font-mono text-[10px]">
+            {studentId ? `ID: ${studentId.slice(0, 8)}` : ''}
+          </div>
+          <div className="opacity-60 text-[10px]">
+            {formatWatermarkTime(watermarkTime)}
+          </div>
+          {courseTitle && (
+            <div className="opacity-60 text-[10px] truncate max-w-[200px]">
+              {courseTitle}
+            </div>
+          )}
         </div>
-      </div>
-
-      <div className="absolute top-3 right-3 z-20 pointer-events-none text-white/20 text-xs font-mono">
-        {new Date().toLocaleDateString()}
-      </div>
-      <div className="absolute bottom-20 left-3 z-20 pointer-events-none text-white/20 text-xs font-mono">
-        {studentEmail}
       </div>
 
       <video
@@ -361,8 +413,8 @@ export default function SecureVideoPlayer({
         onError={() => setError('Failed to load video')}
         onClick={togglePlay}
       >
-        {playbackMode === 'direct' && effectiveUrl && (
-          <source src={effectiveUrl} type="video/mp4" />
+        {playbackMode === 'direct' && streamUrl && (
+          <source src={streamUrl} type="video/mp4" />
         )}
       </video>
 

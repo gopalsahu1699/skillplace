@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { LayoutDashboard, BookOpen, Award, ClipboardList, User, LogOut, Bell, ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,7 @@ const links = [
 
 export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
       body: JSON.stringify({ type: 'all' }),
     }).catch(() => {})
     await supabase.auth.signOut()
-    window.location.href = '/'
+    router.push('/')
   }
 
   return (

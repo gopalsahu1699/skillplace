@@ -1,24 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
+import dynamic from 'next/dynamic'
+
+const ScheduleFormDialog = dynamic(() => import('@/components/admin/ScheduleFormDialog'), { ssr: false })
 import {
   Calendar,
   Plus,
   Trash2,
   Eye,
-  Search,
-  X,
   Clock,
   Video,
   MapPin,
@@ -26,13 +19,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
-
-interface Course {
-  id: string
-  title: string
-  slug: string
-  is_active: boolean
-}
+import type { Course } from '@/types'
 
 interface ClassSchedule {
   id: string
@@ -66,6 +53,9 @@ export default function AdminSchedulePage() {
   const [saving, setSaving] = useState(false)
   const [filterType, setFilterType] = useState<string>('all')
   const [filterMonth, setFilterMonth] = useState('')
+  const [page, setPage] = useState(0)
+
+  const PAGE_SIZE = 10
   const [formData, setFormData] = useState({
     course_id: '',
     title: '',
@@ -83,7 +73,6 @@ export default function AdminSchedulePage() {
   const [courseSearch, setCourseSearch] = useState('')
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-  const courseSearchRef = useRef<HTMLDivElement>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -93,7 +82,7 @@ export default function AdminSchedulePage() {
         getRecords('courses'),
       ])
 
-      const courseList: Course[] = (coursesData || []).map((c: any) => ({
+      const courseList: Course[] = (coursesData || []).map((c: { id: string; title?: string; slug?: string; is_active?: boolean }) => ({
         id: c.id,
         title: c.title || '',
         slug: c.slug || '',
@@ -103,7 +92,7 @@ export default function AdminSchedulePage() {
 
       const courseMap = new Map(courseList.map((c) => [c.id, c]))
 
-      const enrichedClasses: ClassScheduleWithCourse[] = (classesData || []).map((cls: any) => ({
+      const enrichedClasses: ClassScheduleWithCourse[] = (classesData || []).map((cls: { id: string; course_id: string; class_date: string; start_time: string; end_time: string; instructor: string; room: string; type: string; created_at: string; updated_at: string }) => ({
         ...cls,
         course: courseMap.get(cls.course_id) || null,
       }))
@@ -120,24 +109,8 @@ export default function AdminSchedulePage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    Promise.resolve().then(() => fetchData())
   }, [fetchData])
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (courseSearchRef.current && !courseSearchRef.current.contains(event.target as Node)) {
-        setCourseDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const filteredCourses = courses.filter((c) => {
-    const search = courseSearch.toLowerCase().trim()
-    if (!search) return true
-    return c.title.toLowerCase().includes(search) || c.slug.toLowerCase().includes(search)
-  })
 
   function selectCourse(course: Course) {
     setSelectedCourse(course)
@@ -284,6 +257,9 @@ export default function AdminSchedulePage() {
     return true
   })
 
+  const totalPages = Math.ceil(filteredClasses.length / PAGE_SIZE)
+  const pagedClasses = filteredClasses.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -351,7 +327,7 @@ export default function AdminSchedulePage() {
           <span className="text-sm text-slate-600">Type:</span>
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => { setFilterType(e.target.value); setPage(0) }}
             className="border border-slate-300 rounded-xl px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All</option>
@@ -365,7 +341,7 @@ export default function AdminSchedulePage() {
           <input
             type="month"
             value={filterMonth}
-            onChange={(e) => setFilterMonth(e.target.value)}
+            onChange={(e) => { setFilterMonth(e.target.value); setPage(0) }}
             className="border border-slate-300 rounded-xl px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -382,7 +358,7 @@ export default function AdminSchedulePage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredClasses.map((cls) => {
+          {pagedClasses.map((cls) => {
             const upcoming = isUpcoming(cls)
             const today = isToday(cls)
             return (
@@ -492,263 +468,60 @@ export default function AdminSchedulePage() {
           })}
         </div>
       )}
+      {filteredClasses.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-4 px-1">
+          <p className="text-sm text-slate-500">
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredClasses.length)} of{' '}
+            {filteredClasses.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-slate-600 font-medium px-2">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {editingClass ? 'Edit Class' : 'Schedule New Class'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingClass
-                ? 'Update class schedule details'
-                : 'Set date, time, and type for the new class'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div ref={courseSearchRef} className="relative">
-              <label className="text-sm font-medium text-slate-700">
-                Course <span className="text-red-500">*</span>
-              </label>
-              {selectedCourse ? (
-                <div className="mt-1 flex items-center gap-2 p-3 border border-blue-300 bg-blue-50 rounded-xl">
-                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-blue-600">
-                      {selectedCourse.title.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">
-                      {selectedCourse.title}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearCourseSelection}
-                    className="p-1 rounded hover:bg-blue-100 text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="relative mt-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      value={courseSearch}
-                      onChange={(e) => {
-                        setCourseSearch(e.target.value)
-                        setCourseDropdownOpen(true)
-                      }}
-                      onFocus={() => setCourseDropdownOpen(true)}
-                      className="pl-10 border-slate-300"
-                      placeholder="Search courses by title..."
-                    />
-                  </div>
-                  {courseDropdownOpen && filteredCourses.length > 0 && (
-                    <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg">
-                      {filteredCourses.map((course) => (
-                        <button
-                          key={course.id}
-                          type="button"
-                          onClick={() => selectCourse(course)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors"
-                        >
-                          <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                            <span className="text-xs font-bold text-blue-600">
-                              {course.title.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">
-                              {course.title}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {courseDropdownOpen && filteredCourses.length === 0 && courseSearch && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-center">
-                      <p className="text-sm text-slate-500">No courses found matching &quot;{courseSearch}&quot;</p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="border-slate-300 mt-1"
-                placeholder="e.g. Chapter 1 - Introduction"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Description</label>
-              <Input
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="border-slate-300 mt-1"
-                placeholder="Optional class description"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">
-                Class Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.class_type}
-                onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'online' | 'offline' | 'hybrid' })}
-                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-1"
-              >
-                <option value="online">Online</option>
-                <option value="offline">Offline</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Date <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="date"
-                  value={formData.class_date}
-                  onChange={(e) => setFormData({ ...formData, class_date: e.target.value })}
-                  className="border-slate-300 mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Start Time <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="time"
-                  value={formData.start_time}
-                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  className="border-slate-300 mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">
-                  End Time <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="time"
-                  value={formData.end_time}
-                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  className="border-slate-300 mt-1"
-                  required
-                />
-              </div>
-            </div>
-            {(formData.class_type === 'online' || formData.class_type === 'hybrid') && (
-              <div>
-                <label className="text-sm font-medium text-slate-700">Meeting Link</label>
-                <Input
-                  value={formData.meeting_link}
-                  onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-                  className="border-slate-300 mt-1"
-                  placeholder="https://meet.google.com/..."
-                />
-              </div>
-            )}
-            {(formData.class_type === 'offline' || formData.class_type === 'hybrid') && (
-              <div>
-                <label className="text-sm font-medium text-slate-700">Location</label>
-                <Input
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="border-slate-300 mt-1"
-                  placeholder="e.g. Room 101, Main Campus"
-                />
-              </div>
-            )}
-            <div>
-              <label className="text-sm font-medium text-slate-700">Notes</label>
-              <Input
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="border-slate-300 mt-1"
-                placeholder="Optional notes for this class"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="rounded"
-                id="schedule-active"
-              />
-              <label htmlFor="schedule-active" className="text-sm text-slate-600">
-                Active (visible to students)
-              </label>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowForm(false)}
-                className="border-slate-300"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={saving || !formData.course_id || !formData.title || !formData.class_date || !formData.start_time || !formData.end_time}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {saving
-                  ? 'Saving...'
-                  : editingClass
-                    ? 'Update'
-                    : 'Schedule Class'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ScheduleFormDialog
+        open={showForm}
+        onOpenChange={setShowForm}
+        formData={formData}
+        onChange={(data) => setFormData(data as unknown as typeof formData)}
+        submitting={saving}
+        editingClass={editingClass as unknown as Record<string, string | boolean | null | undefined> | null}
+        courses={courses}
+        selectedCourse={selectedCourse}
+        onSelectCourse={selectCourse}
+        onClearCourse={clearCourseSelection}
+        courseSearch={courseSearch}
+        onCourseSearchChange={setCourseSearch}
+        courseDropdownOpen={courseDropdownOpen}
+        onCourseDropdownChange={setCourseDropdownOpen}
+        onSubmit={handleSubmit}
+      />
 
       {/* Delete Confirmation */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Class</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">
-                {deletingClass?.title || 'this class'}
-              </span>
-              ? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Class"
+        itemName={deletingClass?.title || 'this item'}
+      />
     </div>
   )
 }

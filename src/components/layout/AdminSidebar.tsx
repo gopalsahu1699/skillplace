@@ -33,17 +33,17 @@ interface AdminSidebarProps {
   isAdmin?: boolean
   permissions?: EmployeePermission | null
   isOpen?: boolean
-  onToggle?: () => void
+  _onToggle?: () => void
 }
 
-export default function AdminSidebar({ isAdmin, permissions, isOpen, onToggle }: AdminSidebarProps) {
+export default function AdminSidebar({ isAdmin, permissions, isOpen }: AdminSidebarProps) {
   const pathname = usePathname()
 
   // Admin sees all links; employees only see permitted ones
   const visibleLinks = isAdmin || !permissions
     ? links
     : links.filter(link => {
-        // Dashboard always visible if user has any permission
+        // Dashboard always visible if user has unknown permission
         if (link.href === '/admin-place') return true
         if (!link.permissionKey) return true
         return permissions[link.permissionKey] === true

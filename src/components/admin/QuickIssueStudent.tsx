@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -62,7 +61,7 @@ export default function QuickIssueStudent({ open, onClose, onComplete }: QuickIs
       ])
       const batchMap = new Map<string, { name: string; program_type: string }>()
       if (batchesData) {
-        batchesData.forEach((b: any) => {
+        batchesData.forEach((b: { id: string; name: string; program_type: string }) => {
           batchMap.set(b.id, { name: b.name, program_type: b.program_type })
         })
       }
@@ -77,8 +76,8 @@ export default function QuickIssueStudent({ open, onClose, onComplete }: QuickIs
             full_name: s.full_name as string | null,
             email: s.email as string,
             batch_id: batchId,
-            batch_name: batch?.name || (s as any).batches?.name || null,
-            program_type: batch?.program_type || (s as any).batches?.program_type || null,
+            batch_name: batch?.name || null,
+            program_type: batch?.program_type || null,
           }
         })
       setStudents(studentList)

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Plus, ChevronUp, ChevronDown, Edit, Trash2, X } from 'lucide-react'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 
@@ -61,7 +62,7 @@ export default function ModulesPage() {
     }
   }, [courseId])
 
-  useEffect(() => { fetchModules() }, [fetchModules])
+  useEffect(() => { Promise.resolve().then(() => fetchModules()) }, [fetchModules])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -199,25 +200,13 @@ export default function ModulesPage() {
         </div>
       )}
 
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">Delete Module</h2>
-              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="p-1 rounded hover:bg-slate-100">
-                <X className="h-4 w-4 text-slate-500" />
-              </button>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">
-              Are you sure you want to delete <span className="font-semibold text-slate-900">{deletingModule?.title}</span>? All lessons in this module will also be deleted.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="border-slate-300">Cancel</Button>
-              <Button variant="destructive" onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Delete</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Module"
+        itemName={deletingModule?.title || 'this item'}
+      />
     </div>
   )
 }

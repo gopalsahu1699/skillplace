@@ -1,4 +1,5 @@
 'use client'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { SafeImg } from '@/components/ui/safe-image'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
@@ -68,15 +69,15 @@ export default function AdminEmployeesPage() {
     if (employeesData) {
       const permMap = new Map()
       if (permissionsData) {
-        permissionsData.forEach((p: any) => permMap.set(p.employee_id, p))
+        permissionsData.forEach((p: EmployeePermission) => permMap.set(p.employee_id, p))
       }
       
-      const enriched = employeesData.map((emp: any) => ({
+      const enriched = employeesData.map((emp: Employee) => ({
         ...emp,
         employee_permissions: permMap.get(emp.id) || null,
       }))
       
-      const sorted = enriched.sort((a: any, b: any) => 
+      const sorted = enriched.sort((a: EmployeeWithPermissions, b: EmployeeWithPermissions) => 
         (a.name || '').localeCompare(b.name || '')
       )
       setEmployees(sorted)
@@ -514,40 +515,13 @@ export default function AdminEmployeesPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Employee</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">
-                {deletingEmployee?.name}
-              </span>
-              ? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowDeleteConfirm(false)
-                setDeletingEmployee(null)
-              }}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Employee"
+        itemName={deletingEmployee?.name || 'this employee'}
+      />
 
       {/* Permissions Dialog */}
       <Dialog open={showPermissions} onOpenChange={setShowPermissions}>

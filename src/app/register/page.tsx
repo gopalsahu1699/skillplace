@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import PhoneInput from '@/components/ui/phone-input'
 import { validatePhoneStrict, displayPhone } from '@/lib/validation/phone'
-import { GraduationCap, User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle, XCircle, Check } from 'lucide-react'
+import { GraduationCap, User, Mail, Lock, Eye, CheckCircle, EyeOff, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import { validatePasswordStrength } from '@/lib/auth'
@@ -82,7 +82,7 @@ export default function RegisterPage() {
 
       if (data.session) {
         notify.registerSuccess()
-        window.location.href = '/'
+        router.push('/')
         return
       }
     }

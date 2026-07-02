@@ -28,11 +28,11 @@ export async function createOrder(
       ...(notes && { notes }),
     })
     return order
-  } catch (err: any) {
-    if (err?.error?.description) {
-      throw new Error(`Razorpay error: ${err.error.description}`)
+  } catch (error) {
+    if ((error as any)?.error?.description) {
+      throw new Error(`Razorpay error: ${(error as any).error.description}`)
     }
-    throw err
+    throw error
   }
 }
 

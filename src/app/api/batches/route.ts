@@ -10,23 +10,21 @@ export async function GET(request: NextRequest) {
   const id = searchParams.get('id')
 
   try {
-    let query: any = adminSupabase
+    let query = adminSupabase
       .from('batches')
       .select('*, courses(title)')
 
     if (id) {
-      query = query.eq('id', id).single()
-    } else {
-      query = query.order('created_at', { ascending: false })
+      query = query.eq('id', id)
     }
 
-    const { data, error } = await query
+    const { data, error } = await query.order('created_at', { ascending: false })
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
     const batches = Array.isArray(data) ? data : [data]
 
     const batchesWithCounts = await Promise.all(
-      batches.map(async (b: any) => {
+      batches.map(async (b: { id: string }) => {
         const { count } = await adminSupabase
           .from('profiles')
           .select('id', { count: 'exact', head: true })
@@ -37,8 +35,8 @@ export async function GET(request: NextRequest) {
 
     if (id) return NextResponse.json({ data: batchesWithCounts[0] })
     return NextResponse.json({ data: batchesWithCounts })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -61,8 +59,8 @@ export async function POST(request: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -91,8 +89,8 @@ export async function PUT(request: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -106,7 +104,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await adminSupabase.from('batches').delete().eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

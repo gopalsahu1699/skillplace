@@ -1,13 +1,13 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { GraduationCap, LogOut, Bell, ChevronDown, User, BookOpen, Award } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
 export default function StudentNavbar() {
-  const pathname = usePathname()
-  const [user, setUser] = useState<any>(null)
+    const router = useRouter()
+  const [user, setUser] = useState<{ id: string; email?: string; user_metadata?: Record<string, unknown> } | null>(null)
   const [profileName, setProfileName] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -46,7 +46,7 @@ export default function StudentNavbar() {
       body: JSON.stringify({ type: 'all' }),
     }).catch(() => {})
     await supabase.auth.signOut()
-    window.location.href = '/'
+    router.push('/')
   }
 
   const getInitials = (name: string | null | undefined, email: string | undefined) => {
@@ -55,7 +55,7 @@ export default function StudentNavbar() {
     return 'U'
   }
 
-  const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Student'
+  const displayName: string = profileName || (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'Student'
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
@@ -94,7 +94,7 @@ export default function StudentNavbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <div className="h-7 w-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                  {getInitials(profileName || user?.user_metadata?.full_name, user?.email)}
+                  {getInitials(profileName || (user?.user_metadata?.full_name as string | undefined), user?.email)}
                 </div>
                 <span className="text-sm font-medium text-slate-700 max-w-[100px] truncate hidden sm:inline">
                   {displayName}

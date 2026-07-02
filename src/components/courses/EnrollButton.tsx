@@ -52,10 +52,6 @@ export default function EnrollButton({
   const finalPrice = Math.max(basePrice - couponDiscount, 0)
   const isFree = finalPrice === 0
 
-  useEffect(() => {
-    checkAuth()
-  }, [courseId])
-
   async function checkAuth() {
     const { data: { user: currentUser } } = await supabase.auth.getUser()
     setUser(currentUser)
@@ -72,6 +68,10 @@ export default function EnrollButton({
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => checkAuth())
+  }, [courseId])
 
   async function applyCoupon() {
     if (!couponCode.trim()) return
@@ -135,7 +135,7 @@ export default function EnrollButton({
 
     setEnrolled(true)
     notify.enrollSuccess(title)
-    window.location.href = data.redirectUrl || `/courses/${courseSlug}/learn`
+    router.push(data.redirectUrl || `/courses/${courseSlug}/learn`)
   }
 
   async function initiatePayment() {
@@ -168,7 +168,7 @@ export default function EnrollButton({
       if (data.free) {
         setEnrolled(true)
         notify.enrollSuccess(title)
-        window.location.href = data.redirectUrl
+        router.push(data.redirectUrl)
         return
       }
 
@@ -218,7 +218,7 @@ export default function EnrollButton({
           if (verifyData.success) {
             setEnrolled(true)
             notify.paymentSuccess()
-            window.location.href = verifyData.redirectUrl
+            router.push(verifyData.redirectUrl)
           } else {
             setError('Payment verification failed. Please contact support.')
             notify.paymentError('Payment verification failed.')

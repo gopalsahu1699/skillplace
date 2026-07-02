@@ -1,7 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
 import SectionReveal from './SectionReveal'
-import { getSupabaseImageUrl } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
 
 const mentors = [
@@ -14,7 +13,7 @@ const mentors = [
     bio: 'Visionary leader building AI solutions for industry. Passionate about practical engineering education.',
     initials: 'PD',
     gradient: 'from-violet-600 to-purple-700',
-    image: getSupabaseImageUrl('mentor-prakash.png'),
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Prakash%20Dev.JPG.jpeg',
   },
   {
     name: 'Gopal Krishn Sahu',
@@ -25,7 +24,7 @@ const mentors = [
     bio: '20+ years in automation & control systems. Dedicated to bridging the gap between academia and industry.',
     initials: 'GS',
     gradient: 'from-blue-600 to-indigo-700',
-    image: getSupabaseImageUrl('mentor-gopal.png'),
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Gopal%20sahu.png',
   },
 ]
 

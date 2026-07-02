@@ -18,7 +18,7 @@ interface UseAdminResult<T> {
   refetch: () => void
 }
 
-export function useAdminData<T = any>(options: UseAdminDataOptions): UseAdminResult<T> {
+export function useAdminData<T = unknown>(options: UseAdminDataOptions): UseAdminResult<T> {
   const [data, setData] = useState<T[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +44,7 @@ export function useAdminData<T = any>(options: UseAdminDataOptions): UseAdminRes
   }, [options.table, options.filter, options.value, options.join])
 
   useEffect(() => {
-    fetchData()
+    Promise.resolve().then(() => fetchData())
   }, [fetchData])
 
   return { data, loading, error, sessionExpired, refetch: fetchData }

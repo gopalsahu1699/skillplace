@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { adminSupabase } from '@/lib/supabase/admin'
 import CourseLearnClient from './CourseLearnClient'
-import type { Course, Module, Lesson } from '@/types'
+import type { Module, Lesson } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,5 +75,5 @@ export default async function CourseLearnServerPage({ params }: { params: Promis
       }),
   }))
 
-  return <CourseLearnClient course={course} modules={sortedModules} enrollmentCount={0} />
+  return <CourseLearnClient course={course} modules={sortedModules} />
 }

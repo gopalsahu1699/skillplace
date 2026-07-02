@@ -61,7 +61,7 @@ export default function QuickIssueBatch({ open, onClose, onComplete }: QuickIssu
     try {
       const data = await getRecords('batches', undefined, undefined, '*, courses(title)')
       if (data) {
-        const withCounts = data.map((b: any) => ({
+        const withCounts = data.map((b: { id: string; name?: string; program_type?: string; is_active?: boolean; courses?: { title: string } | null }) => ({
           ...b,
           student_count: 0,
         }))

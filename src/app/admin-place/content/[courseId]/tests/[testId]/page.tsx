@@ -5,10 +5,10 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react'
 import { getRecord, getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface DbTest {
   id: string
@@ -96,7 +96,7 @@ export default function TestDetailPage() {
   }, [testId])
 
   useEffect(() => {
-    fetchTest()
+    Promise.resolve().then(() => fetchTest())
   }, [fetchTest])
 
   async function handleSaveTest(e: React.FormEvent) {
@@ -416,34 +416,13 @@ export default function TestDetailPage() {
         </div>
       </div>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Test</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">{test.title}</span>?
-              All questions will also be deleted.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteTest}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDeleteTest}
+        title="Test"
+        itemName={test?.title || 'this item'}
+      />
     </div>
   )
 }

@@ -97,4 +97,3 @@ export async function getCurrentSession(): Promise<ValidatedSession | null> {
   return session as ValidatedSession
 }
 
-

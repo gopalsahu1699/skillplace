@@ -72,9 +72,10 @@ export default function ProgramsPage() {
   const [programs, setPrograms] = useState<TrainingProgram[]>([])
   const [selectedBranch, setSelectedBranch] = useState('all')
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
-  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false)
+  const [_enrollmentsLoading, setEnrollmentsLoading] = useState(false)
 
   useEffect(() => {
     fetchBranches()
@@ -106,27 +107,33 @@ export default function ProgramsPage() {
 
   async function fetchBranches() {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('branches')
         .select('*')
         .eq('is_active', true)
         .order('name')
+      if (error) throw error
       setBranches(data || [])
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch branches:', err)
       setBranches([])
     }
   }
 
   async function fetchAllPrograms() {
     setLoading(true)
+    setError(null)
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('training_programs')
         .select('*,branches(*)')
         .eq('is_active', true)
         .order('created_at', { ascending: true })
+      if (error) throw error
       setPrograms(data || [])
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch programs:', err)
+      setError('Failed to load programs. Please try again.')
       setPrograms([])
     }
     setLoading(false)
@@ -217,7 +224,18 @@ export default function ProgramsPage() {
           </div>
 
           {/* Programs Grid */}
-          {loading ? (
+          {error ? (
+            <div className="text-center py-20">
+              <span className="material-symbols-outlined text-4xl text-red-400 mb-4 block">error_outline</span>
+              <p className="text-red-600 font-medium mb-2">{error}</p>
+              <button
+                onClick={() => { setError(null); fetchAllPrograms(); }}
+                className="text-secondary font-label-md hover:underline"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : loading ? (
             <div className="text-center py-20 text-on-surface-variant">
               <span className="material-symbols-outlined text-4xl animate-pulse mb-4 block">pending</span>
               Loading programs...
@@ -251,10 +269,13 @@ export default function ProgramsPage() {
                         <span className="font-body-md text-sm">{program.duration_weeks} Weeks</span>
                       </div>
                       <div className="font-headline-md text-secondary text-lg">
-                        {program.discount_price
+                        {/* {program.discount_price
                           ? <>₹{program.discount_price.toLocaleString()} <span className="text-on-surface-variant line-through text-sm font-normal">₹{program.price.toLocaleString()}</span></>
                           : <>₹{program.price.toLocaleString()}</>
-                        }
+                        } */}
+                         <span>₹29,999</span> <><span className="text-on-surface-variant line-through text-sm font-normal">₹40,000</span></>
+                          
+                      
                       </div>
                     </div>
                     <ul className="space-y-3 mb-8 flex-grow">

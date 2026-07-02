@@ -3,18 +3,12 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
+
 import { Search, Plus, Edit, Trash2, X } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { SafeImg } from '@/components/ui/safe-image'
 import { notify } from '@/lib/notifications'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface Course {
   id: string
@@ -556,39 +550,13 @@ export default function AdminCoursesPage() {
         </div>
       </div>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Course</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">
-                {deletingCourse?.title || 'this course'}
-              </span>
-              ? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowDeleteConfirm(false)
-                setDeletingCourse(null)
-              }}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Course"
+        itemName={deletingCourse?.title || 'this course'}
+      />
     </div>
   )
 }

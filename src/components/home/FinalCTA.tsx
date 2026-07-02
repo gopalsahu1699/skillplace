@@ -27,7 +27,7 @@ export default function FinalCTA() {
               <span className="gradient-text">You Deserve?</span>
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-2xl mx-auto">
-              Don&apos;t just earn a certificate. Build skills that companies value. Join 2,000+ students who transformed their future with SkillPlace Academy.
+              Don&apos;t just earn a certificate. Build skills that companies value. Join where students who transformed their future with SkillPlace Academy.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -47,7 +47,7 @@ export default function FinalCTA() {
             </div>
 
             {/* Trust stats */}
-            <div className="mt-10 flex items-center justify-center gap-8 flex-wrap">
+            {/* <div className="mt-10 flex items-center justify-center gap-8 flex-wrap">
               <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                 <span className="material-symbols-outlined text-[18px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
                 <span><strong className="text-on-surface">2,000+</strong> students trained</span>
@@ -60,7 +60,7 @@ export default function FinalCTA() {
                 <span className="material-symbols-outlined text-[18px] text-emerald-600" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
                 <span>EMI options available</span>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </SectionReveal>

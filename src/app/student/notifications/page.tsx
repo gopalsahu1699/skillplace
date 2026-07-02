@@ -84,7 +84,7 @@ export default function StudentNotificationsPage() {
   }, [])
 
   useEffect(() => {
-    fetchNotifications()
+    Promise.resolve().then(() => fetchNotifications())
   }, [fetchNotifications])
 
   async function markAsRead(id: string) {

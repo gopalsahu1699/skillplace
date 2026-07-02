@@ -16,6 +16,7 @@ import {
   FileText,
   Download,
   Loader2,
+  Shield,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
@@ -48,6 +49,14 @@ interface LessonPlayerProps {
   hasNext: boolean
 }
 
+const WATERMARK_POSITIONS = [
+  { x: 10, y: 10 },
+  { x: 60, y: 15 },
+  { x: 15, y: 70 },
+  { x: 65, y: 75 },
+  { x: 30, y: 40 },
+]
+
 export default function LessonPlayer({
   lesson,
   courseId,
@@ -63,22 +72,84 @@ export default function LessonPlayer({
 }: LessonPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const lastProgressRef = useRef(0)
+  const tokenRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [effectiveUrl, setEffectiveUrl] = useState<string | null>(null)
+  const [streamUrl, setStreamUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [watermarkPos, setWatermarkPos] = useState(WATERMARK_POSITIONS[0])
+  const [watermarkIdx, setWatermarkIdx] = useState(0)
+  const [watermarkTime, setWatermarkTime] = useState(new Date())
   const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {
       if (controlsTimeout.current) clearTimeout(controlsTimeout.current)
+      if (tokenRefreshRef.current) clearInterval(tokenRefreshRef.current)
     }
   }, [])
+
+  const fetchPlaybackUrl = useCallback(async () => {
+    if (!lesson.id) return null
+    try {
+      const res = await fetch(`/api/video/playback-token?lessonId=${lesson.id}`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        setVideoError(true)
+        return null
+      }
+      const data = await res.json()
+      return data.streamUrl as string
+    } catch {
+      setVideoError(true)
+      return null
+    }
+  }, [lesson.id])
+
+  useEffect(() => {
+    if (lesson.content_type !== 'video') return
+    let cancelled = false
+    Promise.resolve().then(() => {
+      setStreamUrl(null)
+      setVideoError(false)
+      setLoading(true)
+    })
+
+    ;(async () => {
+      const url = await fetchPlaybackUrl()
+      if (!cancelled && url) {
+        setStreamUrl(url)
+      }
+    })()
+
+    tokenRefreshRef.current = setInterval(async () => {
+      if (cancelled) return
+      const url = await fetchPlaybackUrl()
+      if (!cancelled && url) {
+        setStreamUrl(url)
+      }
+    }, 45000)
+
+    return () => {
+      cancelled = true
+    }
+  }, [lesson.id, lesson.content_type, fetchPlaybackUrl])
+
+  useEffect(() => {
+    if (!playing) return
+    const interval = setInterval(() => {
+      setWatermarkIdx((prev) => (prev + 1) % WATERMARK_POSITIONS.length)
+      setWatermarkPos(WATERMARK_POSITIONS[(watermarkIdx + 1) % WATERMARK_POSITIONS.length])
+      setWatermarkTime(new Date())
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [playing, watermarkIdx])
 
   const resetControlsTimeout = useCallback(() => {
     setShowControls(true)
@@ -90,11 +161,11 @@ export default function LessonPlayer({
 
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return
-    const currentTime = videoRef.current.currentTime
+    const ct = videoRef.current.currentTime
     const dur = videoRef.current.duration
-    const pct = dur > 0 ? Math.round((currentTime / dur) * 100) : 0
+    const pct = dur > 0 ? Math.round((ct / dur) * 100) : 0
     setProgress(Number.isFinite(pct) ? pct : 0)
-    setCurrentTime(currentTime)
+    setCurrentTime(ct)
 
     if (pct !== lastProgressRef.current) {
       lastProgressRef.current = pct
@@ -105,7 +176,7 @@ export default function LessonPlayer({
               user_id: userId,
               lesson_id: lesson.id,
               is_completed: true,
-              watched_seconds: Math.round(currentTime),
+              watched_seconds: Math.round(ct),
               completed_at: new Date().toISOString(),
             }, { onConflict: 'user_id,lesson_id' })
             onComplete(lesson.id)
@@ -116,7 +187,7 @@ export default function LessonPlayer({
           user_id: userId,
           lesson_id: lesson.id,
           is_completed: false,
-          watched_seconds: Math.round(currentTime),
+          watched_seconds: Math.round(ct),
         }, { onConflict: 'user_id,lesson_id' })
       }
     }
@@ -179,40 +250,12 @@ export default function LessonPlayer({
     }
   }, [userId, lesson.id, lesson.title, onComplete])
 
-  useEffect(() => {
-    if (!lesson.r2_source_key) return
-    let cancelled = false
-    setEffectiveUrl(null)
-    setVideoError(false)
-    setLoading(true)
-    ;(async () => {
-      try {
-        const res = await fetch(`/api/video/r2-playback?lessonId=${lesson.id}`)
-        if (!res.ok) throw new Error('Failed to get playback URL')
-        const data = await res.json()
-        if (!cancelled && data.playbackUrl) {
-          setEffectiveUrl(data.playbackUrl)
-          setLoading(true)
-        }
-      } catch {
-        if (!cancelled) setVideoError(true)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [lesson.id, lesson.r2_source_key])
-
   if (lesson.content_type === 'video') {
     const hasVideo = !!(lesson.video_id || lesson.video_url || lesson.r2_source_key)
 
     if (!hasVideo) {
       return <LectureComingSoon contentType="video" lessonTitle={lesson.title} />
     }
-
-    const videoSource = lesson.r2_source_key
-      ? effectiveUrl
-      : lesson.video_url?.startsWith('r2://')
-        ? effectiveUrl
-        : lesson.video_url
 
     return (
       <div>
@@ -222,6 +265,34 @@ export default function LessonPlayer({
           role="region"
           aria-label="Video player"
         >
+          <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-red-600/90 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+            <Shield className="h-3 w-3" />
+            Protected
+          </div>
+
+          <div
+            className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out"
+            style={{
+              left: `${watermarkPos.x}%`,
+              top: `${watermarkPos.y}%`,
+              transform: 'translate(-50%, -50%) rotate(-15deg)',
+            }}
+          >
+            <div className="bg-black/50 backdrop-blur-sm text-white/85 text-xs font-medium px-3 py-2 rounded-lg border border-white/10 whitespace-nowrap leading-relaxed">
+              <div className="font-bold text-sm">{userName}</div>
+              <div className="opacity-80">{userEmail}</div>
+              <div className="opacity-60 text-[10px]">
+                ID: {userId.slice(0, 8)}
+              </div>
+              <div className="opacity-60 text-[10px]">
+                {watermarkTime.toLocaleString('en-IN', {
+                  year: 'numeric', month: 'short', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit', second: '2-digit',
+                })}
+              </div>
+            </div>
+          </div>
+
           {videoError && (
             <div className="absolute inset-0 z-20 bg-slate-900 flex flex-col items-center justify-center text-center p-6">
               <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
@@ -231,11 +302,10 @@ export default function LessonPlayer({
                 onClick={() => {
                   setVideoError(false)
                   setLoading(true)
-                  setEffectiveUrl(null)
-                  fetch(`/api/video/r2-playback?lessonId=${lesson.id}`)
-                    .then((r) => r.json())
-                    .then((d) => { if (d.playbackUrl) setEffectiveUrl(d.playbackUrl); setLoading(true) })
-                    .catch(() => setVideoError(true))
+                  setStreamUrl(null)
+                  fetchPlaybackUrl().then((url) => {
+                    if (url) setStreamUrl(url)
+                  })
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
               >
@@ -243,10 +313,6 @@ export default function LessonPlayer({
               </button>
             </div>
           )}
-
-          <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-red-600/90 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
-            Protected
-          </div>
 
           <video
             ref={videoRef}
@@ -261,8 +327,8 @@ export default function LessonPlayer({
             onLoadStart={() => setLoading(true)}
             onClick={togglePlay}
           >
-            {videoSource && (
-              <source src={videoSource} type="video/mp4" />
+            {streamUrl && (
+              <source src={streamUrl} type="video/mp4" />
             )}
           </video>
 
@@ -272,7 +338,7 @@ export default function LessonPlayer({
             </div>
           )}
 
-          {!playing && !loading && (
+          {!playing && !loading && !videoError && (
             <div
               className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 cursor-pointer"
               onClick={togglePlay}
@@ -320,6 +386,37 @@ export default function LessonPlayer({
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPrev}
+            disabled={!hasPrev}
+            className="border-slate-300"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" /> Previous
+          </Button>
+          <div className="flex items-center gap-2">
+            {!isCompleted && (
+              <Button size="sm" onClick={markComplete} className="bg-green-600 hover:bg-green-700 gap-2">
+                <CheckCircle className="h-4 w-4" /> Mark Complete
+              </Button>
+            )}
+            {isCompleted && (
+              <Badge className="bg-green-100 text-green-700 border-0 gap-1">
+                <CheckCircle className="h-3 w-3" /> Completed
+              </Badge>
+            )}
+          </div>
+          <Button
+            size="sm"
+            onClick={onNext}
+            disabled={!hasNext}
+          >
+            Next <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
         </div>
       </div>
     )

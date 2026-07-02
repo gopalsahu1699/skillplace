@@ -49,8 +49,8 @@ export default async function MyProgramsPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {list.map((enrollment: any) => {
-              const program = enrollment.training_programs
+            {list.map((enrollment: { id: string; status: string; enrolled_at: string; training_programs: { name: string; slug: string; duration_weeks: number | null; program_type: string }[] | null }) => {
+              const program = enrollment.training_programs?.[0] ?? null
               const isActive = enrollment.status === 'active'
               const isCompleted = enrollment.status === 'completed'
               return (

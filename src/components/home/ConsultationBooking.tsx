@@ -44,8 +44,8 @@ Preferred Counseling Time: ${timeSlot.toUpperCase()} (Morning: 10AM-12PM, Aftern
       if (typeof window !== 'undefined') {
         notify.registerSuccess()
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to schedule consultation. Please try again.')
+    } catch (error) {
+      setError((error as Error).message || 'Failed to schedule consultation. Please try again.')
     } finally {
       setLoading(false)
     }

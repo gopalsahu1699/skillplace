@@ -65,12 +65,12 @@ export async function getStudentProjects(): Promise<StudentProject[]> {
 
   if (error || !data) return []
 
-  return data.map((item: any) => ({
+  return data.map((item: { id: string; created_at: string; profiles?: { full_name: string }[]; courses?: { title: string }[] }) => ({
     id: item.id,
-    title: item.courses?.title || 'Project',
+    title: item.courses?.[0]?.title || 'Project',
     description: null,
     image_url: null,
-    student_name: item.profiles?.full_name || 'Student',
+    student_name: item.profiles?.[0]?.full_name || 'Student',
     created_at: item.created_at,
   }))
 }
@@ -93,7 +93,7 @@ export async function getPlacementStories(): Promise<PlacementStory[]> {
 
   if (error || !data) return []
 
-  return data.map((t: any) => ({
+  return data.map((t: { id: string; student_name?: string; company?: string; role?: string; review?: string | null }) => ({
     id: t.id,
     student_name: t.student_name || 'Student',
     company: t.company || 'Company',

@@ -37,8 +37,8 @@ export default function ProgramDetailPage() {
   const slug = params.slug as string
   const [program, setProgram] = useState<ProgramDetail | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
-  const [user, setUser] = useState<any>(null)
-  const [enrollment, setEnrollment] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
+  const [enrollment, setEnrollment] = useState<{ id: string; status: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,11 +46,6 @@ export default function ProgramDetailPage() {
   const [inquireName, setInquireName] = useState('')
   const [inquirePhone, setInquirePhone] = useState('')
   const [inquireSubmitted, setInquireSubmitted] = useState(false)
-
-  useEffect(() => {
-    fetchUser()
-    fetchProgram()
-  }, [slug])
 
   async function fetchUser() {
     const { data: { user: u } } = await supabase.auth.getUser()
@@ -77,7 +72,7 @@ export default function ProgramDetailPage() {
         .eq('program_id', programs.id)
         .order('order_index', { ascending: true })
 
-      const courseIds = (programCourses || []).map((pc: any) => pc.course_id).filter(Boolean)
+      const courseIds = (programCourses || []).map((pc: { course_id: string }) => pc.course_id).filter(Boolean)
       if (courseIds.length > 0) {
         const { data: coursesData } = await supabase
           .from('courses')
@@ -93,21 +88,27 @@ export default function ProgramDetailPage() {
     setLoading(false)
   }
 
-  useEffect(() => {
-    if (user && program) {
-      checkEnrollment()
-    }
-  }, [user, program])
-
   async function checkEnrollment() {
+    if (!user || !program) return
     const { data } = await supabase
       .from('enrollments')
       .select('id, status')
       .eq('user_id', user.id)
-      .eq('program_id', program!.id)
+      .eq('program_id', program.id)
       .single()
     setEnrollment(data)
   }
+
+  useEffect(() => {
+    fetchUser()
+    fetchProgram()
+  }, [])
+
+  useEffect(() => {
+    if (user && program) {
+      Promise.resolve().then(() => checkEnrollment())
+    }
+  }, [user, program])
 
   async function handleInquire(e: React.FormEvent) {
     e.preventDefault()
@@ -139,7 +140,7 @@ export default function ProgramDetailPage() {
         <div className="text-center bg-white p-8 rounded-2xl tonal-card max-w-md w-full">
           <span className="material-symbols-outlined text-4xl text-error mb-3">error</span>
           <h2 className="text-headline-md font-bold text-on-surface mb-2">{error || 'Program Not Found'}</h2>
-          <p className="text-on-surface-variant text-body-md mb-6">We couldn't locate the program you requested.</p>
+          <p className="text-on-surface-variant text-body-md mb-6">We couldn&apos;t locate the program you requested.</p>
           <Link href="/programs" className="px-6 py-3 bg-secondary text-white font-label-md rounded-lg block text-center">
             Back to Programs
           </Link>

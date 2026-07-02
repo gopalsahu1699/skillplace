@@ -51,7 +51,7 @@ export default function TestPlayer({ test, lessonId, onComplete }: TestPlayerPro
   }, [test.id])
 
   useEffect(() => {
-    fetchQuestions()
+    Promise.resolve().then(() => fetchQuestions())
   }, [fetchQuestions])
 
   useEffect(() => {

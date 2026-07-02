@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyPaymentSignature, fetchPayment } from '@/lib/razorpay'
 import { adminSupabase } from '@/lib/supabase/admin'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
 
@@ -26,7 +25,6 @@ export async function POST(request: Request) {
       studentName,
       email,
       phone,
-      location,
       notes,
     } = await request.json()
 
@@ -76,17 +74,6 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', paymentRecord.id)
-
-    let authUserId: string | null = null
-    try {
-      const supabase = await createSupabaseServerClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        authUserId = user.id
-      }
-    } catch {
-      // Not authenticated, proceed without auth user
-    }
 
     let profileId: string | null = paymentRecord.user_id
 

@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -13,12 +13,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { PROGRAM_TYPES, PROGRAM_TYPE_COLORS, type ProgramType } from '@/lib/constants'
-import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { PROGRAM_TYPES, PROGRAM_TYPE_COLORS } from '@/lib/constants'
+import { getRecords, createRecord, updateRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 import { ArrowLeft, Plus, Trash2, Users, Calendar, BookOpen, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { displayPhone } from '@/lib/validation/phone'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface BatchInfo {
   id: string
@@ -45,7 +46,6 @@ interface BatchStudent {
 
 export default function BatchDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const batchId = params.batchId as string
 
   const [batch, setBatch] = useState<BatchInfo | null>(null)
@@ -60,11 +60,7 @@ export default function BatchDetailPage() {
   const [showDetail, setShowDetail] = useState(false)
   const [detailStudent, setDetailStudent] = useState<BatchStudent | null>(null)
 
-  useEffect(() => {
-    fetchBatchData()
-  }, [batchId])
-
-  async function fetchBatchData() {
+  const fetchBatchData = useCallback(async () => {
     setLoading(true)
     try {
       const batchData = await getRecords('batches', 'id', batchId)
@@ -79,13 +75,17 @@ export default function BatchDetailPage() {
 
       const studentData = await getRecords('profiles', 'batch_id', batchId, '*,enrollments(*,training_programs(*))')
       if (studentData) {
-        setStudents(studentData.filter((s: any) => s.role === 'student'))
+        setStudents(studentData.filter((s: { role: string }) => s.role === 'student'))
       }
     } catch {
       notify.genericError('Failed to load batch data')
     }
     setLoading(false)
-  }
+  }, [batchId])
+
+  useEffect(() => {
+    fetchBatchData()
+  }, [fetchBatchData])
 
   async function handleAddStudent(e: React.FormEvent) {
     e.preventDefault()
@@ -353,24 +353,13 @@ export default function BatchDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Remove from Batch</DialogTitle>
-            <DialogDescription>
-              Remove <span className="font-semibold text-slate-900">{deletingStudent?.full_name || deletingStudent?.email}</span> from this batch?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowDeleteConfirm(false); setDeletingStudent(null) }} className="border-slate-300">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleRemoveStudent} className="bg-red-600 hover:bg-red-700">
-              Remove
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleRemoveStudent}
+        title="Student"
+        itemName={deletingStudent?.full_name || deletingStudent?.email || 'this item'}
+      />
 
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
         <DialogContent className="sm:max-w-lg">

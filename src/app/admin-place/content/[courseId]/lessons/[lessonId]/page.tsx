@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Save, Upload, Film, CheckCircle, Loader2, X, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Save, Film, CheckCircle, Loader2, X, AlertCircle } from 'lucide-react'
 import { getRecord, updateRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 
@@ -45,7 +45,7 @@ export default function LessonDetailPage() {
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'ready' | 'error'>('idle')
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadError, setUploadError] = useState('')
-  const [streamVideoId, setStreamVideoId] = useState<string | null>(null)
+  const [, setStreamVideoId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchLesson = useCallback(async () => {
@@ -79,7 +79,7 @@ export default function LessonDetailPage() {
   }, [lessonId])
 
   useEffect(() => {
-    fetchLesson()
+    Promise.resolve().then(() => fetchLesson())
   }, [fetchLesson])
 
   async function handleVideoUpload(file: File) {
@@ -109,7 +109,7 @@ export default function LessonDetailPage() {
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100))
         }
-        xhr.onload = () => { xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`)) }
+        xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(); else reject(new Error(`Upload failed (${xhr.status})`)) }
         xhr.onerror = () => reject(new Error('Upload failed'))
         xhr.ontimeout = () => reject(new Error('Upload timed out'))
         xhr.timeout = 3600000

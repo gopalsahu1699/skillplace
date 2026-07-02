@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
 
@@ -18,7 +17,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { full_name, email, phone, location, program_id, start_date, notes } = body
+    const { full_name, email, phone, program_id, notes } = body
 
     if (!full_name || !email || !phone || !program_id) {
       return NextResponse.json(
@@ -59,17 +58,6 @@ export async function POST(request: Request) {
 
     if (!program) {
       return NextResponse.json({ error: 'Program not found' }, { status: 404 })
-    }
-
-    let authUserId: string | null = null
-    try {
-      const supabase = await createSupabaseServerClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        authUserId = user.id
-      }
-    } catch {
-      // Not authenticated, proceed without auth user
     }
 
     let profileId: string | null = null

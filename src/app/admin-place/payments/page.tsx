@@ -51,10 +51,6 @@ export default function AdminPaymentsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchPurchases()
-  }, [])
-
   async function fetchPurchases() {
     setLoading(true)
     try {
@@ -78,6 +74,10 @@ export default function AdminPaymentsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchPurchases())
+  }, [])
 
   const filteredPurchases = purchases.filter((p) => {
     const name = (p.profiles?.full_name || '').toLowerCase()

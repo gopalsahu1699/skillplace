@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Briefcase, TrendingUp, CheckCircle, Building2, GraduationCap, ArrowRight, UserCheck, Search, HelpCircle } from 'lucide-react'
+import { Briefcase, TrendingUp, Building2, GraduationCap, ArrowRight, UserCheck, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import SectionReveal from '@/components/home/SectionReveal'
 import Link from 'next/link'
@@ -84,7 +84,7 @@ export default function PlacementsPage() {
               <span className="gradient-text">Learning & Employment</span>
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-8">
-              Our dedicated placement cell works tirelessly to connect our students with top-tier companies across India. We don't just train; we launch careers.
+              Our dedicated placement cell works tirelessly to connect our students with top-tier companies across India. We don&apos;t just train; we launch careers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -200,7 +200,7 @@ export default function PlacementsPage() {
                   <Briefcase className="h-5 w-5" />
                 </div>
                 <blockquote className="text-lg md:text-xl font-medium mb-6">
-                  "The mock interviews and resume reviews were game-changers for me. I felt incredibly prepared when I sat for my actual interviews."
+                  &quot;The mock interviews and resume reviews were game-changers for me. I felt incredibly prepared when I sat for my actual interviews.&quot;
                 </blockquote>
               </div>
               <div className="relative z-10 flex items-center gap-3">
@@ -251,7 +251,7 @@ export default function PlacementsPage() {
               ))}
               {filteredCompanies.length === 0 && (
                 <div className="col-span-2 md:col-span-4 text-center py-8 text-on-surface-variant">
-                  No hiring partners found matching "{searchQuery}"
+                  No hiring partners found matching &quot;{searchQuery}&quot;
                 </div>
               )}
             </div>

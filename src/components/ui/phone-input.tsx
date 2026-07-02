@@ -25,7 +25,7 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(function PhoneI
     error: externalError,
     required = false,
     disabled = false,
-    placeholder = '9876543210',
+    placeholder = 'xxxxxxxx',
     id: externalId,
     label = 'Phone Number',
     className,

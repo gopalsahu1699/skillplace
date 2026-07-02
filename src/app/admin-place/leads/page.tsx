@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Search } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { getRecords, updateRecord } from '@/lib/admin-api'
 import { displayPhone } from '@/lib/validation/phone'
 
 interface Lead {
@@ -28,10 +28,6 @@ export default function AdminLeadsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchLeads()
-  }, [])
-
   async function fetchLeads() {
     setLoading(true)
     const data = await getRecords('leads')
@@ -40,6 +36,10 @@ export default function AdminLeadsPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchLeads())
+  }, [])
 
   async function updateLeadStatus(id: string, status: Lead['status']) {
     await updateRecord('leads', id, { status })

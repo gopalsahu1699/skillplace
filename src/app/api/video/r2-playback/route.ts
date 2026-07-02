@@ -1,33 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generatePlaybackUrl } from '@/lib/cloudflare-r2'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { createSupabaseServerClient } from '@/lib/supabase/middleware'
 
-/**
- * GET /api/video/r2-playback
- * Returns a presigned R2 playback URL for a lesson video (valid 1 hour).
- * The presigned URL includes authentication tokens so the browser can
- * stream directly from R2 with full range request support for seeking.
- *
- * Query: ?lessonId=xxx&courseId=xxx&userId=xxx
- *
- * Returns JSON: { playbackUrl, filename, type, expiresIn }
- */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const lessonId = searchParams.get('lessonId')
-  const userId = searchParams.get('userId')
   const courseId = searchParams.get('courseId')
 
   if (!lessonId) {
     return NextResponse.json({ error: 'lessonId is required' }, { status: 400 })
   }
 
-  // Check enrollment if userId and courseId provided
-  if (userId && courseId) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  if (courseId) {
     const { data: enrollment } = await adminSupabase
       .from('course_enrollments')
       .select('id')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('course_id', courseId)
       .eq('status', 'active')
       .limit(1)
@@ -38,7 +34,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Get the lesson's R2 key
   const { data: lesson, error } = await adminSupabase
     .from('lessons')
     .select('r2_source_key, r2_original_filename')
@@ -50,7 +45,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Generate a presigned URL (valid 1 hour) that allows direct browser access
     const playbackUrl = await generatePlaybackUrl(lesson.r2_source_key, 3600)
 
     return NextResponse.json({

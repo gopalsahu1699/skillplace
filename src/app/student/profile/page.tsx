@@ -18,7 +18,15 @@ import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<{
+    id: string
+    full_name?: string | null
+    email?: string | null
+    phone?: string | null
+    avatar_url?: string | null
+    role?: string | null
+    program_type?: string | null
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)

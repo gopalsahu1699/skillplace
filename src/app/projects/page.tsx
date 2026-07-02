@@ -19,10 +19,6 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchProjects()
-  }, [])
-
   async function fetchProjects() {
     const { data, error } = await supabase
       .from('student_projects')
@@ -35,6 +31,10 @@ export default function ProjectsPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchProjects())
+  }, [])
 
   return (
     <div className="bg-slate-50 min-h-screen">

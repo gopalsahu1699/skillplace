@@ -69,7 +69,7 @@ function LoginForm() {
         .single()
 
       if (profile?.role === 'admin' || profile?.role === 'employee') {
-        window.location.href = '/admin-place'
+        router.push('/admin-place')
       } else {
         const { data: employee } = await supabase
           .from('employees')
@@ -78,13 +78,13 @@ function LoginForm() {
           .single()
 
         if (employee?.role === 'admin' || employee?.role === 'employee') {
-          window.location.href = '/admin-place'
+          router.push('/admin-place')
         } else {
-          window.location.href = redirectedFrom
+          router.push(redirectedFrom)
         }
       }
     } else {
-      window.location.href = redirectedFrom
+      router.push(redirectedFrom)
     }
   }
 

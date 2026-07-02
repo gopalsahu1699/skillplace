@@ -2,11 +2,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Search, BookOpen, Layers, FileText, HelpCircle, Users, ChevronRight } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Search, BookOpen, Layers, FileText, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import type { Course, Module, Lesson, Test } from '@/types'
 
@@ -42,7 +40,7 @@ export default function ContentManager() {
   }, [])
 
   useEffect(() => {
-    fetchCourses()
+    Promise.resolve().then(() => fetchCourses())
   }, [fetchCourses])
 
   const filteredCourses = courses.filter((c) =>

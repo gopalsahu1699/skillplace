@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { displayPhone } from '@/lib/validation/phone'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface StudentRecord {
   id: string
@@ -85,7 +86,7 @@ export default function AdminPlacementsPage() {
         getRecords('students'),
       ])
 
-      const studentList: StudentRecord[] = (studentsData || []).map((s: any) => ({
+      const studentList: StudentRecord[] = (studentsData || []).map((s: { id: string; full_name?: string; email?: string; phone?: string | null }) => ({
         id: s.id,
         full_name: s.full_name || '',
         email: s.email || '',
@@ -95,7 +96,7 @@ export default function AdminPlacementsPage() {
 
       const studentMap = new Map(studentList.map((s) => [s.id, s]))
 
-      const enrichedPlacements: PlacementWithStudent[] = (placementsData || []).map((p: any) => ({
+      const enrichedPlacements: PlacementWithStudent[] = (placementsData || []).map((p: { id: string; student_id: string; company: string; role: string; package_lpa?: number | null; placed_at: string; created_at: string }) => ({
         ...p,
         student: studentMap.get(p.student_id) || null,
       }))
@@ -112,7 +113,7 @@ export default function AdminPlacementsPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    Promise.resolve().then(() => fetchData())
   }, [fetchData])
 
   // Close dropdown on outside click
@@ -564,37 +565,13 @@ export default function AdminPlacementsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Placement</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">
-                {deletingPlacement?.student?.full_name || 'this'}
-              </span>
-              &apos;s placement record? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Placement"
+        itemName={deletingPlacement?.student?.full_name || deletingPlacement?.company_name || 'this placement'}
+      />
     </div>
   )
 }

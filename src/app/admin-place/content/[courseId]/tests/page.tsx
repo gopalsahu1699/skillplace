@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { ArrowLeft, Plus, Edit, Trash2, HelpCircle } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface DbTest {
   id: string
@@ -68,7 +69,7 @@ export default function TestsPage() {
   }, [courseId])
 
   useEffect(() => {
-    fetchTests()
+    Promise.resolve().then(() => fetchTests())
   }, [fetchTests])
 
   function openCreate() {
@@ -318,26 +319,13 @@ export default function TestsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Test</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">{deletingTest?.title}</span>?
-              All questions will also be deleted.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="border-slate-300">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Test"
+        itemName={deletingTest?.title || 'this item'}
+      />
     </div>
   )
 }

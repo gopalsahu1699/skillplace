@@ -32,13 +32,13 @@ export default function HeroSection() {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
-              <Link
+              {/* <Link
                 href="#path-finder-quiz"
                 className="shimmer-btn bg-gradient-to-r from-secondary to-secondary-container text-white px-8 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:from-secondary-container hover:to-secondary transition-all shadow-lg shadow-secondary/25 hover:shadow-xl hover:-translate-y-0.5 duration-300"
               >
                 Find Your Career Path
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: '"FILL" 1' }}>quiz</span>
-              </Link>
+              </Link> */}
               <Link
                 href="/contact"
                 className="bg-white border border-border-subtle text-on-surface px-8 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-surface-container-low hover:border-secondary/25 transition-all shadow-sm"
@@ -50,7 +50,7 @@ export default function HeroSection() {
 
             {/* Social proof inline */}
             <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white">P</div>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white">R</div>
@@ -60,13 +60,13 @@ export default function HeroSection() {
                 <span className="text-sm text-on-surface-variant">
                   <strong className="text-on-surface">2,000+</strong> students placed
                 </span>
-              </div>
-              <div className="flex items-center gap-1">
+              </div> */}
+              {/* <div className="flex items-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span key={i} className="material-symbols-outlined text-amber-500 text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>
                 ))}
                 <span className="text-sm text-on-surface-variant ml-1">4.9/5</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -86,11 +86,11 @@ export default function HeroSection() {
                     <p className="text-2xl font-bold text-on-surface">100%</p>
                     <p className="text-xs text-on-surface-variant">Job Support</p>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+                  {/* <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
                     <span className="material-symbols-outlined text-emerald-600 text-[28px] mb-2" style={{ fontVariationSettings: '"FILL" 1' }}>groups</span>
                     <p className="text-2xl font-bold text-on-surface">2K+</p>
                     <p className="text-xs text-on-surface-variant">Students</p>
-                  </div>
+                  </div> */}
                   <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
                     <span className="material-symbols-outlined text-violet-600 text-[28px] mb-2" style={{ fontVariationSettings: '"FILL" 1' }}>school</span>
                     <p className="text-2xl font-bold text-on-surface">8+</p>
@@ -108,7 +108,7 @@ export default function HeroSection() {
                       <p className="font-semibold text-on-surface text-sm">Civil Engineering</p>
                       <p className="text-xs text-on-surface-variant">AutoCAD, Revit, Staad Pro &amp; more</p>
                     </div>
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded">Popular</span>
+                    
                   </div>
 
                   <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-center gap-4 hover:bg-slate-100/80 transition-colors">
@@ -119,7 +119,7 @@ export default function HeroSection() {
                       <p className="font-semibold text-on-surface text-sm">Mechanical Engineering</p>
                       <p className="text-xs text-on-surface-variant">SolidWorks, GD&amp;T, CNC &amp; more</p>
                     </div>
-                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">New</span>
+         
                   </div>
 
                   <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-center gap-4 hover:bg-slate-100/80 transition-colors">
@@ -130,13 +130,13 @@ export default function HeroSection() {
                       <p className="font-semibold text-on-surface text-sm">Electrical &amp; Electronics</p>
                       <p className="text-xs text-on-surface-variant">PLC, SCADA, Solar, VFD &amp; more</p>
                     </div>
-                    <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2 py-1 rounded">Trending</span>
+       
                   </div>
                 </div>
               </div>
 
               {/* Floating notification card */}
-              <div className="absolute -bottom-4 -left-4 bg-white/95 backdrop-blur-md rounded-xl p-3 border border-border-subtle shadow-xl animate-float-delayed">
+              {/* <div className="absolute -bottom-4 -left-4 bg-white/95 backdrop-blur-md rounded-xl p-3 border border-border-subtle shadow-xl animate-float-delayed">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
                     <span className="material-symbols-outlined text-emerald-600 text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>check_circle</span>
@@ -146,16 +146,16 @@ export default function HeroSection() {
                     <p className="text-[10px] text-on-surface-variant">Rahul placed at L&amp;T</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Floating rating card */}
-              <div className="absolute -top-3 -right-3 bg-white/95 backdrop-blur-md rounded-xl p-3 border border-border-subtle shadow-xl animate-float">
+              {/* <div className="absolute -top-3 -right-3 bg-white/95 backdrop-blur-md rounded-xl p-3 border border-border-subtle shadow-xl animate-float">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-amber-500 text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>
                   <span className="text-sm font-bold text-on-surface">4.9</span>
                   <span className="text-[10px] text-on-surface-variant">(2.4K reviews)</span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

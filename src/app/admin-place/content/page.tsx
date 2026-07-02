@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Search, BookOpen, Layers, FileText, HelpCircle, ChevronRight } from 'lucide-react'
@@ -95,7 +94,7 @@ export default function AdminContentPage() {
   }, [])
 
   useEffect(() => {
-    fetchCourses()
+    Promise.resolve().then(() => fetchCourses())
   }, [fetchCourses])
 
   const filteredCourses = courses.filter((c) =>

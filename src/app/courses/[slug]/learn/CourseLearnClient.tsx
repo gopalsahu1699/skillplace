@@ -6,9 +6,8 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import {
-  Play, ChevronRight, ChevronDown, BookOpen, FileText,
+  ChevronRight, FileText,
   HelpCircle, CheckCircle, Download, Edit3, Save, Lock, ShoppingCart, Menu, X,
-  AlertCircle, Loader2
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
@@ -21,12 +20,10 @@ import type { Course, Module, Lesson, Test, TestQuestion } from '@/types'
 interface CourseLearnClientProps {
   course: Course & { branches?: unknown }
   modules: (Module & { lessons: Lesson[] })[]
-  enrollmentCount: number
 }
 
-export default function CourseLearnClient({ course, modules: initialModules, enrollmentCount }: CourseLearnClientProps) {
-  const modulesRef = useRef(initialModules)
-  const modules = modulesRef.current
+export default function CourseLearnClient({ course, modules: initialModules }: CourseLearnClientProps) {
+  const modules = initialModules
 
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(
     initialModules?.[0]?.lessons?.[0] || null
@@ -47,8 +44,8 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
   const [enrolled, setEnrolled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
-  const [resumePosition, setResumePosition] = useState(0)
+  const [, setAuthChecked] = useState(false)
+  const [, setResumePosition] = useState(0)
 
   const notesSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeLessonIdRef = useRef<string | null>(null)
@@ -130,8 +127,10 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
 
   useEffect(() => {
     if (!activeLesson || !user) {
-      setNotes('')
-      setNotesDirty(false)
+      Promise.resolve().then(() => {
+        setNotes('')
+        setNotesDirty(false)
+      })
       return
     }
 
@@ -154,12 +153,14 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     })()
 
     return () => { cancelled = true }
-  }, [activeLesson?.id, user])
+  }, [activeLesson, user])
 
   useEffect(() => {
     if (!activeLesson || activeLesson.content_type !== 'quiz') {
-      setQuizQuestions([])
-      setCurrentTest(null)
+      Promise.resolve().then(() => {
+        setQuizQuestions([])
+        setCurrentTest(null)
+      })
       return
     }
 
@@ -181,11 +182,11 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
         if (data) setQuizQuestions(data)
       } catch {}
     })()
-  }, [activeLesson?.id, activeLesson?.content_type])
+  }, [activeLesson])
 
   useEffect(() => {
     if (!activeLesson || !user || activeLesson.content_type !== 'video') {
-      setResumePosition(0)
+      Promise.resolve().then(() => setResumePosition(0))
       return
     }
 
@@ -206,7 +207,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     })()
 
     return () => { cancelled = true }
-  }, [activeLesson?.id, user?.id])
+  }, [activeLesson, user])
 
   useEffect(() => {
     return () => {
@@ -228,7 +229,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     } catch {
       // Silent fail for notes
     }
-  }, [activeLesson?.id, user?.id])
+  }, [activeLesson, user])
 
   const debouncedSaveNotes = useCallback((content: string) => {
     setNotesDirty(true)
@@ -255,7 +256,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     } catch {
       notify.genericError('Failed to mark lesson complete')
     }
-  }, [activeLesson?.id, user?.id])
+  }, [activeLesson, user])
 
   const handleSaveNotes = useCallback(async () => {
     if (notesSaveTimeoutRef.current) {
@@ -296,7 +297,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     } catch {
       notify.genericError('Failed to submit quiz')
     }
-  }, [activeLesson?.id, user?.id, quizQuestions, quizAnswers, quizSubmitted, currentTest?.id, currentTest?.passing_score, markComplete])
+  }, [activeLesson, user, quizQuestions, quizAnswers, quizSubmitted, currentTest?.id, currentTest?.passing_score, markComplete])
 
   const allLessons = modules.flatMap((m) => m.lessons)
   const totalLessons = allLessons.length
@@ -591,6 +592,8 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
                         courseId={course.id}
                         studentName={user?.user_metadata?.full_name || user?.email || 'Student'}
                         studentEmail={user?.email || ''}
+                        studentId={user?.id}
+                        courseName={course.title}
                         onProgress={async (pct) => {
                           if (pct > 0) {
                             try {

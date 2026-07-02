@@ -53,8 +53,8 @@ async function verifyAdminSession(request: NextRequest): Promise<{ ok: boolean; 
     if (error && supabaseRefreshToken) {
       try {
         const refreshed = await adminSupabase.auth.refreshSession({ refresh_token: supabaseRefreshToken })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const refreshedUser = (refreshed as any)?.data?.user
+        const refreshedData = refreshed as { data: { user: typeof user } | null }
+        const refreshedUser = refreshedData?.data?.user
         if (refreshedUser) {
           user = refreshedUser
           error = null

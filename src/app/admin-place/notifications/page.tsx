@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -22,23 +21,24 @@ import {
 import {
   Bell,
   Plus,
-  Trash2,
   Send,
   Users,
   User,
   BellRing,
-  CheckCircle,
-  Info,
-  AlertTriangle,
   Gift,
   Search,
   X,
-  Globe,
   CalendarClock,
+  Info,
+  CheckCircle,
+  AlertTriangle,
   Clock,
-  Calendar,
+  Globe,
 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import NotificationCard from '@/components/admin/NotificationCard'
+import ScheduledNotificationCard from '@/components/admin/ScheduledNotificationCard'
+import AdminPagination from '@/components/admin/AdminPagination'
 
 type SendMode = 'individual' | 'public'
 
@@ -110,6 +110,9 @@ export default function AdminNotificationsPage() {
   // Filter state
   const [filterType, setFilterType] = useState('all')
   const [filterRead, setFilterRead] = useState('all')
+  const [page, setPage] = useState(0)
+
+  const PAGE_SIZE = 10
 
   // Scheduling state
   const [deliveryMode, setDeliveryMode] = useState<'now' | 'scheduled'>('now')
@@ -136,7 +139,7 @@ export default function AdminNotificationsPage() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )
       setNotifications(sorted)
-      setStudents((studentsData || []).map((s: any) => ({
+      setStudents((studentsData || []).map((s: { id: string; full_name?: string; email?: string; phone?: string | null }) => ({
         id: s.id,
         full_name: s.full_name || '',
         email: s.email || '',
@@ -144,7 +147,7 @@ export default function AdminNotificationsPage() {
       })))
       setScheduledNotifications(
         (scheduledData || [])
-          .map((s: any) => ({
+          .map((s: { id: string; user_id: string; target_user_id: string | null; title: string; message: string; type: string; scheduled_at: string; created_at: string; target_type: string; sent_at: string | null; status: string; metadata: Record<string, unknown> | null; updated_at: string; profiles: { full_name: string; email: string } | null }) => ({
             id: s.id,
             user_id: s.user_id,
             target_user_id: s.target_user_id,
@@ -172,7 +175,7 @@ export default function AdminNotificationsPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    Promise.resolve().then(() => fetchData())
   }, [fetchData])
 
   // Close dropdown on outside click
@@ -202,6 +205,9 @@ export default function AdminNotificationsPage() {
     if (filterRead === 'read' && !n.is_read) return false
     return true
   })
+
+  const totalPages = Math.ceil(filteredNotifications.length / PAGE_SIZE)
+  const pagedNotifications = filteredNotifications.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   function selectStudent(student: Student) {
     setSelectedStudent(student)
@@ -298,15 +304,6 @@ export default function AdminNotificationsPage() {
     }
   }
 
-  async function handleCancelScheduled(id: string) {
-    try {
-      await updateRecord('scheduled_notifications', id, { status: 'cancelled' })
-      fetchData()
-    } catch {
-      // handled silently
-    }
-  }
-
   async function handleProcessNow() {
     try {
       const res = await fetch('/api/cron/process-scheduled-notifications', {
@@ -331,10 +328,6 @@ export default function AdminNotificationsPage() {
     } catch {
       // handled silently
     }
-  }
-
-  function getTypeConfig(type: string) {
-    return NOTIFICATION_TYPES.find((t) => t.value === type) || NOTIFICATION_TYPES[0]
   }
 
   if (loading) {
@@ -441,7 +434,7 @@ export default function AdminNotificationsPage() {
 
           {/* Filters */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <Select value={filterType} onValueChange={(v) => v !== null && setFilterType(v)}>
+            <Select value={filterType} onValueChange={(v) => { setPage(0); if (v !== null) setFilterType(v) }}>
               <SelectTrigger className="w-[150px] border-slate-300">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -454,7 +447,7 @@ export default function AdminNotificationsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterRead} onValueChange={(v) => v !== null && setFilterRead(v)}>
+            <Select value={filterRead} onValueChange={(v) => { setPage(0); if (v !== null) setFilterRead(v) }}>
               <SelectTrigger className="w-[150px] border-slate-300">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -474,73 +467,32 @@ export default function AdminNotificationsPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredNotifications.map((notif) => {
-                const typeConfig = getTypeConfig(notif.type)
-                const TypeIcon = typeConfig.icon
-                return (
-                  <div
-                    key={notif.id}
-                    className={`border rounded-xl p-4 transition-colors ${
-                      notif.is_read
-                        ? 'border-slate-200 bg-white hover:bg-slate-50'
-                        : 'border-blue-200 bg-blue-50/50 hover:bg-blue-50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${typeConfig.color}`}>
-                        <TypeIcon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-slate-900">{notif.title}</p>
-                          {!notif.is_read && (
-                            <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">New</Badge>
-                          )}
-                          <Badge className={`border-0 text-xs ${typeConfig.color}`}>
-                            {typeConfig.label}
-                          </Badge>
-                        </div>
-                        {notif.message && (
-                          <p className="text-sm text-slate-600 mb-2">{notif.message}</p>
-                        )}
-                        <div className="flex items-center gap-3 text-xs text-slate-400">
-                          {notif.profiles?.full_name && (
-                            <span className="inline-flex items-center gap-1">
-                              <User className="h-3 w-3" /> {notif.profiles.full_name}
-                            </span>
-                          )}
-                          <span>{new Date(notif.created_at).toLocaleString()}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {!notif.is_read && (
-                          <button
-                            type="button"
-                            onClick={() => markAsRead(notif.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:bg-green-50 hover:text-green-600"
-                            title="Mark as read"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDeletingNotification(notif)
-                            setShowDeleteConfirm(true)
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {pagedNotifications.map((notif) => (
+                <NotificationCard
+                  key={notif.id}
+                  id={notif.id}
+                  type={notif.type}
+                  title={notif.title}
+                  message={notif.message}
+                  is_read={notif.is_read}
+                  created_at={notif.created_at}
+                  profiles={notif.profiles}
+                  onMarkRead={markAsRead}
+                  onDelete={(id) => {
+                    const n = notifications.find((x) => x.id === id)
+                    if (n) { setDeletingNotification(n); setShowDeleteConfirm(true) }
+                  }}
+                />
+              ))}
             </div>
           )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={filteredNotifications.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </>
       )}
 
@@ -569,88 +521,22 @@ export default function AdminNotificationsPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {scheduledNotifications.map((notif) => {
-                const typeConfig = getTypeConfig(notif.type)
-                const TypeIcon = typeConfig.icon
-                const statusColors: Record<string, string> = {
-                  pending: 'bg-yellow-100 text-yellow-700',
-                  sent: 'bg-green-100 text-green-700',
-                  failed: 'bg-red-100 text-red-700',
-                  cancelled: 'bg-slate-100 text-slate-600',
-                }
-                return (
-                  <div
-                    key={notif.id}
-                    className={`border rounded-xl p-4 transition-colors ${
-                      notif.status === 'pending'
-                        ? 'border-amber-200 bg-amber-50/30 hover:bg-amber-50/50'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${typeConfig.color}`}>
-                        <TypeIcon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <p className="font-semibold text-slate-900">{notif.title}</p>
-                          <Badge className={`border-0 text-xs ${typeConfig.color}`}>
-                            {typeConfig.label}
-                          </Badge>
-                          <Badge className={`border-0 text-xs ${statusColors[notif.status] || statusColors.pending}`}>
-                            {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
-                          </Badge>
-                        </div>
-                        {notif.message && (
-                          <p className="text-sm text-slate-600 mb-2">{notif.message}</p>
-                        )}
-                        <div className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(notif.scheduled_at).toLocaleDateString()}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(notif.scheduled_at).toLocaleTimeString()}
-                          </span>
-                          {notif.profiles?.full_name ? (
-                            <span className="inline-flex items-center gap-1">
-                              <User className="h-3 w-3" /> {notif.profiles.full_name}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1">
-                              <Globe className="h-3 w-3" /> All Students
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {notif.status === 'pending' && (
-                          <button
-                            type="button"
-                            onClick={() => handleCancelScheduled(notif.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:bg-yellow-50 hover:text-yellow-600"
-                            title="Cancel"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDeletingScheduled(notif)
-                            setShowDeleteScheduledConfirm(true)
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {scheduledNotifications.map((notif) => (
+                <ScheduledNotificationCard
+                  key={notif.id}
+                  id={notif.id}
+                  type={notif.type}
+                  title={notif.title}
+                  message={notif.message}
+                  status={notif.status}
+                  scheduled_at={notif.scheduled_at}
+                  profiles={notif.profiles}
+                  onDelete={(id) => {
+                    const n = scheduledNotifications.find((x) => x.id === id)
+                    if (n) { setDeletingScheduled(n); setShowDeleteScheduledConfirm(true) }
+                  }}
+                />
+              ))}
             </div>
           )}
         </>

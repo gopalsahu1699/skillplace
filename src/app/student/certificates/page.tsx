@@ -6,13 +6,16 @@ import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import { Download, Award, ArrowLeft } from 'lucide-react'
 
-export default function StudentCertificatesPage() {
-  const [certificates, setCertificates] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+interface Certificate {
+  id: string
+  certificate_number: string
+  issued_at: string
+  courses: { title: string; duration_hours: number } | null
+}
 
-  useEffect(() => {
-    fetchCertificates()
-  }, [])
+export default function StudentCertificatesPage() {
+  const [certificates, setCertificates] = useState<Certificate[]>([])
+  const [loading, setLoading] = useState(true)
 
   async function fetchCertificates() {
     setLoading(true)
@@ -31,6 +34,10 @@ export default function StudentCertificatesPage() {
     setCertificates(data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchCertificates())
+  }, [])
 
   if (loading) {
     return (

@@ -4,7 +4,7 @@ import { adminSupabase } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-const iconMap: any = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   HardHat,
   Wrench,
   Zap,
@@ -32,9 +32,9 @@ async function getBranchesWithCourses() {
     return branches || []
   }
 
-  return (branches || []).map((branch: any) => ({
+  return (branches || []).map((branch: Record<string, unknown>) => ({
     ...branch,
-    courses: (courses || []).filter((c: any) => c.branch_id === branch.id),
+    courses: (courses || []).filter((c: Record<string, unknown>) => c.branch_id === branch.id),
   }))
 }
 
@@ -52,11 +52,11 @@ export default async function CoursesSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {branches.map((branch: any) => {
-            const Icon = iconMap[branch.icon] || HardHat
+          {branches.map((branch: Record<string, unknown>) => {
+            const Icon = (iconMap[branch.icon as string] as React.ComponentType<{ className?: string }> | undefined) || HardHat
             return (
               <Link
-                key={branch.id}
+                key={branch.id as string}
                 href="/courses"
                 className="group block p-6 bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300"
               >
@@ -65,19 +65,19 @@ export default async function CoursesSection() {
                     <Icon className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{branch.name}</h3>
-                    <p className="text-sm text-slate-500">{branch.courses?.length || 0} courses</p>
+                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{branch.name as string}</h3>
+                    <p className="text-sm text-slate-500">{(branch.courses as Record<string, unknown>[] | undefined)?.length || 0} courses</p>
                   </div>
                 </div>
                 <ul className="space-y-1.5 mb-4">
-                  {(branch.courses || []).slice(0, 4).map((course: any) => (
-                    <li key={course.id} className="text-sm text-slate-500 flex items-center gap-2">
+                  {((branch.courses as Record<string, unknown>[] | undefined) || []).slice(0, 4).map((course: Record<string, unknown>) => (
+                    <li key={course.id as string} className="text-sm text-slate-500 flex items-center gap-2">
                       <span className="h-1 w-1 bg-blue-400 rounded-full" />
-                      {course.title}
+                      {course.title as string}
                     </li>
                   ))}
-                  {(branch.courses || []).length > 4 && (
-                    <li className="text-sm text-slate-500">+{(branch.courses || []).length - 4} more</li>
+                  {((branch.courses as Record<string, unknown>[] | undefined) || []).length > 4 && (
+                    <li className="text-sm text-slate-500">+{((branch.courses as Record<string, unknown>[] | undefined) || []).length - 4} more</li>
                   )}
                 </ul>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 group-hover:gap-2 transition-all">

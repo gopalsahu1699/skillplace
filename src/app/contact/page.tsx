@@ -57,7 +57,7 @@ export default function ContactPage() {
         <div className="absolute top-12 -left-24 w-64 h-64 bg-primary-fixed opacity-10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="max-w-container-max mx-auto relative z-10">
-          <span className="inline-block py-1 px-3 bg-secondary-fixed text-on-secondary font-label-md text-[12px] rounded-full mb-6 tracking-wider uppercase">
+          <span className="inline-block py-1 px-3 bg-secondary-fixed text-secondary font-label-md text-[12px] rounded-full mb-6 tracking-wider uppercase">
             Support Center
           </span>
           <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-primary-container mb-6">
@@ -138,12 +138,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label
-                    htmlFor="phone"
-                    className={`font-label-md text-label-md transition-colors ${focusedField === 'phone' ? 'text-secondary' : 'text-on-surface-variant'}`}
-                  >
-                    Phone Number
-                  </label>
+               
                   <PhoneInput
                     value={phoneNumber}
                     onChange={setPhoneNumber}
@@ -210,8 +205,8 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Email</h3>
                   <p className="font-body-md text-on-surface-variant leading-relaxed">
-                    <a href="mailto:info@skillplace.com" className="hover:text-secondary transition-colors">info@skillplace.com</a><br />
-                    <a href="mailto:admissions@skillplace.com" className="hover:text-secondary transition-colors">admissions@skillplace.com</a>
+                    <a href="mailto:skillplaceacademy@gmail.com" className="hover:text-secondary transition-colors">skillplaceacademy@gmail.com</a><br />
+                  
                   </p>
                 </div>
               </div>
@@ -238,7 +233,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Address</h3>
                   <p className="font-body-md text-on-surface-variant leading-relaxed">
-                    Bilaspur, Chhattisgarh, India<br />
+                    1st floor, SD EPITOME, Gandhi chowk, beside Patel tutorial, Old High Court Rd, Bilaspur, Telipara, Chhattisgarh 495004, Bilaspur, India, 495004<br />
                     <span className="text-[12px] font-medium uppercase tracking-widest text-on-surface-variant opacity-70">Main Campus</span>
                   </p>
                 </div>
@@ -253,7 +248,7 @@ export default function ContactPage() {
                   <p className="text-[12px] text-on-surface-variant">Bilaspur, Chhattisgarh</p>
                 </div>
                 <a
-                  href="https://maps.google.com/?q=Bilaspur,Chhattisgarh"
+                  href="https://maps.app.goo.gl/Vc4F1FaXwHD1dAn87"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-all"
@@ -263,7 +258,7 @@ export default function ContactPage() {
               </div>
               <div className="h-64 relative bg-surface-container-highest group">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117942.36109968412!2d82.08316104860012!3d22.08051787680785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a280b13abdbdcbf%3A0xf635fb85d852a38a!2sBilaspur%2C%20Chhattisgarh!5e0!3m2!1sen!2sin!4v1719391000000!5m2!1sen!2sin"
+                  src="https://www.google.com/maps/place/Pind+Balluchi/@22.0774311,82.1641174,20.94z/data=!4m14!1m7!3m6!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!2sPind+Balluchi!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs!3m5!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { getCourses, getTestimonials, getFeaturedTrainingPrograms } from '@/lib/supabase/queries'
 import ScrollProgress from '@/components/home/ScrollProgress'
 import HeroSection from '@/components/home/HeroSection'
@@ -30,11 +29,11 @@ export default async function Home() {
   ])
 
   // Extract dynamic courses per branch
-  const civilCoursesFromDb = courses.filter((c: any) => c.branches?.slug === 'civil').slice(0, 6).map((c: any) => c.title)
-  const mechanicalCoursesFromDb = courses.filter((c: any) => c.branches?.slug === 'mechanical').slice(0, 4).map((c: any) => c.title)
-  const electricalCoursesFromDb = courses.filter((c: any) => c.branches?.slug === 'electrical').slice(0, 4).map((c: any) => c.title)
-  const electronicsCoursesFromDb = courses.filter((c: any) => c.branches?.slug === 'electronics').slice(0, 5).map((c: any) => c.title)
-  const softSkillsCoursesFromDb = courses.filter((c: any) => !c.branches).slice(0, 4).map((c: any) => c.title)
+  const civilCoursesFromDb = courses.filter((c: { branches?: { slug: string } }) => c.branches?.slug === 'civil').slice(0, 6).map((c: { title: string }) => c.title)
+  const mechanicalCoursesFromDb = courses.filter((c: { branches?: { slug: string } }) => c.branches?.slug === 'mechanical').slice(0, 4).map((c: { title: string }) => c.title)
+  const electricalCoursesFromDb = courses.filter((c: { branches?: { slug: string } }) => c.branches?.slug === 'electrical').slice(0, 4).map((c: { title: string }) => c.title)
+  const electronicsCoursesFromDb = courses.filter((c: { branches?: { slug: string } }) => c.branches?.slug === 'electronics').slice(0, 5).map((c: { title: string }) => c.title)
+  const softSkillsCoursesFromDb = courses.filter((c: { branches?: { slug: string } }) => !c.branches).slice(0, 4).map((c: { title: string }) => c.title)
 
   // Fallbacks
   const civilList = getCoursesList(civilCoursesFromDb, ['AutoCAD 2D', 'AutoCAD 3D', 'Revit Architecture', 'Quantity Estimation', 'BOQ Preparation', 'Site Execution'])
@@ -63,7 +62,7 @@ export default async function Home() {
       {/* ═══════════════════════════════════════════
           2. TRUST INDICATORS — TRUST (stat counters)
           ═══════════════════════════════════════════ */}
-      <TrustIndicators />
+      {/* <TrustIndicators /> */}
 
       {/* ═══════════════════════════════════════════
           3. WHY CHOOSE SKILLPLACE — INTEREST (comparison)
@@ -97,7 +96,7 @@ export default async function Home() {
         civilList={civilList}
         mechanicalList={mechanicalList}
         electricalList={electricalList}
-        electronicsList={electronicsList}
+        // electronicsList={electronicsList}
         softSkillsList={softSkillsList}
       />
 
@@ -114,7 +113,7 @@ export default async function Home() {
       {/* ═══════════════════════════════════════════
           11. TESTIMONIALS — PROOF (student stories)
           ═══════════════════════════════════════════ */}
-      <TestimonialSection testimonials={testimonialsList} />
+      {/* <TestimonialSection testimonials={testimonialsList} /> */}
 
       {/* ═══════════════════════════════════════════
           12. CAREER GUIDANCE — DECISION (complete support)

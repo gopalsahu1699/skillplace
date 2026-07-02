@@ -5,10 +5,10 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { ArrowLeft, Save, Trash2, Upload, Film, CheckCircle, Loader2, X, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Save, Trash2, Film, CheckCircle, Loader2, X, AlertCircle } from 'lucide-react'
 import { getRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface DbLesson {
   id: string
@@ -84,7 +84,7 @@ export default function LessonEditorPage() {
   }, [lessonId])
 
   useEffect(() => {
-    fetchLesson()
+    Promise.resolve().then(() => fetchLesson())
   }, [fetchLesson])
 
   async function handleVideoUpload(file: File) {
@@ -399,25 +399,13 @@ export default function LessonEditorPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Lesson</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">{lesson.title}</span>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="border-slate-300">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Lesson"
+        itemName={lesson?.title || 'this item'}
+      />
     </div>
   )
 }

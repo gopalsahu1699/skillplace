@@ -33,6 +33,7 @@ import {
   Calendar,
   Hash,
 } from 'lucide-react'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 
 interface Coupon {
@@ -90,7 +91,7 @@ export default function AdminCouponsPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    Promise.resolve().then(() => fetchData())
   }, [fetchData])
 
   function generateCode() {
@@ -571,34 +572,13 @@ export default function AdminCouponsPage() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Coupon</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete coupon{' '}
-              <span className="font-semibold text-slate-900">{deletingCoupon?.code}</span>?
-              This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="border-slate-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Coupon"
+        itemName={deletingCoupon?.code || 'this coupon'}
+      />
     </div>
   )
 }

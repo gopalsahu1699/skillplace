@@ -6,7 +6,7 @@ interface JobCoursesSectionProps {
   civilList: string[]
   mechanicalList: string[]
   electricalList: string[]
-  electronicsList: string[]
+  // electronicsList: string[]
   softSkillsList: string[]
 }
 
@@ -14,7 +14,7 @@ export default function JobCoursesSection({
   civilList,
   mechanicalList,
   electricalList,
-  electronicsList,
+  // electronicsList,
   softSkillsList
 }: JobCoursesSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -110,7 +110,7 @@ export default function JobCoursesSection({
           </div>
 
           {/* Electronics Bento */}
-          <div className="md:col-span-5 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300">
+          {/* <div className="md:col-span-5 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300">
             <div>
               <h3 className="font-headline-md text-headline-md text-primary mb-6">Electronics &amp; Automation</h3>
               <div className="flex flex-wrap gap-2 mb-8">
@@ -122,7 +122,7 @@ export default function JobCoursesSection({
             <Link className="text-secondary font-bold flex items-center gap-2" href="/courses">
               Explore <span className="material-symbols-outlined">trending_flat</span>
             </Link>
-          </div>
+          </div> */}
 
           {/* Soft Skills Bento */}
           <div className="md:col-span-3 bg-secondary text-white p-8 rounded-2xl flex flex-col justify-between">
@@ -224,7 +224,7 @@ export default function JobCoursesSection({
             </div>
 
             {/* Electronics Card */}
-            <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm">
+            {/* <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-headline-md font-bold text-primary">Electronics &amp; Automation</h4>
@@ -244,7 +244,7 @@ export default function JobCoursesSection({
                 Explore Electronics
                 <span className="material-symbols-outlined text-[18px]">trending_flat</span>
               </Link>
-            </div>
+            </div> */}
 
             {/* Soft Skills Card */}
             <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-secondary text-white p-6 rounded-2xl flex flex-col justify-between min-h-[320px] shadow-md">

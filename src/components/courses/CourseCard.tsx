@@ -35,8 +35,8 @@ export default function CourseCard({ course }: CourseCardProps) {
           <Badge variant="secondary" className={`${levelColors[course.level]} border-0`}>
             {course.level}
           </Badge>
-          {(course as any).branches && (
-            <Badge variant="outline" className="border-slate-200 text-slate-600">{(course as any).branches.name}</Badge>
+          {course.branches && (
+            <Badge variant="outline" className="border-slate-200 text-slate-600">{course.branches.name}</Badge>
           )}
         </div>
         <h3 className="font-bold text-slate-900 mb-1.5 line-clamp-1 group-hover:text-blue-600 transition-colors">{course.title}</h3>

@@ -147,7 +147,7 @@ export default function CourseLearnClient({
         } catch {}
       })()
     } else {
-      setCurrentTest(null)
+      Promise.resolve().then(() => setCurrentTest(null))
     }
   }, [activeLesson, course.id])
 

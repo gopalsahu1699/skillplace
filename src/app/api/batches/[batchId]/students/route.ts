@@ -31,10 +31,10 @@ export async function GET(
     const { count: certCount } = await adminSupabase
       .from('certificates')
       .select('id', { count: 'exact', head: true })
-      .in('user_id', (students || []).map((s: any) => s.id))
+      .in('user_id', (students || []).map((s: { id: string }) => s.id))
 
     return NextResponse.json({ data: { batch, students: students || [], certificate_count: certCount || 0 } })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

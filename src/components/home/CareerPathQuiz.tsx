@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import Link from 'next/link'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 import { getSupabaseImageUrl } from '@/lib/utils'
@@ -120,8 +121,8 @@ Recommended Program: ${rec.title}
       if (typeof window !== 'undefined') {
         notify.registerSuccess()
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit details. Please try again.')
+    } catch (error) {
+      setError((error as Error).message || 'Failed to submit details. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -409,12 +410,12 @@ Recommended Program: ${rec.title}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <a
+                <Link
                   href="/programs"
                   className="flex-1 bg-secondary text-white py-3 rounded-xl font-bold text-sm text-center hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/15"
                 >
                   Browse Recommended Programs
-                </a>
+                </Link>
                 <button
                   onClick={() => {
                     setStep(1)

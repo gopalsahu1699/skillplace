@@ -107,7 +107,7 @@ export default function CareerGuidance() {
         </SectionReveal>
 
         {/* Outcomes */}
-        <SectionReveal>
+        {/* <SectionReveal>
           <div className="relative rounded-2xl overflow-hidden border border-border-subtle/50 mb-16">
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/[0.04] via-white/80 to-violet-500/[0.04] backdrop-blur-sm" />
             <div className="absolute inset-0 grid-pattern opacity-10 pointer-events-none" />
@@ -140,7 +140,7 @@ export default function CareerGuidance() {
               </div>
             </div>
           </div>
-        </SectionReveal>
+        </SectionReveal> */}
 
         {/* CTA */}
         <SectionReveal className="text-center">

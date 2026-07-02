@@ -44,10 +44,6 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([])
   const [user, setUser] = useState<{ id: string } | null>(null)
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
   async function checkUser() {
     const { data: { user: currentUser } } = await supabase.auth.getUser()
     setUser(currentUser)
@@ -61,6 +57,10 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
     }
   }
 
+  useEffect(() => {
+    Promise.resolve().then(() => checkUser())
+  }, [])
+
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
       searchTerm === '' ||
@@ -69,14 +69,14 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
       (course.short_description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
 
     const matchesBranch =
-      selectedBranch === null || (course as any).branches?.id === selectedBranch
+      selectedBranch === null || (course as { branches: { id: string } | null }).branches?.id === selectedBranch
 
     return matchesSearch && matchesBranch
   })
 
   const categoryCourseMap: Record<string, Course[]> = {}
   for (const c of courses) {
-    const bId = (c as any).branches?.id
+    const bId = c.branches?.id
     if (bId) {
       if (!categoryCourseMap[bId]) categoryCourseMap[bId] = []
       categoryCourseMap[bId].push(c)
@@ -127,7 +127,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
             {courses.filter(c => enrolledCourseIds.includes(c.id)).map((course) => {
-              const branch = (course as any).branches
+              const branch = course.branches
               return (
                 <div key={course.id} className="tonal-card rounded-xl overflow-hidden flex flex-col group border-2 border-secondary/20">
                   <div className="h-48 bg-surface-container overflow-hidden relative">
@@ -334,7 +334,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
               {filteredCourses.map((course) => {
-                const branch = (course as any).branches
+                const branch = course.branches
                 return (
                   <div key={course.id} className="tonal-card rounded-xl overflow-hidden flex flex-col group">
                     {/* Thumbnail */}

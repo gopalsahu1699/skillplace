@@ -1,7 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
 import SectionReveal from './SectionReveal'
-import { getSupabaseImageUrl } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
 
 const partners = [
@@ -10,7 +9,7 @@ const partners = [
     short: 'Autommensor',
     desc: 'Industrial automation & control systems',
     type: 'Training Partner',
-    logo: getSupabaseImageUrl('partner-autommensor.png'),
+    logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Logo%20for%20Automensor.png',
     color: 'bg-blue-600',
   },
   {
@@ -18,7 +17,7 @@ const partners = [
     short: 'Dozert',
     desc: 'AI-powered technology solutions',
     type: 'Technology Partner',
-    logo: getSupabaseImageUrl('partner-dozert-ai.png'),
+    logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Dozer%20ai.png',
     color: 'bg-violet-600',
   },
   {
@@ -26,14 +25,14 @@ const partners = [
     short: 'Himanshu',
     desc: 'Civil construction & infrastructure',
     type: 'Hiring Partner',
-    logo: getSupabaseImageUrl('partner-himanshu-construction.png'),
+    logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Himanshu.png',
     color: 'bg-amber-600',
   },
 ]
 
 function PartnerLogo({ partner }: { partner: typeof partners[0] }) {
   return (
-    <div className="mx-auto mb-4 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 border border-border-subtle rounded-2xl bg-white p-4 max-w-[140px] min-w-[80px] group-hover:scale-105 grayscale group-hover:grayscale-0">
+    <div className="mx-auto mb-4 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 border border-border-subtle rounded-2xl bg-white p-4 max-w-[140px] min-w-[80px] group-hover:scale-105">
       <SafeImg
         src={partner.logo}
         alt={`${partner.name} logo`}

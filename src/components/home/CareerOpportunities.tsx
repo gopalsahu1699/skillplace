@@ -55,19 +55,19 @@ const disciplines: CareerDiscipline[] = [
     salary: '₹3L – ₹14L / year',
     growth: '20% annual growth',
   },
-  {
-    name: 'Electronics & Automation',
-    slug: 'electronics',
-    color: 'border-emerald-500',
-    gradientFrom: 'from-emerald-500',
-    gradientTo: 'to-teal-600',
-    roles: ['PLC Programmer', 'SCADA Engineer', 'Automation Engineer', 'IoT Specialist', 'Control Systems Engineer'],
-    skills: ['PLC Programming', 'SCADA', 'HMI', 'VFD', 'Industrial Sensors', 'Industrial IoT'],
-    demand: 'Very High — Industry 4.0 driving massive demand',
-    salary: '₹4L – ₹16L / year',
-    growth: '25% annual growth',
-    popular: true,
-  },
+  // {
+  //   name: 'Electronics & Automation',
+  //   slug: 'electronics',
+  //   color: 'border-emerald-500',
+  //   gradientFrom: 'from-emerald-500',
+  //   gradientTo: 'to-teal-600',
+  //   roles: ['PLC Programmer', 'SCADA Engineer', 'Automation Engineer', 'IoT Specialist', 'Control Systems Engineer'],
+  //   skills: ['PLC Programming', 'SCADA', 'HMI', 'VFD', 'Industrial Sensors', 'Industrial IoT'],
+  //   demand: 'Very High — Industry 4.0 driving massive demand',
+  //   salary: '₹4L – ₹16L / year',
+  //   growth: '25% annual growth',
+  //   popular: true,
+  // },
 ]
 
 export default function CareerOpportunities() {

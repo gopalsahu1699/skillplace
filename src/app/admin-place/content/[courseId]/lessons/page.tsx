@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { ArrowLeft, Plus, ChevronUp, ChevronDown, Edit, Trash2, Upload, Video, CheckCircle2, XCircle, Loader2, CloudUpload } from 'lucide-react'
+import { ArrowLeft, Plus, ChevronUp, ChevronDown, Edit, Trash2, Upload, Video, CheckCircle2, XCircle, CloudUpload } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 import { toast } from 'sonner'
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
 interface DbLesson {
   id: string
@@ -98,12 +99,12 @@ export default function LessonsPage() {
   }, [courseId, selectedModuleId])
 
   useEffect(() => {
-    fetchModules()
+    Promise.resolve().then(() => fetchModules())
   }, [fetchModules])
 
   useEffect(() => {
     const mod = modules.find((m) => m.id === selectedModuleId)
-    setLessons(mod?.lessons || [])
+    Promise.resolve().then(() => setLessons(mod?.lessons || []))
   }, [selectedModuleId, modules])
 
   function openCreate() {
@@ -749,25 +750,13 @@ export default function LessonsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Lesson</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-slate-900">{deletingLesson?.title}</span>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="border-slate-300">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminDeleteDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Lesson"
+        itemName={deletingLesson?.title || 'this item'}
+      />
     </div>
   )
 }

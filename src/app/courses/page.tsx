@@ -5,7 +5,7 @@ import CoursesClient from './CoursesClient'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Civil, Mechanical, Electrical & Electronics Courses | Skillplace Academy',
+  title: 'Civil, Mechanical, Electrical | Skillplace Academy',
   description: 'Browse our comprehensive range of engineering courses. Learn AutoCAD, Revit, SolidWorks, PLC, and more with live classes and projects.',
   openGraph: {
     title: 'Engineering Courses | Skillplace Academy',
@@ -20,9 +20,9 @@ export default async function CoursesPage() {
   const branches = Array.from(
     new Map(
       courses
-        .map((c: any) => c.branches)
-        .filter(Boolean)
-        .map((b: any) => [b.id, b])
+        .map((c) => c.branches)
+        .filter((b): b is NonNullable<typeof b> => b != null)
+        .map((b) => [b.id, b] as [string, typeof b])
     ).values()
   )
 

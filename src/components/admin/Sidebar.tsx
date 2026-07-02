@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+
 import { ChevronDown, ChevronRight, Layers, FileText, HelpCircle, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'

@@ -1,17 +1,28 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { BookOpen, Award, Clock, TrendingUp } from 'lucide-react'
+import { BookOpen, Award, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase/client'
 
-export default function StudentDashboard() {
-  const [enrollments, setEnrollments] = useState<any[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+interface DashboardEnrollment {
+  id: string
+  status: string
+  progress_percent: number | null
+  courses: { title: string; slug: string } | null
+}
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+interface DashboardNotification {
+  id: string
+  title: string
+  message: string | null
+  is_read: boolean
+  created_at: string
+}
+
+export default function StudentDashboard() {
+  const [enrollments, setEnrollments] = useState<DashboardEnrollment[]>([])
+  const [notifications, setNotifications] = useState<DashboardNotification[]>([])
+  const [loading, setLoading] = useState(true)
 
   async function fetchData() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -38,6 +49,10 @@ export default function StudentDashboard() {
     setNotifications(notificationsRes.data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchData())
+  }, [])
 
   const completedCount = enrollments.filter((e) => e.status === 'completed').length
   const avgProgress = enrollments.length > 0

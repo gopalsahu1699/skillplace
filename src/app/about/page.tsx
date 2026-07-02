@@ -4,23 +4,18 @@ import { SafeImg } from '@/components/ui/safe-image'
 
 const teamMembers = [
   {
-    name: 'Dr. Rajesh Mehta',
-    role: 'Founder & Director',
-    specialty: 'Civil Engineering Expert',
-    image: getSupabaseImageUrl('about-team-founder.jpg'),
+    name: 'Prakash Dev',
+    role: 'CEO & Founder',
+    specialty: 'Dozert AI',
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Prakash%20Dev.JPG.jpeg',
   },
   {
-    name: 'Prof. Sunita Sharma',
-    role: 'Head of Training',
-    specialty: 'Mechanical Engineering Lead',
-    image: getSupabaseImageUrl('about-team-training-head.jpg'),
+    name: 'Gopal Krishn Sahu',
+    role: 'Director & Co-Founder',
+    specialty: 'Autommensor Automation Pvt. Ltd.',
+    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Gopal%20sahu.png',
   },
-  {
-    name: 'Er. Amit Deshmukh',
-    role: 'Placement Head',
-    specialty: 'Electronics & IT Specialist',
-    image: getSupabaseImageUrl('about-team-placement-head.jpg'),
-  },
+
 ]
 
 const whyChooseUs = [
@@ -50,9 +45,9 @@ export default function AboutPage() {
 
         <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
           <div className="max-w-2xl">
-            <span className="inline-block py-1 px-3 rounded bg-secondary/10 text-secondary font-label-md text-label-md mb-6">
+            {/* <span className="inline-block py-1 px-3 rounded bg-secondary/10 text-secondary font-label-md text-label-md mb-6">
               ESTABLISHED 2020
-            </span>
+            </span> */}
             <h1 className="font-display-lg text-display-lg text-white mb-6 leading-tight">
               Empowering Engineers with Practical Skills
             </h1>
@@ -150,11 +145,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Our Team */}
+      {/* Our Mentors */}
       <section className="py-section-gap bg-surface-container-lowest">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="mb-20">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4">Our Team</h2>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4">Our Mentors</h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
               Our leadership consists of experienced engineers and educators who are passionate about transforming technical education.
             </p>
@@ -186,12 +181,20 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-wrap justify-center items-center gap-20 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-default">
             <div className="flex flex-col items-center">
-              <span className="material-symbols-outlined text-4xl mb-2">settings_suggest</span>
+              <img
+                src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Logo%20for%20Automensor.png"
+                alt="Autommensor Automation Pvt Ltd"
+                className="w-32 h-16 object-contain mb-2"
+              />
               <span className="font-bold text-xl tracking-tight">Autommensor Automation</span>
               <span className="text-xs uppercase font-label-md">Pvt. Ltd.</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="material-symbols-outlined text-4xl mb-2">construction</span>
+              <img
+                src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Himanshu.png"
+                alt="Himanshu Construction"
+                className="w-32 h-16 object-contain mb-2"
+              />
               <span className="font-bold text-xl tracking-tight">Himanshu Construction</span>
               <span className="text-xs uppercase font-label-md">Industry Partner</span>
             </div>

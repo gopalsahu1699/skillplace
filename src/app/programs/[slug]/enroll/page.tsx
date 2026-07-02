@@ -84,21 +84,6 @@ export default function EnrollPage() {
   const [couponError, setCouponError] = useState('')
   const [applyingCoupon, setApplyingCoupon] = useState(false)
 
-  useEffect(() => {
-    fetchUserProfile()
-    fetchProgram()
-  }, [slug])
-
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    document.body.appendChild(script)
-    return () => {
-      document.body.removeChild(script)
-    }
-  }, [])
-
   async function fetchUserProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -157,6 +142,21 @@ export default function EnrollPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchUserProfile())
+    Promise.resolve().then(() => fetchProgram())
+  }, [slug])
+
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    document.body.appendChild(script)
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
 
   function updateForm(updates: Partial<FormData>) {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -391,7 +391,7 @@ export default function EnrollPage() {
                 ))}
               </div>
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                <p className="text-xs text-blue-800 font-medium mb-1">Program Fee</p>
+                <p className="text-xs text-blue-800 font-medium mb-1">Enrollment Fee</p>
                 {appliedCoupon && getCouponDiscount() > 0 && (
                   <p className="text-sm text-slate-400 line-through">₹{originalPrice.toLocaleString()}</p>
                 )}
@@ -463,7 +463,7 @@ export default function EnrollPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-700 mb-1 block">Phone *</label>
+
                     <PhoneInput
                       value={formData.phoneNumber}
                       onChange={(num) => updateForm({ phoneNumber: num })}
@@ -498,7 +498,7 @@ export default function EnrollPage() {
                       className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm text-slate-600">
-                      I agree to the terms and conditions and understand that enrollment is subject to successful payment.
+                      I agree to the <Link href="/terms" className="text-blue-600 hover:underline">terms and conditions</Link> and understand that enrollment is subject to successful payment.
                     </span>
                   </label>
                 </div>

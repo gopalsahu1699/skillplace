@@ -23,10 +23,6 @@ export default function MyCoursesPage() {
   const [courses, setCourses] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchCourses()
-  }, [])
-
   async function fetchCourses() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -43,6 +39,10 @@ export default function MyCoursesPage() {
     setCourses(data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchCourses())
+  }, [])
 
   return (
     <div>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import AdminSidebar from '@/components/layout/AdminSidebar'
 import AdminNavbar from '@/components/layout/AdminNavbar'
 import { Button } from '@/components/ui/button'
@@ -27,7 +26,6 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [errorType, setErrorType] = useState<'auth' | 'unauthorized' | 'error'>('error')
@@ -155,17 +153,6 @@ export default function AdminLayout({
     return () => clearTimeout(timer)
   }, [loading])
 
-  const handleLogout = async () => {
-    await fetch('/api/session/revoke', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'all' }),
-    }).catch(() => {})
-    await supabase.auth.signOut()
-    setAdminUser(null)
-    router.push('/')
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -250,7 +237,6 @@ export default function AdminLayout({
           isAdmin={adminUser.role === 'admin'}
           permissions={adminUser.isEmployee ? adminUser.permissions : null}
           isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
         <AdminContext.Provider value={{ isAdmin: adminUser.role === 'admin', permissions: adminUser.permissions || null }}>
           <main className="flex-1 p-4 md:p-6 min-h-[calc(100vh-3.5rem)]">
