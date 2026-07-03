@@ -195,6 +195,19 @@ export async function getRecentEnrollments() {
   return data || []
 }
 
+export async function getMentors() {
+  const { data, error } = await adminSupabase
+    .from('mentors')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
 export async function getRecentPayments() {
   const { data, error } = await adminSupabase
     .from('purchases')

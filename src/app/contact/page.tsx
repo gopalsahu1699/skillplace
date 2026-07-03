@@ -258,7 +258,7 @@ export default function ContactPage() {
               </div>
               <div className="h-64 relative bg-surface-container-highest group">
                 <iframe
-                  src="https://www.google.com/maps/place/Pind+Balluchi/@22.0774311,82.1641174,20.94z/data=!4m14!1m7!3m6!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!2sPind+Balluchi!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs!3m5!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D"
+                  src="https://www.google.com/maps/place/Pind+Balluchi/@22.0775672,82.1641834,21z/data=!4m14!1m7!3m6!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!2sPind+Balluchi!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs!3m5!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

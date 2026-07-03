@@ -1,22 +1,7 @@
 import Link from 'next/link'
 import { getSupabaseImageUrl } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
-
-const teamMembers = [
-  {
-    name: 'Prakash Dev',
-    role: 'CEO & Founder',
-    specialty: 'Dozert AI',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Prakash%20Dev.JPG.jpeg',
-  },
-  {
-    name: 'Gopal Krishn Sahu',
-    role: 'Director & Co-Founder',
-    specialty: 'Autommensor Automation Pvt. Ltd.',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Gopal%20sahu.png',
-  },
-
-]
+import { getMentors } from '@/lib/supabase/queries'
 
 const whyChooseUs = [
   { icon: 'menu_book', title: 'Industry-Relevant Curriculum', desc: 'Courses designed by industry experts based on current market demands and emerging technological trends.' },
@@ -27,7 +12,9 @@ const whyChooseUs = [
   { icon: 'event_available', title: 'Flexible Scheduling', desc: 'Weekday and weekend batches available to suit both students and working professionals.' },
 ]
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const teamMembers = await getMentors()
+
   return (
     <div className="bg-background text-on-surface font-body-md overflow-x-hidden">
 
@@ -165,8 +152,9 @@ export default function AboutPage() {
                   />
                 </div>
                 <h4 className="font-headline-md text-headline-md text-on-surface">{member.name}</h4>
-                <p className="text-secondary font-label-md text-label-md mb-2">{member.role}</p>
-                <p className="text-on-surface-variant font-body-md text-body-md">{member.specialty}</p>
+                <p className="text-secondary font-label-md text-label-md mb-2">{member.position}</p>
+                <p className="text-on-surface-variant font-body-md text-body-md">{member.company}</p>
+                <p className="text-primary font-label-md text-label-md">{member.experience}</p>
               </div>
             ))}
           </div>
@@ -179,15 +167,15 @@ export default function AboutPage() {
           <p className="text-center text-on-surface-variant font-label-md text-label-md mb-12 tracking-widest uppercase">
             Trusted by Industry Leaders
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-20 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-default">
+          <div className="flex flex-wrap justify-center items-center gap-20 opacity-60  grayscale-0 opacity-100 transition-all duration-500 cursor-default">
             <div className="flex flex-col items-center">
               <img
                 src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Logo%20for%20Automensor.png"
                 alt="Autommensor Automation Pvt Ltd"
                 className="w-32 h-16 object-contain mb-2"
               />
-              <span className="font-bold text-xl tracking-tight">Autommensor Automation</span>
-              <span className="text-xs uppercase font-label-md">Pvt. Ltd.</span>
+              <span className="font-bold text-xl tracking-tight">Autommensor Automation Pvt. Ltd.</span>
+              <span className="text-xs uppercase font-label-md">Sponsored</span>
             </div>
             <div className="flex flex-col items-center">
               <img

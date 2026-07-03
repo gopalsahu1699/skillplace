@@ -326,16 +326,16 @@ export default function ProgramsPage() {
                 Our programs go beyond standard curriculum. We immerse students in real-world scenarios, guided by mentors who lead the industry today.
               </p>
               <div className="flex flex-wrap gap-12">
-                <div>
+                {/* <div>
                   <div className="text-3xl font-bold text-surface-container-lowest">2000+</div>
                   <div className="text-sm opacity-60">Engineers Trained</div>
-                </div>
+                </div> */}
                 <div>
                   <div className="text-3xl font-bold text-surface-container-lowest">100%</div>
                   <div className="text-sm opacity-60">Job Assistance</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-surface-container-lowest">10+</div>
+                  <div className="text-3xl font-bold text-surface-container-lowest">6+</div>
                   <div className="text-sm opacity-60">Industry Mentors</div>
                 </div>
               </div>

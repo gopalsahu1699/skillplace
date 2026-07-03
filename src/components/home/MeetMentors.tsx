@@ -1,34 +1,24 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import SectionReveal from './SectionReveal'
 import { SafeImg } from '@/components/ui/safe-image'
+import { supabase } from '@/lib/supabase/client'
 
-const mentors = [
-  {
-    name: 'Prakash Dev',
-    position: 'CEO',
-    company: 'Dozert AI',
-    expertise: 'AI & Automation',
-    experience: '10+ years',
-    bio: 'Visionary leader building AI solutions for industry. Passionate about practical engineering education.',
-    initials: 'PD',
-    gradient: 'from-violet-600 to-purple-700',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Prakash%20Dev.JPG.jpeg',
-  },
-  {
-    name: 'Gopal Krishn Sahu',
-    position: 'Director',
-    company: 'Autommensor Automation Pvt Ltd',
-    expertise: 'Industrial Automation',
-    experience: '20+ years',
-    bio: '20+ years in automation & control systems. Dedicated to bridging the gap between academia and industry.',
-    initials: 'GS',
-    gradient: 'from-blue-600 to-indigo-700',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Gopal%20sahu.png',
-  },
-]
+interface Mentor {
+  id: string
+  name: string
+  position: string
+  company: string
+  expertise: string
+  experience: string
+  bio: string
+  initials: string
+  gradient: string
+  image: string | null
+  linkedin_url: string | null
+}
 
-function MentorPhoto({ mentor, size = 'large' }: { mentor: typeof mentors[0]; size?: 'large' | 'small' }) {
+function MentorPhoto({ mentor, size = 'large' }: { mentor: Mentor; size?: 'large' | 'small' }) {
   const sizeClass = size === 'large' ? 'w-28 h-28' : 'w-20 h-20'
   
   if (!mentor.image) {
@@ -56,8 +46,28 @@ function MentorPhoto({ mentor, size = 'large' }: { mentor: typeof mentors[0]; si
 }
 
 export default function MeetMentors() {
+  const [mentors, setMentors] = useState<Mentor[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    async function fetchMentors() {
+      const { data, error } = await supabase
+        .from('mentors')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+      if (error) {
+        console.error('Error fetching mentors:', error)
+      }
+      if (data) {
+        setMentors(data)
+      }
+      setLoading(false)
+    }
+    fetchMentors()
+  }, [])
 
   const handleScroll = () => {
     if (!scrollRef.current) return
@@ -82,7 +92,7 @@ export default function MeetMentors() {
             Expert Mentors
           </span>
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
-            Learn From{' '}
+            Mentorship From{' '}
             <span className="gradient-text">Industry Leaders</span>
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
@@ -91,6 +101,12 @@ export default function MeetMentors() {
           </p>
         </SectionReveal>
 
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin" />
+          </div>
+        ) : (
+        <>
         {/* DESKTOP: 2-column premium grid */}
         <SectionReveal stagger>
           <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -124,7 +140,9 @@ export default function MeetMentors() {
                   <p className="text-body-md text-on-surface-variant mt-4 leading-relaxed">{mentor.bio}</p>
                   
                   <a
-                    href="#"
+                    href={mentor.linkedin_url || '#'}
+                    target={mentor.linkedin_url ? '_blank' : undefined}
+                    rel={mentor.linkedin_url ? 'noopener noreferrer' : undefined}
                     className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border-subtle text-sm font-bold text-on-surface hover:border-secondary/30 hover:text-secondary hover:bg-secondary/5 transition-all duration-300"
                   >
                     <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: '"FILL" 1' }}>person</span>
@@ -167,7 +185,9 @@ export default function MeetMentors() {
                   </div>
                   <p className="text-body-md text-on-surface-variant mt-4">{mentor.bio}</p>
                   <a
-                    href="#"
+                    href={mentor.linkedin_url || '#'}
+                    target={mentor.linkedin_url ? '_blank' : undefined}
+                    rel={mentor.linkedin_url ? 'noopener noreferrer' : undefined}
                     className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border-subtle text-sm font-bold text-on-surface hover:border-secondary/30 hover:text-secondary transition-colors"
                   >
                     <span className="material-symbols-outlined text-[18px]">person</span>
@@ -198,6 +218,8 @@ export default function MeetMentors() {
             Swipe to meet all mentors
           </p>
         </div>
+        </>
+        )}
 
       </div>
     </section>
