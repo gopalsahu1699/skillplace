@@ -18,16 +18,17 @@ const links: NavLink[] = [
   { href: '/admin-place/programs', label: 'Programs', icon: Briefcase, permissionKey: 'can_manage_programs' },
   { href: '/admin-place/content', label: 'Content', icon: FileText, permissionKey: 'can_manage_content' },
   { href: '/admin-place/enrollments', label: 'Enrollments', icon: GraduationCap, permissionKey: 'can_manage_enrollments' },
-  { href: '/admin-place/placements', label: 'Placements', icon: GraduationCap, permissionKey: 'can_manage_enrollments' },
-  { href: '/admin-place/schedule', label: 'Schedule', icon: Calendar, permissionKey: 'can_manage_programs' },
+  { href: '/admin-place/placements', label: 'Placements', icon: GraduationCap, permissionKey: 'can_manage_placements' },
+  { href: '/admin-place/schedule', label: 'Schedule', icon: Calendar, permissionKey: 'can_manage_schedule' },
   { href: '/admin-place/students', label: 'Students', icon: Users, permissionKey: 'can_manage_students' },
   { href: '/admin-place/employees', label: 'Employees', icon: UserCog, permissionKey: 'can_manage_employees' },
   { href: '/admin-place/leads', label: 'Leads', icon: MessageSquare, permissionKey: 'can_manage_leads' },
-  { href: '/admin-place/testimonials', label: 'Testimonials', icon: Star, permissionKey: 'can_manage_courses' },
-  { href: '/admin-place/coupons', label: 'Coupons', icon: Tag, permissionKey: 'can_manage_courses' },
-  { href: '/admin-place/notifications', label: 'Notifications', icon: Bell, permissionKey: 'can_manage_content' },
-  { href: '/admin-place/security/forensic', label: 'Video Security', icon: ShieldAlert, permissionKey: 'can_manage_students' },
+  { href: '/admin-place/testimonials', label: 'Testimonials', icon: Star, permissionKey: 'can_manage_testimonials' },
+  { href: '/admin-place/coupons', label: 'Coupons', icon: Tag, permissionKey: 'can_manage_coupons' },
+  { href: '/admin-place/notifications', label: 'Notifications', icon: Bell, permissionKey: 'can_manage_notifications' },
+  { href: '/admin-place/security/forensic', label: 'Video Security', icon: ShieldAlert, permissionKey: 'can_manage_video_security' },
   { href: '/admin-place/payments', label: 'Payments', icon: CreditCard, permissionKey: 'can_manage_payments' },
+  { href: '/admin-place/certificates', label: 'Certificates', icon: FileText, permissionKey: 'can_manage_certificates' },
 ]
 
 interface AdminSidebarProps {

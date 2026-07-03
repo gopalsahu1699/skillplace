@@ -22,20 +22,8 @@ const faqItems = [
     a: 'Absolutely. We provide 100% placement assistance including resume building, interview preparation, mock interviews, and direct connections with hiring partners.',
   },
   {
-    q: 'What if I don\'t get placed?',
-    a: 'We stand behind our training. Our placement team works actively with 50+ hiring partners. With a 87% placement rate, we are confident in our process. If you follow our guidance, you will get placed.',
-  },
-  {
-    q: 'Can I pay in installments?',
-    a: 'Yes! We offer flexible EMI options for all programs. You can split your fees into easy monthly installments. Contact our admissions team for details.',
-  },
-  {
     q: 'Are the classes online or offline?',
     a: 'We offer all three modes — 100% Offline (at our Bilaspur campus), 100% Online (live + recorded), and Hybrid (online lectures + weekend labs). Choose what fits your schedule.',
-  },
-  {
-    q: 'How long are the programs?',
-    a: 'Program durations range from 12 to 48 weeks depending on the discipline and depth. Most core engineering programs run 24-36 weeks with 3-4 sessions per week.',
   },
 ]
 

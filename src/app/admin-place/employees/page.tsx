@@ -48,11 +48,18 @@ export default function AdminEmployeesPage() {
     can_manage_courses: false,
     can_manage_programs: false,
     can_manage_enrollments: false,
+    can_manage_placements: false,
+    can_manage_schedule: false,
     can_manage_students: false,
     can_manage_content: false,
     can_manage_payments: false,
     can_manage_leads: false,
     can_manage_employees: false,
+    can_manage_testimonials: false,
+    can_manage_coupons: false,
+    can_manage_notifications: false,
+    can_manage_video_security: false,
+    can_manage_certificates: false,
   })
 
   useEffect(() => {
@@ -183,11 +190,18 @@ export default function AdminEmployeesPage() {
       can_manage_courses: p?.can_manage_courses || false,
       can_manage_programs: p?.can_manage_programs || false,
       can_manage_enrollments: p?.can_manage_enrollments || false,
+      can_manage_placements: p?.can_manage_placements || false,
+      can_manage_schedule: p?.can_manage_schedule || false,
       can_manage_students: p?.can_manage_students || false,
       can_manage_content: p?.can_manage_content || false,
       can_manage_payments: p?.can_manage_payments || false,
       can_manage_leads: p?.can_manage_leads || false,
       can_manage_employees: p?.can_manage_employees || false,
+      can_manage_testimonials: p?.can_manage_testimonials || false,
+      can_manage_coupons: p?.can_manage_coupons || false,
+      can_manage_notifications: p?.can_manage_notifications || false,
+      can_manage_video_security: p?.can_manage_video_security || false,
+      can_manage_certificates: p?.can_manage_certificates || false,
     })
     setShowPermissions(true)
   }
@@ -227,11 +241,18 @@ export default function AdminEmployeesPage() {
       can_manage_courses: false,
       can_manage_programs: false,
       can_manage_enrollments: false,
+      can_manage_placements: false,
+      can_manage_schedule: false,
       can_manage_students: false,
       can_manage_content: false,
       can_manage_payments: false,
       can_manage_leads: false,
       can_manage_employees: false,
+      can_manage_testimonials: false,
+      can_manage_coupons: false,
+      can_manage_notifications: false,
+      can_manage_video_security: false,
+      can_manage_certificates: false,
     })
   }
 
@@ -536,12 +557,19 @@ export default function AdminEmployeesPage() {
             {([
               { key: 'can_manage_courses', label: 'Courses' },
               { key: 'can_manage_programs', label: 'Programs' },
-              { key: 'can_manage_enrollments', label: 'Enrollments' },
-              { key: 'can_manage_students', label: 'Students' },
               { key: 'can_manage_content', label: 'Content' },
-              { key: 'can_manage_payments', label: 'Payments' },
-              { key: 'can_manage_leads', label: 'Leads' },
+              { key: 'can_manage_enrollments', label: 'Enrollments' },
+              { key: 'can_manage_placements', label: 'Placements' },
+              { key: 'can_manage_schedule', label: 'Schedule' },
+              { key: 'can_manage_students', label: 'Students' },
               { key: 'can_manage_employees', label: 'Employees' },
+              { key: 'can_manage_leads', label: 'Leads' },
+              { key: 'can_manage_testimonials', label: 'Testimonials' },
+              { key: 'can_manage_coupons', label: 'Coupons' },
+              { key: 'can_manage_notifications', label: 'Notifications' },
+              { key: 'can_manage_video_security', label: 'Video Security' },
+              { key: 'can_manage_payments', label: 'Payments' },
+              { key: 'can_manage_certificates', label: 'Certificates' },
             ] as const).map((perm) => (
               <button
                 key={perm.key}

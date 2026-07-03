@@ -277,4 +277,11 @@ export interface EmployeePermission {
   can_manage_payments: boolean
   can_manage_leads: boolean
   can_manage_employees: boolean
+  can_manage_placements: boolean
+  can_manage_schedule: boolean
+  can_manage_testimonials: boolean
+  can_manage_coupons: boolean
+  can_manage_notifications: boolean
+  can_manage_video_security: boolean
+  can_manage_certificates: boolean
 }

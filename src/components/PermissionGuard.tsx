@@ -9,15 +9,16 @@ const PERMISSION_MAP: Record<string, string> = {
   '/admin-place/programs': 'can_manage_programs',
   '/admin-place/content': 'can_manage_content',
   '/admin-place/enrollments': 'can_manage_enrollments',
-  '/admin-place/placements': 'can_manage_enrollments',
-  '/admin-place/schedule': 'can_manage_programs',
+  '/admin-place/placements': 'can_manage_placements',
+  '/admin-place/schedule': 'can_manage_schedule',
   '/admin-place/students': 'can_manage_students',
   '/admin-place/employees': 'can_manage_employees',
   '/admin-place/leads': 'can_manage_leads',
-  '/admin-place/testimonials': 'can_manage_courses',
-  '/admin-place/coupons': 'can_manage_courses',
-  '/admin-place/notifications': 'can_manage_content',
+  '/admin-place/testimonials': 'can_manage_testimonials',
+  '/admin-place/coupons': 'can_manage_coupons',
+  '/admin-place/notifications': 'can_manage_notifications',
   '/admin-place/payments': 'can_manage_payments',
+  '/admin-place/certificates': 'can_manage_certificates',
 }
 
 interface PermissionGuardProps {
