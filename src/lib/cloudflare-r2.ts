@@ -19,11 +19,6 @@ const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || ''
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || ''
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'skillplace-videos'
 
-let R2_PUBLIC_DOMAIN = process.env.R2_PUBLIC_DOMAIN || ''
-if (R2_PUBLIC_DOMAIN) {
-  R2_PUBLIC_DOMAIN = R2_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '')
-}
-
 const R2_ENDPOINT = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
 
 export const r2Client = new S3Client({
@@ -41,9 +36,6 @@ export function getR2Key(lessonId: string, filename: string): string {
 }
 
 export function getR2Url(key: string): string {
-  if (R2_PUBLIC_DOMAIN) {
-    return `https://${R2_PUBLIC_DOMAIN}/${key}`
-  }
   return `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`
 }
 
@@ -162,12 +154,13 @@ export async function getPartUploadUrl(
 
 /**
  * Complete the multipart upload after all parts are uploaded.
+ * Returns only the object key, never the public URL.
  */
 export async function completeMultipartUpload(
   key: string,
   uploadId: string,
   parts: { PartNumber: number; ETag: string }[]
-): Promise<{ location: string }> {
+): Promise<{ key: string }> {
   const command = new CompleteMultipartUploadCommand({
     Bucket: R2_BUCKET_NAME,
     Key: key,
@@ -176,8 +169,8 @@ export async function completeMultipartUpload(
       Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
     },
   })
-  const result = await r2Client.send(command)
-  return { location: result.Location || getR2Url(key) }
+  await r2Client.send(command)
+  return { key }
 }
 
 /**
@@ -212,4 +205,4 @@ export function getPartRange(partNumber: number, fileSize: number): { start: num
   return { start, end }
 }
 
-export { R2_BUCKET_NAME, R2_PUBLIC_DOMAIN, CHUNK_SIZE }
+export { R2_BUCKET_NAME, CHUNK_SIZE }

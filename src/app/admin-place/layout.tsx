@@ -239,7 +239,17 @@ export default function AdminLayout({
           isOpen={sidebarOpen}
         />
         <AdminContext.Provider value={{ isAdmin: adminUser.role === 'admin', permissions: adminUser.permissions || null }}>
-          <main className="flex-1 p-4 md:p-6 min-h-[calc(100vh-3.5rem)]">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-3.5rem)] w-full max-w-full overflow-x-hidden">
+            <div className="md:hidden mb-4">
+              <button
+                className="p-2 rounded-lg hover:bg-slate-100"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
             <PermissionGuard>{children}</PermissionGuard>
           </main>
         </AdminContext.Provider>

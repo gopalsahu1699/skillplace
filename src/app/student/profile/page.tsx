@@ -161,10 +161,10 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-3xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200 p-6 flex items-center gap-5">
-          <div className="h-20 w-20 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-5 text-center md:text-left">
+          <div className="h-20 w-20 shrink-0 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
             {profile.avatar_url ? (
               <SafeImg
                 src={profile.avatar_url}
@@ -185,7 +185,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Completion */}
-        <div className="px-6 pt-6">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6">
           <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-slate-700">Profile Completion</span>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSave} className="p-6 space-y-6">
+        <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-6">
           {success && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
               <div className="h-2 w-2 bg-green-500 rounded-full" />
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                   value={formData.gender}
                   onValueChange={(value: string | null) => setFormData({ ...formData, gender: value || '' })}
                 >
-                  <SelectTrigger id="gender" className="mt-1.5 border-slate-300">
+                  <SelectTrigger id="gender" className="mt-1.5 border-slate-300 w-full">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -334,7 +334,7 @@ export default function ProfilePage() {
                       setProfile({ ...profile, program_type: value })
                     }}
                   >
-                    <SelectTrigger id="program_type" className="border-slate-300">
+                    <SelectTrigger id="program_type" className="border-slate-300 w-full">
                       <SelectValue placeholder="Select program type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -367,7 +367,7 @@ export default function ProfilePage() {
 
           {/* Submit */}
           <div className="pt-4 border-t border-slate-200">
-            <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700 gap-2">
+            <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700 gap-2 w-full md:w-auto">
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

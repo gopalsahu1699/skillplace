@@ -22,6 +22,9 @@ import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import { cn } from '@/lib/utils'
 import LectureComingSoon from './LectureComingSoon'
+import { useCanvasWatermark } from '@/lib/use-canvas-watermark'
+import { ForensicSampler } from '@/lib/video-forensics'
+import { isDrmSupported, type DrmConfig, type DrmSession, createDrmSession, destroyDrmSession } from '@/lib/video-drm'
 
 interface LessonData {
   id: string
@@ -47,15 +50,9 @@ interface LessonPlayerProps {
   onNext: () => void
   hasPrev: boolean
   hasNext: boolean
+  courseName?: string
+  drmConfig?: DrmConfig
 }
-
-const WATERMARK_POSITIONS = [
-  { x: 10, y: 10 },
-  { x: 60, y: 15 },
-  { x: 15, y: 70 },
-  { x: 65, y: 75 },
-  { x: 30, y: 40 },
-]
 
 export default function LessonPlayer({
   lesson,
@@ -69,10 +66,15 @@ export default function LessonPlayer({
   onNext,
   hasPrev,
   hasNext,
+  courseName,
+  drmConfig,
 }: LessonPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const lastProgressRef = useRef(0)
   const tokenRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const drmSessionRef = useRef<DrmSession | null>(null)
+  const forensicRef = useRef<ForensicSampler | null>(null)
+  const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -82,10 +84,14 @@ export default function LessonPlayer({
   const [streamUrl, setStreamUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState(false)
   const [showControls, setShowControls] = useState(true)
-  const [watermarkPos, setWatermarkPos] = useState(WATERMARK_POSITIONS[0])
-  const [watermarkIdx, setWatermarkIdx] = useState(0)
-  const [watermarkTime, setWatermarkTime] = useState(new Date())
-  const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { canvasRef: watermarkCanvasRef, startWatermark, stopWatermark } = useCanvasWatermark(videoRef, {
+    studentName: userName,
+    studentEmail: userEmail,
+    studentId: userId,
+    courseTitle: courseName || lesson.title,
+    lessonTitle: lesson.title,
+  })
 
   useEffect(() => {
     return () => {
@@ -115,14 +121,29 @@ export default function LessonPlayer({
   useEffect(() => {
     if (lesson.content_type !== 'video') return
     let cancelled = false
-    Promise.resolve().then(() => {
-      setStreamUrl(null)
-      setVideoError(false)
-      setLoading(true)
-    })
+    let retries = 0
+    const MAX_RETRIES = 3
+    const RETRY_DELAY = 2000
+
+    setStreamUrl(null)
+    setVideoError(false)
+    setLoading(true)
+
+    async function fetchWithRetry(): Promise<string | null> {
+      while (retries < MAX_RETRIES) {
+        if (cancelled) return null
+        const url = await fetchPlaybackUrl()
+        if (url) return url
+        retries++
+        if (retries < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY * retries))
+        }
+      }
+      return null
+    }
 
     ;(async () => {
-      const url = await fetchPlaybackUrl()
+      const url = await fetchWithRetry()
       if (!cancelled && url) {
         setStreamUrl(url)
       }
@@ -130,7 +151,8 @@ export default function LessonPlayer({
 
     tokenRefreshRef.current = setInterval(async () => {
       if (cancelled) return
-      const url = await fetchPlaybackUrl()
+      retries = 0
+      const url = await fetchWithRetry()
       if (!cancelled && url) {
         setStreamUrl(url)
       }
@@ -142,14 +164,42 @@ export default function LessonPlayer({
   }, [lesson.id, lesson.content_type, fetchPlaybackUrl])
 
   useEffect(() => {
-    if (!playing) return
-    const interval = setInterval(() => {
-      setWatermarkIdx((prev) => (prev + 1) % WATERMARK_POSITIONS.length)
-      setWatermarkPos(WATERMARK_POSITIONS[(watermarkIdx + 1) % WATERMARK_POSITIONS.length])
-      setWatermarkTime(new Date())
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [playing, watermarkIdx])
+    if (playing) {
+      startWatermark()
+      if (!forensicRef.current) {
+        forensicRef.current = new ForensicSampler(videoRef, lesson.id, userId)
+        forensicRef.current.start()
+      }
+    } else {
+      stopWatermark()
+    }
+    return () => stopWatermark()
+  }, [playing, lesson.id, userId, startWatermark, stopWatermark])
+
+  useEffect(() => {
+    if (!drmConfig || !videoRef.current || !streamUrl) return
+    let cancelled = false
+    ;(async () => {
+      const session = await createDrmSession(videoRef.current!, drmConfig)
+      if (!cancelled) drmSessionRef.current = session
+    })()
+    return () => {
+      cancelled = true
+      if (drmSessionRef.current) {
+        destroyDrmSession(drmSessionRef.current)
+        drmSessionRef.current = null
+      }
+    }
+  }, [drmConfig, streamUrl])
+
+  useEffect(() => {
+    return () => {
+      if (forensicRef.current) {
+        forensicRef.current.stop()
+        forensicRef.current = null
+      }
+    }
+  }, [])
 
   const resetControlsTimeout = useCallback(() => {
     setShowControls(true)
@@ -270,28 +320,11 @@ export default function LessonPlayer({
             Protected
           </div>
 
-          <div
-            className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out"
-            style={{
-              left: `${watermarkPos.x}%`,
-              top: `${watermarkPos.y}%`,
-              transform: 'translate(-50%, -50%) rotate(-15deg)',
-            }}
-          >
-            <div className="bg-black/50 backdrop-blur-sm text-white/85 text-xs font-medium px-3 py-2 rounded-lg border border-white/10 whitespace-nowrap leading-relaxed">
-              <div className="font-bold text-sm">{userName}</div>
-              <div className="opacity-80">{userEmail}</div>
-              <div className="opacity-60 text-[10px]">
-                ID: {userId.slice(0, 8)}
-              </div>
-              <div className="opacity-60 text-[10px]">
-                {watermarkTime.toLocaleString('en-IN', {
-                  year: 'numeric', month: 'short', day: 'numeric',
-                  hour: '2-digit', minute: '2-digit', second: '2-digit',
-                })}
-              </div>
-            </div>
-          </div>
+          <canvas
+            ref={watermarkCanvasRef}
+            className="absolute inset-0 z-20 pointer-events-none"
+            aria-hidden="true"
+          />
 
           {videoError && (
             <div className="absolute inset-0 z-20 bg-slate-900 flex flex-col items-center justify-center text-center p-6">

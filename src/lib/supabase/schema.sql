@@ -62,24 +62,47 @@ CREATE TABLE public.lessons (
   module_id UUID REFERENCES public.modules(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
+  content TEXT,
+  content_type TEXT DEFAULT 'text' CHECK (content_type IN ('text', 'video', 'pdf', 'quiz')),
   video_url TEXT,
+  video_id TEXT,
+  r2_source_key TEXT,
+  r2_original_filename TEXT,
+  stream_status TEXT DEFAULT 'pending' CHECK (stream_status IN ('pending', 'processing', 'ready', 'failed')),
   video_duration INTEGER,
   pdf_url TEXT,
+  is_downloadable BOOLEAN DEFAULT false,
   order_index INTEGER DEFAULT 0,
   is_free BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enrollments table
-CREATE TABLE public.enrollments (
+-- Course Enrollments table (direct course purchases)
+CREATE TABLE public.course_enrollments (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'expired')),
-  progress_percent INTEGER DEFAULT 0,
   enrolled_at TIMESTAMPTZ DEFAULT NOW(),
   completed_at TIMESTAMPTZ DEFAULT NULL,
   UNIQUE(user_id, course_id)
+);
+
+-- Enrollments table (program enrollments)
+CREATE TABLE public.enrollments (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  program_id UUID REFERENCES public.training_programs(id) ON DELETE CASCADE,
+  course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+  branch_id UUID,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'expired')),
+  progress_percent INTEGER DEFAULT 0,
+  notes TEXT,
+  enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ DEFAULT NULL,
+  program_type TEXT
 );
 
 -- Lesson progress table
@@ -207,6 +230,77 @@ CREATE TABLE public.student_projects (
   is_approved BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Video forensic samples table (anti-piracy screenshots)
+CREATE TABLE public.video_forensic_samples (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  lesson_id UUID REFERENCES public.lessons(id) ON DELETE SET NULL,
+  sample_timestamp TIMESTAMPTZ DEFAULT NOW(),
+  video_current_time REAL DEFAULT 0,
+  screenshot_b64 TEXT,
+  user_agent TEXT,
+  screen_width INTEGER,
+  screen_height INTEGER,
+  ip_address TEXT,
+  flagged BOOLEAN DEFAULT false,
+  flag_reason TEXT,
+  flagged_at TIMESTAMPTZ,
+  warning_sent_at TIMESTAMPTZ,
+  access_revoked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_forensic_samples_user ON public.video_forensic_samples(user_id);
+CREATE INDEX idx_forensic_samples_lesson ON public.video_forensic_samples(lesson_id);
+CREATE INDEX idx_forensic_samples_created ON public.video_forensic_samples(created_at);
+CREATE INDEX idx_forensic_samples_flagged ON public.video_forensic_samples(flagged) WHERE flagged = true;
+
+-- Video leak reports (admin-managed piracy incidents)
+CREATE TABLE public.video_leak_reports (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  lesson_id UUID REFERENCES public.lessons(id) ON DELETE SET NULL,
+  course_id UUID REFERENCES public.courses(id) ON DELETE SET NULL,
+  sample_id UUID REFERENCES public.video_forensic_samples(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'investigating', 'resolved', 'dismissed')),
+  severity TEXT DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  detected_by TEXT DEFAULT 'system' CHECK (detected_by IN ('system', 'admin', 'manual')),
+  warning_sent_at TIMESTAMPTZ,
+  access_revoked_at TIMESTAMPTZ,
+  revoke_duration_days INTEGER DEFAULT 30,
+  admin_notes TEXT,
+  resolution_notes TEXT,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_leak_reports_user ON public.video_leak_reports(user_id);
+CREATE INDEX idx_leak_reports_status ON public.video_leak_reports(status);
+CREATE INDEX idx_leak_reports_created ON public.video_leak_reports(created_at);
+
+-- Video playback audit log table
+CREATE TABLE public.video_playback_log (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  lesson_id UUID REFERENCES public.lessons(id) ON DELETE SET NULL,
+  course_id UUID REFERENCES public.courses(id) ON DELETE SET NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  action TEXT NOT NULL CHECK (action IN ('stream', 'token_generate', 'token_refresh', 'access_denied', 'error')),
+  watch_duration_seconds INTEGER DEFAULT 0,
+  bytes_served BIGINT DEFAULT 0,
+  range_requested TEXT,
+  success BOOLEAN DEFAULT true,
+  error_message TEXT,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_video_playback_log_user ON public.video_playback_log(user_id);
+CREATE INDEX idx_video_playback_log_lesson ON public.video_playback_log(lesson_id);
+CREATE INDEX idx_video_playback_log_created ON public.video_playback_log(created_at);
 
 -- Testimonials table
 CREATE TABLE public.testimonials (

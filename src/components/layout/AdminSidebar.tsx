@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog, Tag, Bell, Calendar } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog, Tag, Bell, Calendar, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EmployeePermission } from '@/types'
 
@@ -26,6 +26,7 @@ const links: NavLink[] = [
   { href: '/admin-place/testimonials', label: 'Testimonials', icon: Star, permissionKey: 'can_manage_courses' },
   { href: '/admin-place/coupons', label: 'Coupons', icon: Tag, permissionKey: 'can_manage_courses' },
   { href: '/admin-place/notifications', label: 'Notifications', icon: Bell, permissionKey: 'can_manage_content' },
+  { href: '/admin-place/security/forensic', label: 'Video Security', icon: ShieldAlert, permissionKey: 'can_manage_students' },
   { href: '/admin-place/payments', label: 'Payments', icon: CreditCard, permissionKey: 'can_manage_payments' },
 ]
 
@@ -51,7 +52,7 @@ export default function AdminSidebar({ isAdmin, permissions, isOpen }: AdminSide
 
   return (
     <aside className={cn(
-      "sticky top-14 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300 overflow-y-auto",
+      "fixed top-14 left-0 md:sticky md:top-14 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-slate-200 z-50 flex flex-col shrink-0 transition-transform duration-300 overflow-y-auto",
       "md:translate-x-0",
       isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
@@ -85,3 +86,4 @@ export default function AdminSidebar({ isAdmin, permissions, isOpen }: AdminSide
     </aside>
   )
 }
+

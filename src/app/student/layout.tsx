@@ -26,7 +26,7 @@ export default function StudentLayout({
             />
           )}
           <StudentSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-          <main className="flex-1 p-4 md:p-6 min-h-[calc(100vh-3.5rem)]">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-3.5rem)] w-full max-w-full overflow-x-hidden">
             <div className="md:hidden mb-4">
               <button 
                 className="p-2 rounded-lg hover:bg-slate-100"

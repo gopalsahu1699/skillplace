@@ -68,4 +68,10 @@ export const notify = {
 
   comingSoon: () => toast.info('Coming soon!'),
   copied: () => toast.success('Copied to clipboard!'),
+
+  videoLeakWarning(lessonName: string) {
+    toast.warning('Policy Warning: Unauthorized recording detected in ' + lessonName + '. Please review our terms.')
+  },
 }
+
+

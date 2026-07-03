@@ -5,6 +5,9 @@ import { Shield, AlertTriangle, Play, Pause, Volume2, VolumeX, Maximize, Loader2
 import { cn } from '@/lib/utils'
 import Hls from 'hls.js'
 import LectureComingSoon from './LectureComingSoon'
+import { useCanvasWatermark } from '@/lib/use-canvas-watermark'
+import { ForensicSampler } from '@/lib/video-forensics'
+import { isDrmSupported, type DrmConfig, type DrmSession, createDrmSession, destroyDrmSession, getDrmConfig, getSupportedDrm } from '@/lib/video-drm'
 
 interface SecureVideoPlayerProps {
   videoUrl?: string
@@ -18,6 +21,7 @@ interface SecureVideoPlayerProps {
   courseName?: string
   onProgress?: (percent: number) => void
   resumePosition?: number
+  drmConfig?: DrmConfig
 }
 
 interface PlaybackTokenResponse {
@@ -31,17 +35,6 @@ interface PlaybackTokenResponse {
   source: { type: 'stream' | 'r2' | 'none' }
 }
 
-const WATERMARK_POSITIONS = [
-  { x: 10, y: 10 },
-  { x: 60, y: 15 },
-  { x: 15, y: 70 },
-  { x: 65, y: 75 },
-  { x: 30, y: 40 },
-  { x: 50, y: 10 },
-  { x: 10, y: 50 },
-  { x: 55, y: 60 },
-]
-
 export default function SecureVideoPlayer({
   videoUrl,
   videoId: _videoId,
@@ -54,6 +47,7 @@ export default function SecureVideoPlayer({
   courseName,
   onProgress,
   resumePosition = 0,
+  drmConfig,
 }: SecureVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -61,6 +55,8 @@ export default function SecureVideoPlayer({
   const lastProgressRef = useRef(0)
   const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tokenRefreshInterval = useRef<ReturnType<typeof setInterval> | null>(null)
+  const drmSessionRef = useRef<DrmSession | null>(null)
+  const forensicRef = useRef<ForensicSampler | null>(null)
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null)
   const [playbackMode, setPlaybackMode] = useState<'hls' | 'direct' | 'none'>('none')
@@ -69,15 +65,19 @@ export default function SecureVideoPlayer({
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [watermarkPos, setWatermarkPos] = useState(WATERMARK_POSITIONS[0])
-  const [watermarkIdx, setWatermarkIdx] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [noVideo, setNoVideo] = useState(false)
   const [showTabWarning, setShowTabWarning] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const [courseTitle, setCourseTitle] = useState(courseName || '')
-  const [watermarkTime, setWatermarkTime] = useState(new Date())
+
+  const { canvasRef: watermarkCanvasRef, startWatermark, stopWatermark } = useCanvasWatermark(videoRef, {
+    studentName,
+    studentEmail,
+    studentId,
+    courseTitle: courseTitle || courseName,
+  })
 
   const resolvePlaybackToken = useCallback(async (): Promise<PlaybackTokenResponse | null> => {
     try {
@@ -110,8 +110,22 @@ export default function SecureVideoPlayer({
 
   useEffect(() => {
     let cancelled = false
-    const retryCount = 0
-    const maxRetries = 2
+    let retries = 0
+    const MAX_RETRIES = 3
+    const RETRY_DELAY = 2000
+
+    async function fetchTokenWithRetry(): Promise<PlaybackTokenResponse | null> {
+      while (retries < MAX_RETRIES) {
+        if (cancelled) return null
+        const data = await resolvePlaybackToken()
+        if (data) return data
+        retries++
+        if (retries < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY * retries))
+        }
+      }
+      return null
+    }
 
     async function initPlayback() {
       setLoading(true)
@@ -131,7 +145,7 @@ export default function SecureVideoPlayer({
         return
       }
 
-      const tokenData = await resolvePlaybackToken()
+      const tokenData = await fetchTokenWithRetry()
       if (cancelled || !tokenData) return
 
       if (tokenData.source.type === 'none') {
@@ -147,19 +161,21 @@ export default function SecureVideoPlayer({
 
     initPlayback()
 
-    const refreshInterval = setInterval(async () => {
+    tokenRefreshInterval.current = setInterval(async () => {
       if (cancelled) return
-      const tokenData = await resolvePlaybackToken()
+      retries = 0
+      const tokenData = await fetchTokenWithRetry()
       if (!cancelled && tokenData) {
         setStreamUrl(tokenData.streamUrl)
       }
     }, 45000)
 
-    tokenRefreshInterval.current = refreshInterval
-
     return () => {
       cancelled = true
-      if (refreshInterval) clearInterval(refreshInterval)
+      if (tokenRefreshInterval.current) {
+        clearInterval(tokenRefreshInterval.current)
+        tokenRefreshInterval.current = null
+      }
     }
   }, [lessonId, videoUrl, resolvePlaybackToken])
 
@@ -214,15 +230,6 @@ export default function SecureVideoPlayer({
   }, [playbackMode, streamUrl])
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setWatermarkIdx((prev) => (prev + 1) % WATERMARK_POSITIONS.length)
-      setWatermarkPos(WATERMARK_POSITIONS[(watermarkIdx + 1) % WATERMARK_POSITIONS.length])
-      setWatermarkTime(new Date())
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [watermarkIdx])
-
-  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && videoRef.current && !videoRef.current.paused) {
         videoRef.current.pause()
@@ -231,6 +238,48 @@ export default function SecureVideoPlayer({
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  useEffect(() => {
+    if (playing) {
+      startWatermark()
+      if (!forensicRef.current) {
+        forensicRef.current = new ForensicSampler(videoRef, lessonId, studentId || '')
+        forensicRef.current.start()
+      }
+    } else {
+      stopWatermark()
+    }
+    return () => {
+      stopWatermark()
+    }
+  }, [playing, lessonId, studentId, startWatermark, stopWatermark])
+
+  useEffect(() => {
+    if (!drmConfig || !videoRef.current || playbackMode === 'none') return
+    let cancelled = false
+    ;(async () => {
+      const session = await createDrmSession(videoRef.current!, drmConfig)
+      if (!cancelled) {
+        drmSessionRef.current = session
+      }
+    })()
+    return () => {
+      cancelled = true
+      if (drmSessionRef.current) {
+        destroyDrmSession(drmSessionRef.current)
+        drmSessionRef.current = null
+      }
+    }
+  }, [drmConfig, playbackMode])
+
+  useEffect(() => {
+    return () => {
+      if (forensicRef.current) {
+        forensicRef.current.stop()
+        forensicRef.current = null
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -328,17 +377,6 @@ export default function SecureVideoPlayer({
     }
   }, [])
 
-  const formatWatermarkTime = (date: Date) => {
-    return date.toLocaleString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  }
-
   if (noVideo) {
     return <LectureComingSoon contentType="video" />
   }
@@ -374,30 +412,11 @@ export default function SecureVideoPlayer({
         Protected
       </div>
 
-      <div
-        className="absolute z-20 pointer-events-none transition-all duration-1000 ease-in-out"
-        style={{
-          left: `${watermarkPos.x}%`,
-          top: `${watermarkPos.y}%`,
-          transform: 'translate(-50%, -50%) rotate(-15deg)',
-        }}
-      >
-        <div className="bg-black/50 backdrop-blur-sm text-white/85 text-xs font-medium px-3 py-2 rounded-lg border border-white/10 whitespace-nowrap leading-relaxed">
-          <div className="font-bold text-sm">{studentName}</div>
-          <div className="opacity-80">{studentEmail}</div>
-          <div className="opacity-60 font-mono text-[10px]">
-            {studentId ? `ID: ${studentId.slice(0, 8)}` : ''}
-          </div>
-          <div className="opacity-60 text-[10px]">
-            {formatWatermarkTime(watermarkTime)}
-          </div>
-          {courseTitle && (
-            <div className="opacity-60 text-[10px] truncate max-w-[200px]">
-              {courseTitle}
-            </div>
-          )}
-        </div>
-      </div>
+      <canvas
+        ref={watermarkCanvasRef}
+        className="absolute inset-0 z-20 pointer-events-none"
+        aria-hidden="true"
+      />
 
       <video
         ref={videoRef}

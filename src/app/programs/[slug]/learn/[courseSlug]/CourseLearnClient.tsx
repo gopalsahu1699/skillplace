@@ -258,6 +258,7 @@ export default function CourseLearnClient({
                 onNext={handleNext}
                 hasPrev={currentIndex > 0}
                 hasNext={currentIndex < allLessons.length - 1}
+                courseName={course.title}
               />
             )}
 

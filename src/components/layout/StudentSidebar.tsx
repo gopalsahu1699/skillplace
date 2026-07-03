@@ -57,7 +57,7 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
 
   return (
     <aside className={cn(
-      "sticky top-14 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300 overflow-y-auto",
+      "fixed top-14 left-0 md:sticky md:top-14 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-slate-200 z-50 flex flex-col shrink-0 transition-transform duration-300 overflow-y-auto",
       "md:translate-x-0",
       isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
     )}>
