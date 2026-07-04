@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import { waitForRazorpay, getRazorpay } from '@/lib/razorpay-client'
 import SecureVideoPlayer from '@/components/course/SecureVideoPlayer'
 import LectureComingSoon from '@/components/course/LectureComingSoon'
 import ErrorBoundary from '@/components/course/ErrorBoundary'
@@ -49,6 +50,7 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
 
   const notesSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeLessonIdRef = useRef<string | null>(null)
+  const paymentOrderRef = useRef<{ key: string; amount: number; currency: string; orderId: string } | null>(null)
 
   useEffect(() => {
     activeLessonIdRef.current = activeLesson?.id || null
@@ -217,6 +219,33 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
     }
   }, [])
 
+  useEffect(() => {
+    if (enrolled || !user || course.price <= 0) {
+      paymentOrderRef.current = null
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId: course.id, userId: user.id }),
+        })
+        const data = await res.json()
+        if (!cancelled && data.success === false && data.orderId) {
+          paymentOrderRef.current = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        }
+      } catch {
+        if (!cancelled) paymentOrderRef.current = null
+      }
+    })()
+    return () => {
+      cancelled = true
+      paymentOrderRef.current = null
+    }
+  }, [user, course.id, enrolled])
+
   const saveNotesImmediate = useCallback(async (content: string) => {
     if (!activeLesson || !user) return
     try {
@@ -374,74 +403,88 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
 
     const handlePayment = async () => {
       try {
-        const res = await fetch('/api/payments/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ courseId: course.id, userId: user.id }),
-        })
-        const data = await res.json()
+        const preOrder = paymentOrderRef.current
 
-        if (data.free) {
-          window.location.href = data.redirectUrl
+        let orderData = preOrder
+
+        if (!orderData || !orderData.orderId) {
+          const res = await fetch('/api/payments/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId: course.id, userId: user.id }),
+          })
+          const data = await res.json()
+
+          if (data.free) {
+            window.location.href = data.redirectUrl
+            return
+          }
+
+          if (!data.orderId) {
+            notify.paymentError('Unexpected response from payment server')
+            return
+          }
+
+          orderData = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        }
+
+        await waitForRazorpay()
+
+        const Razorpay = getRazorpay()
+        if (!Razorpay) {
+          notify.paymentError('Payment gateway not loaded. Please refresh and try again.')
           return
         }
 
-        if (data.success === false && data.orderId) {
-          const options = {
-            key: data.key,
-            amount: data.amount,
-            currency: data.currency,
-            name: 'Skillplace Academy',
-            description: course.title,
-            order_id: data.orderId,
-            handler: async function (response: {
-              razorpay_order_id: string
-              razorpay_payment_id: string
-              razorpay_signature: string
-            }) {
-              try {
-                const verifyRes = await fetch('/api/payments/verify', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(response),
-                })
-                const verifyData = await verifyRes.json()
-                if (verifyData.success) {
-                  setEnrolled(true)
-                  notify.paymentSuccess()
-                  window.location.href = verifyData.redirectUrl
-                } else {
-                  notify.paymentError('Payment verification failed')
-                }
-              } catch {
-                notify.paymentError()
-              }
-            },
-            prefill: {
-              name: user?.user_metadata?.full_name || '',
-              email: user?.email || '',
-            },
-            theme: { color: '#2563eb' },
-            modal: {
-              ondismiss: () => notify.paymentCancelled(),
-            },
-          }
-
-          const RazorpayCtor = (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay
-
-          if (!document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
-            const script = document.createElement('script')
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-            script.onload = () => {
-              const rzp = new RazorpayCtor(options)
-              rzp.open()
-            }
-            document.body.appendChild(script)
-          } else {
-            const rzp = new RazorpayCtor(options)
-            rzp.open()
-          }
+        if (!orderData || !orderData.orderId) {
+          notify.paymentError('Payment session expired. Please refresh and try again.')
+          return
         }
+
+        const options = {
+          key: orderData.key,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: 'Skillplace Academy',
+          description: course.title,
+          order_id: orderData.orderId,
+          handler: async function (response: {
+            razorpay_order_id: string
+            razorpay_payment_id: string
+            razorpay_signature: string
+          }) {
+            try {
+              const verifyRes = await fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(response),
+              })
+              const verifyData = await verifyRes.json()
+              if (verifyData.success) {
+                setEnrolled(true)
+                notify.paymentSuccess()
+                window.location.href = verifyData.redirectUrl
+              } else {
+                notify.paymentError('Payment verification failed')
+              }
+            } catch {
+              notify.paymentError()
+            }
+          },
+          prefill: {
+            name: user?.user_metadata?.full_name || '',
+            email: user?.email || '',
+          },
+          theme: { color: '#2563eb' },
+          modal: {
+            ondismiss: () => {
+              // User dismissed the payment modal
+            },
+          },
+        }
+
+        const rzp = new Razorpay(options)
+        rzp.open()
       } catch {
         notify.paymentError()
       }

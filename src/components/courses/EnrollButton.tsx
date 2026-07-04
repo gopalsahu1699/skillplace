@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import { waitForRazorpay, getRazorpay } from '@/lib/razorpay-client'
 import { ShoppingCart, CheckCircle, Loader2, CreditCard, Lock, AlertCircle, X, Check } from 'lucide-react'
 
 interface CouponData {
@@ -43,6 +44,8 @@ export default function EnrollButton({
   const [couponError, setCouponError] = useState('')
   const [applyingCoupon, setApplyingCoupon] = useState(false)
 
+  const orderDataRef = useRef<{ key: string; amount: number; currency: string; orderId: string } | null>(null)
+
   const basePrice = discountPrice || price
   const couponDiscount = appliedCoupon
     ? appliedCoupon.discount_type === 'percent'
@@ -72,6 +75,33 @@ export default function EnrollButton({
   useEffect(() => {
     Promise.resolve().then(() => checkAuth())
   }, [courseId])
+
+  useEffect(() => {
+    if (!user || enrolled || loading) {
+      orderDataRef.current = null
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
+        })
+        const data = await res.json()
+        if (!cancelled && data.success === false && data.orderId) {
+          orderDataRef.current = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        }
+      } catch {
+        if (!cancelled) orderDataRef.current = null
+      }
+    })()
+    return () => {
+      cancelled = true
+      orderDataRef.current = null
+    }
+  }, [user, courseId, appliedCoupon, enrolled, loading])
 
   async function applyCoupon() {
     if (!couponCode.trim()) return
@@ -149,112 +179,111 @@ export default function EnrollButton({
     setError('')
 
     try {
-      notify.paymentRedirecting()
-      const res = await fetch('/api/payments/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
-      })
+      const orderData = orderDataRef.current
 
-      const data = await res.json()
+      if (!orderData || !orderData.orderId) {
+        const res = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
+        })
+        const data = await res.json()
 
-      if (!res.ok) {
-        if (data.error?.includes('Authentication') || data.error?.includes('BAD_REQUEST')) {
-          throw new Error('Payment gateway not configured. Please contact support.')
+        if (!res.ok) {
+          throw new Error(data.error || 'Payment initiation failed. Please try again.')
         }
-        throw new Error(data.error || 'Payment initiation failed. Please try again.')
+
+        if (data.free) {
+          setEnrolled(true)
+          notify.enrollSuccess(title)
+          router.push(data.redirectUrl)
+          setProcessing(false)
+          return
+        }
+
+        if (!data.orderId) {
+          throw new Error('Unexpected response from payment server')
+        }
+
+        orderDataRef.current = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
       }
 
-      if (data.free) {
-        setEnrolled(true)
-        notify.enrollSuccess(title)
-        router.push(data.redirectUrl)
-        return
+      await waitForRazorpay()
+
+      const Razorpay = getRazorpay()
+      if (!Razorpay) {
+        throw new Error('Payment gateway not loaded. Please refresh and try again.')
       }
 
-      if (data.success === false && data.orderId) {
-        openRazorpayCheckout(data)
-      } else {
-        throw new Error('Unexpected response from payment server')
+      const currentOrderData = orderDataRef.current
+      if (!currentOrderData) {
+        throw new Error('Payment session expired. Please try again.')
       }
+
+      const options = {
+        key: currentOrderData.key,
+        amount: currentOrderData.amount,
+        currency: currentOrderData.currency,
+        name: 'Skillplace Academy',
+        description: title,
+        order_id: currentOrderData.orderId,
+        image: '/logo.png',
+        handler: async function (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) {
+          setProcessing(true)
+          setError('')
+          try {
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            })
+
+            const verifyData = await verifyRes.json()
+
+            if (verifyData.success) {
+              setEnrolled(true)
+              notify.paymentSuccess()
+              router.push(verifyData.redirectUrl)
+            } else {
+              setError('Payment verification failed. Please contact support.')
+              notify.paymentError('Payment verification failed.')
+            }
+          } catch {
+            setError('Payment verification failed. Please try again.')
+            notify.paymentError('Payment verification failed.')
+          }
+          setProcessing(false)
+        },
+        prefill: {
+          name: user?.user_metadata?.full_name as string || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#2563eb',
+        },
+        modal: {
+          ondismiss: function () {
+            setProcessing(false)
+          },
+        },
+      }
+
+      const rzp = new Razorpay(options)
+      rzp.open()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
       setError(message)
       notify.paymentError(message)
-    }
-
-    setProcessing(false)
-  }
-
-  function openRazorpayCheckout(data: { key: string; amount: number; currency: string; orderId: string }) {
-    const options = {
-      key: data.key,
-      amount: data.amount,
-      currency: data.currency,
-      name: 'Skillplace Academy',
-      description: title,
-      order_id: data.orderId,
-      image: '/logo.png',
-      handler: async function (response: {
-        razorpay_order_id: string
-        razorpay_payment_id: string
-        razorpay_signature: string
-      }) {
-        setProcessing(true)
-        setError('')
-        try {
-          const verifyRes = await fetch('/api/payments/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
-          })
-
-          const verifyData = await verifyRes.json()
-
-          if (verifyData.success) {
-            setEnrolled(true)
-            notify.paymentSuccess()
-            router.push(verifyData.redirectUrl)
-          } else {
-            setError('Payment verification failed. Please contact support.')
-            notify.paymentError('Payment verification failed.')
-          }
-        } catch {
-          setError('Payment verification failed. Please try again.')
-          notify.paymentError('Payment verification failed.')
-        }
-        setProcessing(false)
-      },
-      prefill: {
-        name: user?.user_metadata?.full_name as string || '',
-        email: user?.email || '',
-      },
-      theme: {
-        color: '#2563eb',
-      },
-      modal: {
-        ondismiss: function () {
-          setProcessing(false)
-        },
-      },
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.onload = () => {
-      const rzp = new (window as unknown as { Razorpay: new (options: Record<string, unknown>) => { open: () => void } }).Razorpay(options)
-      rzp.open()
-    }
-    script.onerror = () => {
-      setError('Failed to load payment gateway. Please try again.')
-      notify.paymentError('Failed to load payment gateway.')
       setProcessing(false)
     }
-    document.body.appendChild(script)
   }
 
   if (enrolled) {

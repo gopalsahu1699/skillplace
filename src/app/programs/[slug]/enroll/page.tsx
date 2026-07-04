@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Check, ChevronRight, ChevronLeft, Loader2, CreditCard, Shield, X } from 'lucide-react'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
+import { waitForRazorpay, getRazorpay } from '@/lib/razorpay-client'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
@@ -143,24 +144,7 @@ export default function EnrollPage() {
     setLoading(false)
   }
 
-  useEffect(() => {
-    Promise.resolve().then(() => fetchUserProfile())
-    Promise.resolve().then(() => fetchProgram())
-  }, [slug])
-
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    document.body.appendChild(script)
-    return () => {
-      document.body.removeChild(script)
-    }
-  }, [])
-
-  function updateForm(updates: Partial<FormData>) {
-    setFormData(prev => ({ ...prev, ...updates }))
-  }
+  const orderDataRef = useRef<{ key: string; amount: number; currency: string; orderId: string } | null>(null)
 
   function getCouponDiscount(): number {
     if (!appliedCoupon || !program) return 0
@@ -176,6 +160,51 @@ export default function EnrollPage() {
     const basePrice = program.discount_price || program.price
     const discount = getCouponDiscount()
     return Math.max(basePrice - discount, 0)
+  }
+
+  const displayPrice = getFinalPrice()
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchUserProfile())
+    Promise.resolve().then(() => fetchProgram())
+  }, [slug])
+
+  useEffect(() => {
+    if (step !== 'payment' || !program || displayPrice <= 0) {
+      orderDataRef.current = null
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/programs/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            programId: program.id,
+            programName: program.name,
+            studentName: formData.fullName,
+            email: formData.email,
+            phone: sanitizePhone(formData.phoneNumber),
+            couponCode: appliedCoupon?.code || null,
+          }),
+        })
+        const data = await res.json()
+        if (!cancelled && data.orderId) {
+          orderDataRef.current = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        }
+      } catch {
+        if (!cancelled) orderDataRef.current = null
+      }
+    })()
+    return () => {
+      cancelled = true
+      orderDataRef.current = null
+    }
+  }, [step, program, formData.fullName, formData.email, formData.phoneNumber, appliedCoupon, displayPrice])
+
+  function updateForm(updates: Partial<FormData>) {
+    setFormData(prev => ({ ...prev, ...updates }))
   }
 
   async function applyCoupon() {
@@ -219,31 +248,53 @@ export default function EnrollPage() {
     setError('')
 
     try {
-      // Create order
-      const orderRes = await fetch('/api/programs/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          programId: program.id,
-          programName: program.name,
-          studentName: formData.fullName,
-          email: formData.email,
-          phone: sanitizePhone(formData.phoneNumber),
-          couponCode: appliedCoupon?.code || null,
-        }),
-      })
+      const preOrderData = orderDataRef.current
 
-      const orderData = await orderRes.json()
+      let orderData = preOrderData
 
-      if (!orderRes.ok) {
-        throw new Error(orderData.error || 'Failed to create payment order')
+      if (!orderData || !orderData.orderId) {
+        const orderRes = await fetch('/api/programs/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            programId: program.id,
+            programName: program.name,
+            studentName: formData.fullName,
+            email: formData.email,
+            phone: sanitizePhone(formData.phoneNumber),
+            couponCode: appliedCoupon?.code || null,
+          }),
+        })
+
+        const data = await orderRes.json()
+
+        if (!orderRes.ok) {
+          throw new Error(data.error || 'Failed to create payment order')
+        }
+
+        if (data.free) {
+          setStep('success')
+          toast.success('Enrollment confirmed!')
+          setSubmitting(false)
+          return
+        }
+
+        if (!data.orderId) {
+          throw new Error('Unexpected response from payment server')
+        }
+
+        orderData = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
       }
 
-      if (orderData.free) {
-        setStep('success')
-        toast.success('Enrollment confirmed!')
-        setSubmitting(false)
-        return
+      await waitForRazorpay()
+
+      const Razorpay = getRazorpay()
+      if (!Razorpay) {
+        throw new Error('Payment gateway not loaded. Please refresh and try again.')
+      }
+
+      if (!orderData || !orderData.orderId) {
+        throw new Error('Payment session expired. Please go back and try again.')
       }
 
       const options = {
@@ -308,7 +359,7 @@ export default function EnrollPage() {
         },
       }
 
-      const rzp = new window.Razorpay(options)
+      const rzp = new Razorpay(options)
       rzp.open()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to initiate payment')
@@ -349,7 +400,6 @@ export default function EnrollPage() {
     )
   }
 
-  const displayPrice = getFinalPrice()
   const originalPrice = program.discount_price || program.price
 
   return (

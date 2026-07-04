@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Inter, Plus_Jakarta_Sans } from "next/font/google"
+import Script from "next/script"
 import "./globals.css"
 import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
@@ -109,6 +110,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=swap" />
+        <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
+        <link rel="preconnect" href="https://checkout.razorpay.com" />
         <link rel="dns-prefetch" href="https://weebasgxtemffakbvcfa.supabase.co" />
         <link rel="preconnect" href="https://weebasgxtemffakbvcfa.supabase.co" />
         <meta name="geo.region" content="IN-CT" />
@@ -128,6 +131,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={localBusinessSchema()} />
       </head>
       <body className={`${inter.className} ${jakarta.className} antialiased`}>
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
         <Toaster position="top-right" richColors closeButton duration={4000} />
         <Navbar />
         <main className="min-h-screen">{children}</main>
