@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimitDB, logLoginAttempt, getRateLimitHeaders } from '@/lib/rate-limit'
-import { emailSchema, passwordSchema } from '@/lib/security/validation'
+import { emailSchema } from '@/lib/security/validation'
 import { logAuditEvent } from '@/lib/security/audit'
 import crypto from 'crypto'
 
@@ -14,14 +14,6 @@ export async function POST(request: Request) {
     if (!emailResult.success) {
       return NextResponse.json(
         { error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-
-    const passwordResult = passwordSchema.safeParse(password)
-    if (!passwordResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid password format' },
         { status: 400 }
       )
     }
@@ -46,7 +38,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await adminSupabase.auth.signInWithPassword({
       email: emailResult.data,
-      password: passwordResult.data,
+      password,
     })
 
     await logLoginAttempt(emailResult.data, ip, !error, error?.message)

@@ -199,7 +199,7 @@ export default function RegisterPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="phone" className="text-slate-700">Phone</Label>
+       
                 <PhoneInput
                   value={phoneNumber}
                   onChange={setPhoneNumber}

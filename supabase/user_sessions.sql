@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.user_sessions (
   device_type TEXT CHECK (device_type IN ('desktop', 'mobile', 'tablet', 'unknown')),
   browser TEXT,
   os TEXT,
-  login_method TEXT DEFAULT 'email' CHECK (login_method IN ('email', 'google', 'github', 'admin')),
+  login_method TEXT DEFAULT 'email' CHECK (login_method IN ('email', 'google', 'admin')),
   is_active BOOLEAN DEFAULT true,
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),

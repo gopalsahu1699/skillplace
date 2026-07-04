@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
             "img-src 'self' data: blob: https://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://*.videodelivery.net https://*.r2.cloudflarestorage.com https://img.icons8.com",
             "media-src 'self' blob: https://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://*.videodelivery.net https://*.r2.cloudflarestorage.com",
             "font-src 'self' data: https://fonts.gstatic.com",
-            "connect-src 'self' https://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://api.razorpay.com https://checkout.razorpay.com",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://api.razorpay.com https://checkout.razorpay.com",
             "frame-src 'self' https://checkout.razorpay.com https://*.cloudflarestream.com",
             "frame-ancestors 'self'",
             "form-action 'self'",
