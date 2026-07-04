@@ -48,7 +48,24 @@ export default function MyCoursesPage() {
     <div>
       <h1 className="text-2xl font-bold text-slate-900 mb-6">My Courses</h1>
       {loading ? (
-        <p className="text-slate-500">Loading courses...</p>
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-6">
+              <div className="h-20 w-20 rounded-xl shrink-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" aria-hidden="true" />
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-48 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                  <div className="h-5 w-16 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-full" aria-hidden="true" />
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full w-3/5 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-full" aria-hidden="true" />
+                </div>
+                <div className="h-3 w-24 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+              </div>
+              <div className="h-9 w-20 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-lg shrink-0" aria-hidden="true" />
+            </div>
+          ))}
+        </div>
       ) : courses.length === 0 ? (
         <div className="text-center py-16">
           <div className="inline-flex h-16 w-16 bg-slate-100 rounded-2xl items-center justify-center mb-4">

@@ -254,10 +254,6 @@ export default function CourseLearnClient({
                 userEmail={userEmail}
                 isCompleted={completedLessonIds.has(activeLesson.id)}
                 onComplete={handleLessonComplete}
-                onPrev={handlePrev}
-                onNext={handleNext}
-                hasPrev={currentIndex > 0}
-                hasNext={currentIndex < allLessons.length - 1}
                 courseName={course.title}
               />
             )}

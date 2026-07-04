@@ -80,7 +80,10 @@ setInterval(() => {
 // Playback Token
 // ============================================
 
-const VIDEO_SECRET = process.env.VIDEO_SECRET || 'skillplace-secure-video-key-2026-prod-x9f2k'
+const VIDEO_SECRET: string = process.env.VIDEO_SECRET!
+if (!VIDEO_SECRET) {
+  throw new Error('VIDEO_SECRET environment variable is required')
+}
 const TOKEN_EXPIRY_SECONDS = 60
 const TOKEN_VERSION = 1
 
@@ -149,8 +152,7 @@ export function getVideoStreamHeaders(): Record<string, string> {
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
     'Cross-Origin-Resource-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'require-corp',
-    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     'Content-Security-Policy': "default-src 'self'; media-src 'self' blob:; connect-src 'self'; style-src 'self' 'unsafe-inline'",
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, private',
     'Pragma': 'no-cache',

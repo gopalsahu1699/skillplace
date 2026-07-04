@@ -155,8 +155,47 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex min-h-screen bg-slate-50">
+        <div className="hidden md:block w-64 bg-white border-r border-border p-4 space-y-2">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" aria-hidden="true" />
+            <div className="space-y-1.5">
+              <div className="h-4 w-24 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+              <div className="h-3 w-16 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+            </div>
+          </div>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+              <div className={`h-5 w-5 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded`} aria-hidden="true" />
+              <div className={`h-4 ${i < 4 ? 'w-28' : 'w-20'} bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded`} aria-hidden="true" />
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 p-6 lg:p-8">
+          <div className="space-y-6 max-w-6xl">
+            <div className="flex items-center justify-between">
+              <div className="h-8 w-48 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+              <div className="h-9 w-32 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-lg" aria-hidden="true" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white border border-border rounded-xl p-5 space-y-2">
+                  <div className="h-4 w-20 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                  <div className="h-8 w-12 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                  <div className="h-3 w-32 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-white border border-border rounded-xl p-5">
+              <div className="h-6 w-48 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded mb-4" aria-hidden="true" />
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-12 w-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-lg" aria-hidden="true" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

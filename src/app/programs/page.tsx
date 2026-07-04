@@ -5,9 +5,6 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils'
 
-// Note: Metadata for client components must be handled in a parent server component
-// or layout. This page is client-side due to filter state.
-
 interface Branch {
   id: string
   name: string
@@ -146,9 +143,13 @@ export default function ProgramsPage() {
   return (
     <div className="bg-background text-on-surface font-body-md overflow-x-hidden">
 
-      {/* Hero Section */}
       <section className="px-margin-mobile md:px-margin-desktop pt-16 pb-12 md:pt-24 md:pb-section-gap">
         <div className="max-w-container-max mx-auto text-center">
+          <nav aria-label="Breadcrumb" className="text-sm text-on-surface-variant mb-6">
+            <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
+            <span className="mx-2">/</span>
+            <span className="text-on-surface">Programs</span>
+          </nav>
           <span className="text-secondary font-label-md tracking-widest uppercase mb-4 block">Industry-Led Excellence</span>
           <h1 className="font-display-lg text-display-lg mb-6 max-w-3xl mx-auto">Job-Oriented Training Programs</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
@@ -157,7 +158,6 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      {/* My Purchased Programs */}
       {user && enrollments.length > 0 && (
         <section className="px-margin-mobile md:px-margin-desktop pb-12">
           <div className="max-w-container-max mx-auto">
@@ -200,11 +200,9 @@ export default function ProgramsPage() {
         </section>
       )}
 
-      {/* Filters & Programs Section */}
       <section className="px-margin-mobile md:px-margin-desktop pb-section-gap">
         <div className="max-w-container-max mx-auto">
 
-          {/* Filter Tabs */}
           <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 border-b border-outline-variant mb-12">
             <button
               onClick={() => setSelectedBranch('all')}
@@ -223,7 +221,6 @@ export default function ProgramsPage() {
             ))}
           </div>
 
-          {/* Programs Grid */}
           {error ? (
             <div className="text-center py-20">
               <span className="material-symbols-outlined text-4xl text-red-400 mb-4 block">error_outline</span>
@@ -236,9 +233,30 @@ export default function ProgramsPage() {
               </button>
             </div>
           ) : loading ? (
-            <div className="text-center py-20 text-on-surface-variant">
-              <span className="material-symbols-outlined text-4xl animate-pulse mb-4 block">pending</span>
-              Loading programs...
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-white border border-border rounded-xl overflow-hidden">
+                  <div className="h-56 w-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" aria-hidden="true" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 w-24 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                    <div className="h-6 w-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                    <div className="h-4 w-3/4 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="h-4 w-24 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                      <div className="h-6 w-28 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                    </div>
+                    <div className="space-y-2 pt-2">
+                      {[1, 2, 3].map((j) => (
+                        <div key={j} className="flex items-center gap-3">
+                          <div className="h-2 w-2 rounded-sm bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer" aria-hidden="true" />
+                          <div className="h-3 w-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="h-12 w-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-lg mt-4" aria-hidden="true" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredPrograms.length === 0 ? (
             <div className="text-center py-20 text-on-surface-variant">
@@ -269,13 +287,8 @@ export default function ProgramsPage() {
                         <span className="font-body-md text-sm">{program.duration_weeks} Weeks</span>
                       </div>
                       <div className="font-headline-md text-secondary text-lg">
-                        {/* {program.discount_price
-                          ? <>₹{program.discount_price.toLocaleString()} <span className="text-on-surface-variant line-through text-sm font-normal">₹{program.price.toLocaleString()}</span></>
-                          : <>₹{program.price.toLocaleString()}</>
-                        } */}
-                         <span>₹29,999</span> <><span className="text-on-surface-variant line-through text-sm font-normal">₹40,000</span></>
-                          
-                      
+                        <span>₹29,999</span>
+                        <span className="text-on-surface-variant line-through text-sm font-normal ml-1">₹40,000</span>
                       </div>
                     </div>
                     <ul className="space-y-3 mb-8 flex-grow">
@@ -295,13 +308,12 @@ export default function ProgramsPage() {
                       href={`/programs/${program.slug}`}
                       className="w-full py-4 border-2 border-secondary text-secondary font-label-md rounded-lg hover:bg-secondary hover:text-on-primary transition-all text-center block mt-auto"
                     >
-                      view Details
+                      View Details
                     </Link>
                   </div>
                 </div>
               ))}
 
-              {/* Custom Training Placeholder */}
               <div className="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-12 text-center bg-surface-container-low/30">
                 <span className="material-symbols-outlined text-4xl text-outline mb-4">school</span>
                 <h4 className="font-headline-md text-headline-md mb-2">Request Custom Training</h4>
@@ -316,7 +328,6 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      {/* Trust / Why Section */}
       <section className="bg-primary-container text-on-primary-container py-section-gap px-margin-mobile md:px-margin-desktop">
         <div className="max-w-container-max mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
@@ -326,10 +337,6 @@ export default function ProgramsPage() {
                 Our programs go beyond standard curriculum. We immerse students in real-world scenarios, guided by mentors who lead the industry today.
               </p>
               <div className="flex flex-wrap gap-12">
-                {/* <div>
-                  <div className="text-3xl font-bold text-surface-container-lowest">2000+</div>
-                  <div className="text-sm opacity-60">Engineers Trained</div>
-                </div> */}
                 <div>
                   <div className="text-3xl font-bold text-surface-container-lowest">100%</div>
                   <div className="text-sm opacity-60">Job Assistance</div>
@@ -361,7 +368,6 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-section-gap px-margin-mobile md:px-margin-desktop">
         <div className="max-w-container-max mx-auto bg-secondary rounded-[2rem] p-12 md:p-24 relative overflow-hidden text-center">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 to-transparent opacity-50"></div>

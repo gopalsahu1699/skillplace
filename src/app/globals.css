@@ -524,6 +524,25 @@ html {
 }
 
 /* =====================================================
+   SKELETON SHIMMER ANIMATION
+   ===================================================== */
+
+@keyframes shimmer-slide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer-slide 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+}
+
+/* =====================================================
    SHIMMER EFFECT (for CTAs)
    ===================================================== */
 .shimmer-btn {

@@ -1,10 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import JsonLd from '@/components/seo/JsonLd'
+import { createMetadata } from '@/lib/seo/metadata'
+import { breadcrumbSchema, pageSchema } from '@/lib/seo/json-ld'
 
-export const metadata: Metadata = {
-  title: 'Terms and Conditions - Skillplace Academy',
-  description: 'Read the terms and conditions for using Skillplace Academy services, enrolling in courses, and participating in placement assistance programs.',
-}
+export const metadata: Metadata = createMetadata({
+  title: 'Terms and Conditions | Skillplace Academy',
+  description: 'Terms and conditions governing enrollment, fees, refunds, placement assistance, and use of Skillplace Academy\'s educational services and platform.',
+  path: '/terms',
+})
 
 export default function TermsPage() {
   const lastUpdated = 'June 30, 2026'
@@ -53,68 +57,71 @@ export default function TermsPage() {
   ]
 
   return (
-    <div className="bg-slate-50 min-h-screen py-16 md:py-24">
-      <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop">
-        
-        {/* Header */}
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-secondary bg-secondary/10 px-3 py-1.5 rounded-full">Legal</span>
-          <h1 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mt-4 mb-2">Terms & Conditions</h1>
-          <p className="text-sm text-on-surface-variant">Last updated: {lastUpdated}</p>
-        </div>
+    <>
+      <JsonLd data={breadcrumbSchema([
+        { name: 'Home', url: '/' },
+        { name: 'Terms & Conditions', url: '/terms' },
+      ])} />
+      <JsonLd data={pageSchema('/terms', 'Terms and Conditions | Skillplace Academy', 'Terms and conditions governing enrollment, fees, refunds, placement assistance, and use of Skillplace Academy\'s educational services.')} />
 
-        {/* Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
-          {/* Quick Navigation */}
-          <aside className="lg:col-span-1 hidden lg:block">
-            <div className="sticky top-24 bg-white p-6 rounded-2xl border border-border-subtle shadow-sm">
-              <h3 className="font-bold text-sm text-primary uppercase tracking-wider mb-4">Navigation</h3>
-              <nav className="space-y-3">
+      <div className="bg-slate-50 min-h-screen py-16 md:py-24">
+        <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop">
+
+          <div className="text-center mb-12">
+            <span className="text-xs font-bold uppercase tracking-widest text-secondary bg-secondary/10 px-3 py-1.5 rounded-full">Legal</span>
+            <h1 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mt-4 mb-2">Terms & Conditions</h1>
+            <p className="text-sm text-on-surface-variant">Last updated: {lastUpdated}</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <aside className="lg:col-span-1 hidden lg:block">
+              <div className="sticky top-24 bg-white p-6 rounded-2xl border border-border-subtle shadow-sm">
+                <h3 className="font-bold text-sm text-primary uppercase tracking-wider mb-4">Navigation</h3>
+                <nav className="space-y-3">
+                  {sections.map((section) => (
+                    <a
+                      key={section.id}
+                      href={`#${section.id}`}
+                      className="block text-xs font-semibold text-on-surface-variant hover:text-secondary transition-colors"
+                    >
+                      {section.title.split('. ')[1]}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            </aside>
+
+            <main className="lg:col-span-3 bg-white p-8 md:p-12 rounded-3xl border border-border-subtle shadow-sm">
+              <p className="text-body-md text-on-surface-variant mb-8">
+                Welcome to Skillplace Academy. Please review the following terms and conditions that govern your use of our website, courses, and educational services.
+              </p>
+
+              <div className="space-y-8">
                 {sections.map((section) => (
-                  <a
-                    key={section.id}
-                    href={`#${section.id}`}
-                    className="block text-xs font-semibold text-on-surface-variant hover:text-secondary transition-colors"
-                  >
-                    {section.title.split('. ')[1]}
-                  </a>
+                  <div key={section.id} id={section.id} className="scroll-mt-24">
+                    <h2 className="font-headline-md text-headline-md text-primary mb-3">{section.title}</h2>
+                    <p className="text-body-md text-on-surface-variant leading-relaxed">{section.content}</p>
+                  </div>
                 ))}
-              </nav>
-            </div>
-          </aside>
+              </div>
 
-          {/* Main Terms Content */}
-          <main className="lg:col-span-3 bg-white p-8 md:p-12 rounded-3xl border border-border-subtle shadow-sm">
-            <p className="text-body-md text-on-surface-variant mb-8">
-              Welcome to Skillplace Academy. Please review the following terms and conditions that govern your use of our website, courses, and educational services.
-            </p>
+              <div className="mt-12 p-6 bg-surface-container-low rounded-2xl border border-border-subtle text-center">
+                <h3 className="font-bold text-on-surface mb-2">Questions about our Terms?</h3>
+                <p className="text-sm text-on-surface-variant mb-4">Our administrative team is here to clarify any questions you might have.</p>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors"
+                >
+                  Contact Administration
+                </Link>
+              </div>
+            </main>
 
-            <div className="space-y-8">
-              {sections.map((section) => (
-                <div key={section.id} id={section.id} className="scroll-mt-24">
-                  <h2 className="font-headline-md text-headline-md text-primary mb-3">{section.title}</h2>
-                  <p className="text-body-md text-on-surface-variant leading-relaxed">{section.content}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Support Box */}
-            <div className="mt-12 p-6 bg-surface-container-low rounded-2xl border border-border-subtle text-center">
-              <h3 className="font-bold text-on-surface mb-2">Questions about our Terms?</h3>
-              <p className="text-sm text-on-surface-variant mb-4">Our administrative team is here to clarify any questions you might have.</p>
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors"
-              >
-                Contact Administration
-              </Link>
-            </div>
-          </main>
+          </div>
 
         </div>
-
       </div>
-    </div>
+    </>
   )
 }

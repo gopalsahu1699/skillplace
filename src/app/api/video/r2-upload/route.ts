@@ -1,47 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateUploadUrl, getR2Key } from '@/lib/cloudflare-r2'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
-/**
- * POST /api/video/r2-upload
- * Generates a presigned R2 URL for direct browser upload.
- * Body: { lessonId?: string, filename: string, contentType?: string }
- *
- * For new lessons (no ID yet), pass lessonId: 'temp' — key will be under lessons/temp/
- * The key gets updated to the real lesson ID after creation via r2-to-stream or lesson update.
- */
+async function verifyAdminSession(request: NextRequest): Promise<boolean> {
+  const accessToken = request.cookies.get('sb-access-token')?.value
+  if (!accessToken) return false
+
+  try {
+    const { data: { user }, error } = await adminSupabase.auth.getUser(accessToken)
+    if (error || !user) return false
+
+    const { data: profile } = await adminSupabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (profile?.role === 'admin') return true
+
+    const { data: emp } = await adminSupabase.from('employees').select('role').eq('email', user.email).maybeSingle()
+    return emp?.role === 'admin'
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization')
-  const cookieToken = request.cookies.get('sb-access-token')?.value
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`r2-upload:${ip}`, 10, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
 
-  // Verify admin session via cookie
-  if (cookieToken) {
-    const { data: { user }, error: authErr } = await adminSupabase.auth.getUser(cookieToken)
-    if (!authErr && user) {
-      const { data: profile } = await adminSupabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-      if (profile?.role !== 'admin') {
-        const { data: emp } = await adminSupabase.from('employees').select('role').eq('email', user.email).maybeSingle()
-        if (emp?.role !== 'admin') {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-        }
-      }
-    }
-  } else if (authHeader !== `Bearer ${process.env.CRON_SECRET || 'cron-secret'}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
+  }
+
+  const isAdmin = await verifyAdminSession(request)
+  if (!isAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   try {
     const body = await request.json()
     const { lessonId = 'temp', filename, contentType = 'video/mp4' } = body
 
-    if (!filename) {
-      return NextResponse.json(
-        { error: 'filename is required' },
-        { status: 400 }
-      )
+    if (!filename || typeof filename !== 'string') {
+      return NextResponse.json({ error: 'filename is required' }, { status: 400 })
     }
 
-    // Verify lesson exists (skip for 'temp' IDs — new lesson not yet created)
+    const allowedExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv']
+    const ext = '.' + filename.split('.').pop()?.toLowerCase()
+    if (!allowedExtensions.includes(ext)) {
+      return NextResponse.json({ error: 'Invalid video file type' }, { status: 400 })
+    }
+
     if (lessonId !== 'temp') {
       const { data: lesson, error: lessonErr } = await adminSupabase
         .from('lessons')
@@ -54,10 +61,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate unique R2 key: lessons/{lessonId}/{timestamp}.{ext}
     const key = getR2Key(lessonId, filename)
-
-    // Generate presigned URL (valid for 1 hour)
     const uploadUrl = await generateUploadUrl(key, contentType, 3600)
 
     return NextResponse.json({

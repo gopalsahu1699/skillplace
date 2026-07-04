@@ -96,7 +96,17 @@ export default function StudentDashboard() {
           <CardContent>
             <div className="space-y-4">
               {loading ? (
-                <p className="text-sm text-slate-500">Loading...</p>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="space-y-2 p-3 rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="h-4 w-40 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                      <div className="h-4 w-10 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full w-3/4 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded-full" aria-hidden="true" />
+                    </div>
+                  </div>
+                ))
               ) : enrollments.length === 0 ? (
                 <p className="text-sm text-slate-500">No enrolled courses yet.</p>
               ) : (
@@ -123,7 +133,16 @@ export default function StudentDashboard() {
           <CardContent>
             <div className="space-y-4">
               {loading ? (
-                <p className="text-sm text-slate-500">Loading...</p>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl">
+                    <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer mt-1.5 shrink-0" aria-hidden="true" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-4 w-48 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                      <div className="h-3 w-64 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                      <div className="h-3 w-20 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] animate-shimmer rounded" aria-hidden="true" />
+                    </div>
+                  </div>
+                ))
               ) : notifications.length === 0 ? (
                 <p className="text-sm text-slate-500">No notifications yet.</p>
               ) : (

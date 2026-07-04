@@ -43,7 +43,6 @@ export default function ContactPage() {
   return (
     <div className="bg-background text-on-surface font-body-md overflow-x-hidden">
 
-      {/* Hero Section — dot-pattern background */}
       <section
         className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24 px-margin-mobile md:px-margin-desktop text-center"
         style={{
@@ -52,11 +51,15 @@ export default function ContactPage() {
           backgroundSize: '24px 24px',
         }}
       >
-        {/* Decorative blobs */}
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary opacity-5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-12 -left-24 w-64 h-64 bg-primary-fixed opacity-10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="max-w-container-max mx-auto relative z-10">
+          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-on-surface-variant">
+            <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
+            <span className="mx-2">/</span>
+            <span className="text-on-surface">Contact</span>
+          </nav>
           <span className="inline-block py-1 px-3 bg-secondary-fixed text-secondary font-label-md text-[12px] rounded-full mb-6 tracking-wider uppercase">
             Support Center
           </span>
@@ -69,11 +72,9 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Contact Section */}
       <section className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
 
-          {/* Left Column: Form */}
           <div className="bg-surface-container-lowest p-8 md:p-12 rounded-xl border border-border-subtle shadow-soft">
             <h2 className="font-headline-lg text-headline-lg text-primary-container mb-2">Send us a Message</h2>
             <p className="font-body-md text-on-surface-variant mb-10">
@@ -138,7 +139,6 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-               
                   <PhoneInput
                     value={phoneNumber}
                     onChange={setPhoneNumber}
@@ -179,7 +179,7 @@ export default function ContactPage() {
                   {loading ? (
                     <>
                       <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                      Sending…
+                      Sending&hellip;
                     </>
                   ) : (
                     <>
@@ -192,12 +192,9 @@ export default function ContactPage() {
             )}
           </div>
 
-          {/* Right Column: Info */}
           <div className="lg:pl-12 space-y-12">
 
-            {/* Contact Cards */}
             <div className="space-y-8">
-              {/* Email */}
               <div className="flex gap-6 group">
                 <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300 shrink-0">
                   <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: '"FILL" 1' }}>mail</span>
@@ -206,12 +203,10 @@ export default function ContactPage() {
                   <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Email</h3>
                   <p className="font-body-md text-on-surface-variant leading-relaxed">
                     <a href="mailto:skillplaceacademy@gmail.com" className="hover:text-secondary transition-colors">skillplaceacademy@gmail.com</a><br />
-                  
                   </p>
                 </div>
               </div>
 
-              {/* Phone */}
               <div className="flex gap-6 group">
                 <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300 shrink-0">
                   <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: '"FILL" 1' }}>call</span>
@@ -225,7 +220,6 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Address */}
               <div className="flex gap-6 group">
                 <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors duration-300 shrink-0">
                   <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: '"FILL" 1' }}>location_on</span>
@@ -233,14 +227,13 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-headline-md text-headline-md text-primary-container mb-2">Address</h3>
                   <p className="font-body-md text-on-surface-variant leading-relaxed">
-                    1st floor, SD EPITOME, Gandhi chowk, beside Patel tutorial, Old High Court Rd, Bilaspur, Telipara, Chhattisgarh 495004, Bilaspur, India, 495004<br />
+                    1st floor, SD EPITOME, Gandhi chowk, beside Patel tutorial, Old High Court Rd, Bilaspur, Telipara, Chhattisgarh 495004<br />
                     <span className="text-[12px] font-medium uppercase tracking-widest text-on-surface-variant opacity-70">Main Campus</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Map Card */}
             <div className="rounded-xl overflow-hidden border border-border-subtle shadow-soft bg-surface-container">
               <div className="p-6 bg-surface-container-lowest flex justify-between items-center border-b border-border-subtle">
                 <div>
@@ -258,7 +251,7 @@ export default function ContactPage() {
               </div>
               <div className="h-64 relative bg-surface-container-highest group">
                 <iframe
-                  src="https://www.google.com/maps/place/Pind+Balluchi/@22.0775672,82.1641834,21z/data=!4m14!1m7!3m6!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!2sPind+Balluchi!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs!3m5!1s0x3a280b05903bbfa9:0xa5bfdde50a6ffef5!8m2!3d22.0775439!4d82.1642337!16s%2Fg%2F11rhyj1rbs?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.5!2d82.1642!3d22.0775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDA0JzM5LjAiTiA4MsKwMDknNTEuMSJF!5e0!3m2!1sen!2sin!4v1"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -266,6 +259,7 @@ export default function ContactPage() {
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   className="grayscale group-hover:grayscale-0 transition-all duration-700"
+                  title="Skillplace Academy Location"
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white shadow-xl animate-bounce">
@@ -279,9 +273,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="bg-primary-container text-on-primary py-24 px-margin-mobile md:px-margin-desktop text-center relative overflow-hidden">
-        {/* Decorative shapes */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-secondary/10 to-transparent pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 border-[32px] border-white/5 rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none" />
 

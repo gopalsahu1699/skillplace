@@ -1,18 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Play,
   Pause,
   Volume2,
   VolumeX,
   Maximize,
-  CheckCircle,
   AlertCircle,
-  ArrowLeft,
-  ArrowRight,
   FileText,
   Download,
   Loader2,
@@ -46,10 +41,6 @@ interface LessonPlayerProps {
   userEmail: string
   isCompleted: boolean
   onComplete: (lessonId: string) => void
-  onPrev: () => void
-  onNext: () => void
-  hasPrev: boolean
-  hasNext: boolean
   courseName?: string
   drmConfig?: DrmConfig
 }
@@ -62,10 +53,6 @@ export default function LessonPlayer({
   userEmail,
   isCompleted,
   onComplete,
-  onPrev,
-  onNext,
-  hasPrev,
-  hasNext,
   courseName,
   drmConfig,
 }: LessonPlayerProps) {
@@ -421,36 +408,6 @@ export default function LessonPlayer({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPrev}
-            disabled={!hasPrev}
-            className="border-slate-300"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Previous
-          </Button>
-          <div className="flex items-center gap-2">
-            {!isCompleted && (
-              <Button size="sm" onClick={markComplete} className="bg-green-600 hover:bg-green-700 gap-2">
-                <CheckCircle className="h-4 w-4" /> Mark Complete
-              </Button>
-            )}
-            {isCompleted && (
-              <Badge className="bg-green-100 text-green-700 border-0 gap-1">
-                <CheckCircle className="h-3 w-3" /> Completed
-              </Badge>
-            )}
-          </div>
-          <Button
-            size="sm"
-            onClick={onNext}
-            disabled={!hasNext}
-          >
-            Next <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
       </div>
     )
   }

@@ -3,7 +3,7 @@ import { adminSupabase } from '@/lib/supabase/admin'
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('Authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET || 'cron-secret'}`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

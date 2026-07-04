@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/security/rate-limit'
+import { logAuditEvent } from '@/lib/security/audit'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/rest\/v1\/?$/, '')
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+if (!serviceKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required in production')
+}
 const adminSupabase = createClient(supabaseUrl, serviceKey)
 
 const ALLOWED_TABLES = new Set([
@@ -25,23 +29,25 @@ const ALLOWED_TABLES = new Set([
   'employees',
   'employee_permissions',
   'coupons',
-  'students',
   'batches',
   'class_schedule',
   'scheduled_notifications',
   'notifications',
   'placements',
   'certificates',
-  'user_sessions',
-  'user_activity',
-  'login_attempts',
-  'revoked_tokens',
   'course_progress',
   'lesson_progress',
   'test_attempts',
 ])
 
-async function verifyAdminSession(request: NextRequest): Promise<{ ok: boolean; userId?: string }> {
+const READ_ONLY_TABLES = new Set([
+  'user_sessions',
+  'user_activity',
+  'login_attempts',
+  'revoked_tokens',
+])
+
+async function verifyAdminSession(request: NextRequest): Promise<{ ok: boolean; userId?: string; role?: string }> {
   const supabaseAccessToken = request.cookies.get('sb-access-token')?.value
   const supabaseRefreshToken = request.cookies.get('sb-refresh-token')?.value
   if (!supabaseAccessToken) return { ok: false }
@@ -49,43 +55,35 @@ async function verifyAdminSession(request: NextRequest): Promise<{ ok: boolean; 
   try {
     let { data: { user }, error } = await adminSupabase.auth.getUser(supabaseAccessToken)
 
-    // If token expired, try to refresh using the refresh token
     if (error && supabaseRefreshToken) {
-      try {
-        const refreshed = await adminSupabase.auth.refreshSession({ refresh_token: supabaseRefreshToken })
-        const refreshedData = refreshed as { data: { user: typeof user } | null }
-        const refreshedUser = refreshedData?.data?.user
-        if (refreshedUser) {
-          user = refreshedUser
-          error = null
-        }
-      } catch {
-        // refresh failed, fall through to false
+      const refreshed = await adminSupabase.auth.refreshSession({ refresh_token: supabaseRefreshToken })
+      const refreshedData = refreshed as { data: { user: typeof user } | null }
+      const refreshedUser = refreshedData?.data?.user
+      if (refreshedUser) {
+        user = refreshedUser
+        error = null
       }
     }
 
     if (error || !user) return { ok: false }
 
-    // Check profiles table first
     const { data: profile } = await adminSupabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role === 'admin') return { ok: true, userId: user.id }
+    if (profile?.role === 'admin') return { ok: true, userId: user.id, role: 'admin' }
 
-    // Fallback: check employees table (admins may not have a profile entry)
     const { data: employee } = await adminSupabase
       .from('employees')
       .select('id, role')
       .eq('email', user.email)
       .single()
 
-    if (employee?.role === 'admin') return { ok: true, userId: employee.id }
+    if (employee?.role === 'admin') return { ok: true, userId: employee.id, role: 'admin' }
 
-    // Non-admin employee — allow access (page-level permission guard handles restrictions)
-    if (employee) return { ok: true, userId: employee.id }
+    if (employee) return { ok: true, userId: employee.id, role: employee.role }
 
     return { ok: false }
   } catch {
@@ -112,32 +110,14 @@ export async function GET(request: NextRequest) {
   const id = searchParams.get('id')
   const filter = searchParams.get('filter')
   const value = searchParams.get('value')
-  const join = searchParams.get('join')
 
-  if (!table || !ALLOWED_TABLES.has(table)) {
+  if (!table || !(ALLOWED_TABLES.has(table) || READ_ONLY_TABLES.has(table))) {
     return NextResponse.json({ error: 'Invalid table' }, { status: 400, headers: rateLimitHeaders })
   }
 
   try {
-    let selectStr = '*'
-    if (join) {
-      const parts: string[] = []
-      let depth = 0
-      let current = ''
-      for (const ch of join) {
-        if (ch === '(') { depth++; current += ch }
-        else if (ch === ')') { depth--; current += ch }
-        else if (ch === ',' && depth === 0) {
-          if (current.trim()) parts.push(current.trim())
-          current = ''
-        } else { current += ch }
-      }
-      if (current.trim()) parts.push(current.trim())
-      selectStr = '*' + ',' + parts.map(t => t === '*' ? t : t.includes('(') ? t : `${t}(*)`).join(',')
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = adminSupabase.from(table).select(selectStr)
+    let query: any = adminSupabase.from(table).select('*')
 
     if (id) {
       query = query.eq('id', id).single()
@@ -164,8 +144,8 @@ export async function POST(request: NextRequest) {
   }
 
   const authResult = await verifyAdminSession(request)
-  if (!authResult.ok) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  if (!authResult.ok || authResult.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: rateLimitHeaders })
   }
 
   const { searchParams } = new URL(request.url)
@@ -177,8 +157,23 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: rateLimitHeaders })
+    }
+
     const { data, error } = await adminSupabase.from(table).insert(body).select()
     if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+
+    await logAuditEvent({
+      userId: authResult.userId,
+      action: 'admin_action',
+      resource: `${table}:create`,
+      details: { table, data: body },
+      ipAddress: ip,
+      success: true,
+    })
+
     return NextResponse.json({ data }, { headers: rateLimitHeaders })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'
@@ -196,8 +191,8 @@ export async function PUT(request: NextRequest) {
   }
 
   const authResult = await verifyAdminSession(request)
-  if (!authResult.ok) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  if (!authResult.ok || authResult.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: rateLimitHeaders })
   }
 
   const { searchParams } = new URL(request.url)
@@ -214,8 +209,23 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
+
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: rateLimitHeaders })
+    }
+
     const { data, error } = await adminSupabase.from(table).update(body).eq('id', id).select()
     if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+
+    await logAuditEvent({
+      userId: authResult.userId,
+      action: 'admin_action',
+      resource: `${table}:update:${id}`,
+      details: { table, id, changes: body },
+      ipAddress: ip,
+      success: true,
+    })
+
     return NextResponse.json({ data }, { headers: rateLimitHeaders })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'
@@ -233,8 +243,8 @@ export async function DELETE(request: NextRequest) {
   }
 
   const authResult = await verifyAdminSession(request)
-  if (!authResult.ok) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  if (!authResult.ok || authResult.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: rateLimitHeaders })
   }
 
   const { searchParams } = new URL(request.url)
@@ -252,6 +262,16 @@ export async function DELETE(request: NextRequest) {
   try {
     const { error } = await adminSupabase.from(table).delete().eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+
+    await logAuditEvent({
+      userId: authResult.userId,
+      action: 'admin_action',
+      resource: `${table}:delete:${id}`,
+      details: { table, id },
+      ipAddress: ip,
+      success: true,
+    })
+
     return NextResponse.json({ success: true }, { headers: rateLimitHeaders })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'
