@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       customerEmail: '',
       customerPhone: '',
       returnUrl: `${BASE_URL}/api/payments/verify?order_id={order_id}`,
-      notifyUrl: `${BASE_URL}/api/payments/webhook`,
+      notifyUrl: `${BASE_URL}/api/payment/webhook`,
     })
 
     await adminSupabase.from('payments').insert({

@@ -13,7 +13,7 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
   '/images',
   '/api/video/stream-webhook',
-  '/api/payments/webhook',
+  '/api/payment/webhook',
   '/api/cron',
   '/api/public',
 ]
@@ -80,7 +80,9 @@ export async function middleware(request: NextRequest) {
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
       const origin = request.headers.get('origin')
       if (origin) {
-        const isValid = ALLOWED_ORIGINS.some(a => origin.startsWith(a))
+        const host = request.headers.get('host') || ''
+        const allowed = [...ALLOWED_ORIGINS, `https://${host}`, `http://${host}`]
+        const isValid = allowed.some(a => origin.startsWith(a))
         if (!isValid) {
           return NextResponse.json(
             { error: 'CSRF: Invalid origin' },

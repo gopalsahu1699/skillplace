@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       customerEmail: email,
       customerPhone: safePhone,
       returnUrl: `${BASE_URL}/api/programs/verify-payment?order_id={order_id}`,
-      notifyUrl: `${BASE_URL}/api/payments/webhook`,
+      notifyUrl: `${BASE_URL}/api/payment/webhook`,
     })
 
     const { data: existingProfile } = await adminSupabase
