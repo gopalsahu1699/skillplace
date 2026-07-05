@@ -79,8 +79,6 @@ export default function EnrollPage() {
   const [couponError, setCouponError] = useState('')
   const [applyingCoupon, setApplyingCoupon] = useState(false)
 
-  const orderDataRef = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
-
   async function fetchUserProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -129,10 +127,12 @@ export default function EnrollPage() {
         const coursesRes = await fetch(`${PUBLIC_API_BASE}?table=program_courses&filter=program_id&value=${prog.id}&join=courses(id,title)`)
         const coursesData = await coursesRes.json()
         setCourses((coursesData.data || []).map((pc: { courses: Course }) => pc.courses).filter(Boolean))
-      } catch {
+      } catch (err) {
+        console.error('Failed to fetch courses:', err)
         setCourses([])
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch program:', err)
       setProgram(null)
     }
     setLoading(false)

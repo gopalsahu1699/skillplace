@@ -64,7 +64,13 @@ export async function createCashfreeOrder(req: CashfreeOrderRequest): Promise<Ca
     (request.order_meta as Record<string, string>).notify_url = req.notifyUrl
   }
 
-  const response = await client.PGCreateOrder(request)
+  let response
+  try {
+    response = await client.PGCreateOrder(request)
+  } catch (err) {
+    console.error('Cashfree PGCreateOrder failed:', err)
+    throw new Error(`Cashfree order creation failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+  }
 
   return {
     cfOrderId: response.data.cf_order_id || '',
@@ -88,7 +94,13 @@ export interface CashfreePayment {
 
 export async function fetchCashfreePayments(orderId: string): Promise<CashfreePayment[]> {
   const client = getCashfreeClient()
-  const response = await client.PGOrderFetchPayments(orderId)
+  let response
+  try {
+    response = await client.PGOrderFetchPayments(orderId)
+  } catch (err) {
+    console.error('Cashfree PGOrderFetchPayments failed:', err)
+    throw new Error(`Cashfree payment fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+  }
 
   return (response.data || []).map((p) => ({
     paymentId: p.cf_payment_id || '',
@@ -103,16 +115,33 @@ export async function fetchCashfreePayments(orderId: string): Promise<CashfreePa
 
 export async function fetchCashfreeOrder(orderId: string) {
   const client = getCashfreeClient()
-  const response = await client.PGFetchOrder(orderId)
+  let response
+  try {
+    response = await client.PGFetchOrder(orderId)
+  } catch (err) {
+    console.error('Cashfree PGFetchOrder failed:', err)
+    throw new Error(`Cashfree order fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+  }
   return response.data
 }
 
 export function verifyWebhookSignature(rawBody: string, signature: string, timestamp?: string): boolean {
+  if (!signature || !rawBody) return false
+
+  if (timestamp) {
+    const client = getCashfreeClient()
+    try {
+      client.PGVerifyWebhookSignature(signature, rawBody, timestamp)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   if (!CASHFREE_WEBHOOK_SECRET) return false
-  const payload = timestamp ? timestamp + rawBody : rawBody
   const expectedSignature = crypto
     .createHmac('sha256', CASHFREE_WEBHOOK_SECRET)
-    .update(payload)
+    .update(rawBody)
     .digest('base64')
   return expectedSignature === signature
 }

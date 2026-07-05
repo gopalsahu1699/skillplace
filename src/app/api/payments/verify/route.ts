@@ -67,22 +67,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (payment.coupon_id) {
-      const { data: coupon } = await adminSupabase
-        .from('coupons')
-        .select('used_count')
-        .eq('id', payment.coupon_id)
-        .single()
-
-      if (coupon) {
-        await adminSupabase
-          .from('coupons')
-          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('id', payment.coupon_id)
-      }
+      await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
 
     return NextResponse.redirect(new URL(`/courses/${payment.courses?.slug}/learn`, request.url))
-  } catch {
+  } catch (err) {
+    console.error('payments/verify GET error:', err)
     return NextResponse.redirect(new URL('/payment/error?reason=verification_failed', request.url))
   }
 }
@@ -150,22 +140,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (payment.coupon_id) {
-      const { data: coupon } = await adminSupabase
-        .from('coupons')
-        .select('used_count')
-        .eq('id', payment.coupon_id)
-        .single()
-
-      if (coupon) {
-        await adminSupabase
-          .from('coupons')
-          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('id', payment.coupon_id)
-      }
+      await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
 
     return NextResponse.json({ success: true, redirectUrl: `/courses/${courseSlug || payment.courses?.slug}/learn` })
-  } catch {
+  } catch (err) {
+    console.error('payments/verify POST error:', err)
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

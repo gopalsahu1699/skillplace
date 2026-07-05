@@ -91,18 +91,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (existingPayment.coupon_id) {
-        const { data: coupon } = await adminSupabase
-          .from('coupons')
-          .select('used_count')
-          .eq('id', existingPayment.coupon_id)
-          .single()
-
-        if (coupon) {
-          await adminSupabase
-            .from('coupons')
-            .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-            .eq('id', existingPayment.coupon_id)
-        }
+        await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: existingPayment.coupon_id })
       }
     } else if (paymentStatus === 'FAILED') {
       await adminSupabase

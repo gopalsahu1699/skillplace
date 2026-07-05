@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchCashfreePayments } from '@/lib/cashfree'
+import { fetchCashfreePayments, fetchCashfreeOrder } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
@@ -48,21 +48,20 @@ export async function GET(request: NextRequest) {
       let profileId = payment.user_id
 
       if (!profileId) {
-        const { data: paymentData } = await adminSupabase
-          .from('payments')
-          .select('id')
-          .eq('order_id', orderId)
-          .single()
-
-        if (!paymentData) {
+        try {
+          const orderData = await fetchCashfreeOrder(orderId)
+          const customerEmail = orderData.customer_details?.customer_email
+          if (customerEmail) {
+            const { data: profile } = await adminSupabase
+              .from('profiles')
+              .select('id')
+              .eq('email', customerEmail)
+              .maybeSingle()
+            profileId = profile?.id || null
+          }
+        } catch {
           return NextResponse.redirect(new URL('/enroll/error?reason=profile_not_found', request.url))
         }
-        const { data: profile } = await adminSupabase
-          .from('profiles')
-          .select('id')
-          .eq('email', successfulPayment.orderId)
-          .maybeSingle()
-        profileId = profile?.id || null
       }
 
       if (profileId) {
@@ -84,22 +83,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (payment.coupon_id) {
-      const { data: coupon } = await adminSupabase
-        .from('coupons')
-        .select('used_count')
-        .eq('id', payment.coupon_id)
-        .single()
-
-      if (coupon) {
-        await adminSupabase
-          .from('coupons')
-          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('id', payment.coupon_id)
-      }
+      await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
 
     return NextResponse.redirect(new URL('/enroll/success', request.url))
-  } catch {
+  } catch (err) {
+    console.error('programs/verify-payment GET error:', err)
     return NextResponse.redirect(new URL('/enroll/error?reason=verification_failed', request.url))
   }
 }
@@ -223,22 +212,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (payment.coupon_id) {
-      const { data: coupon } = await adminSupabase
-        .from('coupons')
-        .select('used_count')
-        .eq('id', payment.coupon_id)
-        .single()
-
-      if (coupon) {
-        await adminSupabase
-          .from('coupons')
-          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('id', payment.coupon_id)
-      }
+      await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
 
     return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId })
-  } catch {
+  } catch (err) {
+    console.error('programs/verify-payment POST error:', err)
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

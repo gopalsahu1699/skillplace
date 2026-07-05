@@ -413,6 +413,12 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ courseId: course.id, userId: user.id }),
           })
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}))
+            throw new Error(err.error || `Server error (${res.status})`)
+          }
+
           const data = await res.json()
 
           if (data.free) {
@@ -434,8 +440,9 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
           paymentSessionId: sessionData.paymentSessionId,
           returnUrl,
         })
-      } catch {
-        notify.paymentError()
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Payment failed. Please try again.'
+        notify.paymentError(message)
       }
     }
 

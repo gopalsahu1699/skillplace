@@ -160,18 +160,7 @@ export async function POST(request: Request) {
           status: 'completed',
         })
 
-        const { data: couponCheck } = await adminSupabase
-          .from('coupons')
-          .select('used_count')
-          .eq('id', coupon.id)
-          .single()
-
-        if (couponCheck) {
-          await adminSupabase
-            .from('coupons')
-            .update({ used_count: (couponCheck.used_count || 0) + 1, updated_at: new Date().toISOString() })
-            .eq('id', coupon.id)
-        }
+        await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: coupon.id })
 
         return NextResponse.json({
           free: true,
@@ -184,12 +173,13 @@ export async function POST(request: Request) {
     }
 
     const orderId = `prog_${programId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
+    const cfCustomerId = `prog_${safePhone}`
 
     const cfOrder = await createCashfreeOrder({
       orderId,
       orderAmount: amount,
       orderCurrency: 'INR',
-      customerId: email,
+      customerId: cfCustomerId,
       customerName: studentName,
       customerEmail: email,
       customerPhone: safePhone,
@@ -227,8 +217,10 @@ export async function POST(request: Request) {
       env: getCashfreeEnv(),
     }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
+    console.error('programs/create-order error:', error)
+    const message = error instanceof Error ? error.message : 'Failed to create order'
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create order' },
+      { error: message },
       { status: 500, headers: rateLimitHeaders }
     )
   }

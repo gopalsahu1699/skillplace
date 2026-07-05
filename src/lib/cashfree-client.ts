@@ -1,11 +1,16 @@
 import { load } from '@cashfreepayments/cashfree-js'
 
+let cashfreeMode: 'sandbox' | 'production' | null = null
 let cashfreeInstance: Awaited<ReturnType<typeof load>> | null = null
 
 export async function getCashfreeClient(mode: 'sandbox' | 'production' = 'sandbox') {
   if (typeof window === 'undefined') return null
-  if (!cashfreeInstance) {
+  if (cashfreeMode !== mode) {
     cashfreeInstance = await load({ mode })
+    cashfreeMode = mode
+  } else if (!cashfreeInstance) {
+    cashfreeInstance = await load({ mode })
+    cashfreeMode = mode
   }
   return cashfreeInstance
 }

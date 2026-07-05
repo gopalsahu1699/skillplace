@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createCashfreeOrder, CASHFREE_APP_ID, getCashfreeEnv } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
@@ -15,10 +16,20 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     const { courseId, userId, couponCode } = await request.json()
 
     if (!courseId || !userId) {
       return NextResponse.json({ error: 'Missing courseId or userId' }, { status: 400 })
+    }
+
+    if (user.id !== userId) {
+      return NextResponse.json({ error: 'User ID does not match authenticated user' }, { status: 403 })
     }
 
     const { data: course, error: courseError } = await adminSupabase
@@ -42,6 +53,12 @@ export async function POST(request: NextRequest) {
     if (existingEnrollment) {
       return NextResponse.json({ error: 'Already enrolled' }, { status: 400 })
     }
+
+    const { data: profile } = await adminSupabase
+      .from('profiles')
+      .select('email, phone')
+      .eq('id', userId)
+      .single()
 
     let amount = course.discount_price || course.price
     let couponId: string | null = null
@@ -103,18 +120,7 @@ export async function POST(request: NextRequest) {
       if (enrollError) throw enrollError
 
       if (couponId) {
-        const { data: coupon } = await adminSupabase
-          .from('coupons')
-          .select('used_count')
-          .eq('id', couponId)
-          .single()
-
-        if (coupon) {
-          await adminSupabase
-            .from('coupons')
-            .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-            .eq('id', couponId)
-        }
+        await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: couponId })
       }
 
       return NextResponse.json({
@@ -132,8 +138,8 @@ export async function POST(request: NextRequest) {
       orderAmount: amount,
       orderCurrency: 'INR',
       customerId: userId,
-      customerEmail: '',
-      customerPhone: '',
+      customerEmail: profile?.email || '',
+      customerPhone: profile?.phone || '',
       returnUrl: `${BASE_URL}/api/payments/verify?order_id={order_id}`,
       notifyUrl: `${BASE_URL}/api/payment/webhook`,
     })
