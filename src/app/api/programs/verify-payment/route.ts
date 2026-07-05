@@ -1,89 +1,174 @@
-import { NextResponse } from 'next/server'
-import { verifyPaymentSignature, fetchPayment } from '@/lib/razorpay'
+import { NextRequest, NextResponse } from 'next/server'
+import { fetchCashfreePayments } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
 
-export async function POST(request: Request) {
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const orderId = searchParams.get('order_id')
+
+    if (!orderId) {
+      return NextResponse.redirect(new URL('/enroll/error?reason=missing_order', request.url))
+    }
+
+    const { data: payment } = await adminSupabase
+      .from('payments')
+      .select('*')
+      .eq('order_id', orderId)
+      .single()
+
+    if (!payment) {
+      return NextResponse.redirect(new URL('/enroll/error?reason=not_found', request.url))
+    }
+
+    if (payment.status === 'completed') {
+      return NextResponse.redirect(new URL('/enroll/success', request.url))
+    }
+
+    const payments = await fetchCashfreePayments(orderId)
+    const successfulPayment = payments.find((p) => p.paymentStatus === 'SUCCESS')
+
+    if (!successfulPayment) {
+      return NextResponse.redirect(new URL(`/enroll/status?order_id=${orderId}&status=failed`, request.url))
+    }
+
+    const updateData: Record<string, unknown> = {
+      status: 'completed',
+      cf_payment_id: String(successfulPayment.cfPaymentId),
+      payment_id: successfulPayment.paymentId,
+      payment_method: successfulPayment.paymentMethod,
+      updated_at: new Date().toISOString(),
+    }
+
+    await adminSupabase.from('payments').update(updateData).eq('id', payment.id)
+
+    if (payment.program_id) {
+      let profileId = payment.user_id
+
+      if (!profileId) {
+        const { data: paymentData } = await adminSupabase
+          .from('payments')
+          .select('id')
+          .eq('order_id', orderId)
+          .single()
+
+        if (!paymentData) {
+          return NextResponse.redirect(new URL('/enroll/error?reason=profile_not_found', request.url))
+        }
+        const { data: profile } = await adminSupabase
+          .from('profiles')
+          .select('id')
+          .eq('email', successfulPayment.orderId)
+          .maybeSingle()
+        profileId = profile?.id || null
+      }
+
+      if (profileId) {
+        const { data: existingEnrollment } = await adminSupabase
+          .from('enrollments')
+          .select('id')
+          .eq('user_id', profileId)
+          .eq('program_id', payment.program_id)
+          .maybeSingle()
+
+        if (!existingEnrollment) {
+          await adminSupabase.from('enrollments').insert({
+            user_id: profileId,
+            program_id: payment.program_id,
+            status: 'active',
+          })
+        }
+      }
+    }
+
+    if (payment.coupon_id) {
+      const { data: coupon } = await adminSupabase
+        .from('coupons')
+        .select('used_count')
+        .eq('id', payment.coupon_id)
+        .single()
+
+      if (coupon) {
+        await adminSupabase
+          .from('coupons')
+          .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
+          .eq('id', payment.coupon_id)
+      }
+    }
+
+    return NextResponse.redirect(new URL('/enroll/success', request.url))
+  } catch {
+    return NextResponse.redirect(new URL('/enroll/error?reason=verification_failed', request.url))
+  }
+}
+
+export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-  const rateLimit = checkRateLimit(`verify-payment:${ip}`, 10, 60000)
+  const rateLimit = checkRateLimit(`program-verify-post:${ip}`, 10, 60000)
   const rateLimitHeaders = getRateLimitHeaders(rateLimit)
 
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      { status: 429, headers: rateLimitHeaders }
-    )
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
   }
 
   try {
     const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
+      orderId,
       programId,
       studentName,
       email,
       phone,
+      location,
       notes,
     } = await request.json()
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !programId) {
-      return NextResponse.json(
-        { error: 'Missing required payment fields' },
-        { status: 400 }
-      )
+    if (!orderId || !programId || !email) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 })
-    }
-
-    const phoneValidation = phone ? validatePhoneServer(phone) : null
-    const safePhone = phoneValidation?.formatted || phone
-
-    const payment = await fetchPayment(razorpay_payment_id)
-    if (payment.status !== 'captured') {
-      return NextResponse.json({ error: 'Payment not captured' }, { status: 400 })
-    }
-
-    // Find the payment record in our DB
-    const { data: paymentRecord, error: recordError } = await adminSupabase
+    const { data: payment } = await adminSupabase
       .from('payments')
       .select('*')
-      .eq('razorpay_order_id', razorpay_order_id)
-      .eq('status', 'pending')
+      .eq('order_id', orderId)
       .single()
 
-    if (recordError || !paymentRecord) {
-      // Already processed or not found — return success to avoid client errors
-      return NextResponse.json({
-        success: true,
-        message: 'Payment already processed',
-      }, { headers: rateLimitHeaders })
+    if (!payment) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
-    // Update payment record to completed
-    await adminSupabase
-      .from('payments')
-      .update({
-        razorpay_payment_id,
-        razorpay_signature,
-        status: 'completed',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', paymentRecord.id)
+    if (payment.status === 'completed') {
+      return NextResponse.json({ success: true })
+    }
 
-    let profileId: string | null = paymentRecord.user_id
+    const payments = await fetchCashfreePayments(orderId)
+    const successfulPayment = payments.find((p) => p.paymentStatus === 'SUCCESS')
 
-    // If no user_id on payment record, find/create profile
+    if (!successfulPayment) {
+      return NextResponse.json({ success: false, status: payment.status })
+    }
+
+    const updateData: Record<string, unknown> = {
+      status: 'completed',
+      cf_payment_id: String(successfulPayment.cfPaymentId),
+      payment_id: successfulPayment.paymentId,
+      payment_method: successfulPayment.paymentMethod,
+      updated_at: new Date().toISOString(),
+    }
+
+    await adminSupabase.from('payments').update(updateData).eq('id', payment.id)
+
+    const safePhone = phone ? (validatePhoneServer(phone).formatted || phone) : null
+
+    let profileId = payment.user_id
+
     if (!profileId) {
       const { data: existingProfile } = await adminSupabase
         .from('profiles')
         .select('id')
         .eq('email', email)
-        .single()
+        .maybeSingle()
 
       if (existingProfile) {
         profileId = existingProfile.id
@@ -96,7 +181,7 @@ export async function POST(request: Request) {
           })
           .eq('id', profileId)
       } else {
-        const { data: newProfile, error: profileError } = await adminSupabase
+        const { data: newProfile } = await adminSupabase
           .from('profiles')
           .insert({
             email,
@@ -108,67 +193,52 @@ export async function POST(request: Request) {
           .select('id')
           .single()
 
-        if (profileError) {
-          return NextResponse.json(
-            { error: 'Failed to create profile' },
-            { status: 500 }
-          )
+        if (newProfile) {
+          profileId = newProfile.id
         }
-        profileId = newProfile.id
       }
 
-      // Update payment record with user_id
-      await adminSupabase
-        .from('payments')
-        .update({ user_id: profileId })
-        .eq('id', paymentRecord.id)
+      if (profileId) {
+        await adminSupabase.from('payments').update({ user_id: profileId }).eq('id', payment.id)
+      }
     }
 
-    const { data: enrollment, error: enrollmentError } = await adminSupabase
-      .from('enrollments')
-      .insert({
-        user_id: profileId,
-        program_id: programId,
-        status: 'active',
-        notes: notes || null,
-      })
-      .select('id')
-      .single()
+    if (profileId && programId) {
+      const { data: existingEnrollment } = await adminSupabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', profileId)
+        .eq('program_id', programId)
+        .maybeSingle()
 
-    if (enrollmentError) {
-      return NextResponse.json(
-        { error: 'Failed to create enrollment' },
-        { status: 500 }
-      )
+      if (!existingEnrollment) {
+        await adminSupabase.from('enrollments').insert({
+          user_id: profileId,
+          program_id: programId,
+          status: 'active',
+          location: location || null,
+          notes: notes || null,
+        })
+      }
     }
 
-    // Increment coupon used_count if coupon was used
-    // Safe from double-count: this route only processes payments with status='pending'
-    // Once status is updated to 'completed', neither webhook nor verify will reprocess
-    if (paymentRecord.coupon_id) {
+    if (payment.coupon_id) {
       const { data: coupon } = await adminSupabase
         .from('coupons')
         .select('used_count')
-        .eq('id', paymentRecord.coupon_id)
+        .eq('id', payment.coupon_id)
         .single()
 
       if (coupon) {
         await adminSupabase
           .from('coupons')
           .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('id', paymentRecord.coupon_id)
+          .eq('id', payment.coupon_id)
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      enrollmentId: enrollment.id,
-      paymentId: razorpay_payment_id,
-    }, { headers: rateLimitHeaders })
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Verification failed' },
-      { status: 500, headers: rateLimitHeaders }
-    )
+    return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId })
+  } catch {
+    return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

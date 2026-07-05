@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
-import { razorpay, RAZORPAY_KEY_ID } from '@/lib/razorpay'
+import { createCashfreeOrder, getCashfreeEnv } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -20,33 +22,21 @@ export async function POST(request: Request) {
     const { programId, programName, studentName, email, phone, couponCode } = await request.json()
 
     if (!programId || !studentName || !email || !phone) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     if (typeof studentName !== 'string' || studentName.trim().length < 2) {
-      return NextResponse.json(
-        { error: 'Invalid student name' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid student name' }, { status: 400 })
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email address' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
     }
 
     const phoneValidation = validatePhoneServer(phone)
     if (!phoneValidation.valid) {
-      return NextResponse.json(
-        { error: phoneValidation.error || 'Invalid phone number' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: phoneValidation.error || 'Invalid phone number' }, { status: 400 })
     }
     const safePhone = phoneValidation.formatted || phone
 
@@ -60,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Program not found' }, { status: 404 })
     }
 
-    let amount = (program.discount_price || program.price) * 100
+    let amount = (program.discount_price || program.price)
     let couponId: string | null = null
 
     if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
@@ -93,10 +83,7 @@ export async function POST(request: Request) {
 
       const basePrice = program.discount_price || program.price
       if (coupon.min_order_amount && basePrice < coupon.min_order_amount) {
-        return NextResponse.json(
-          { error: `Minimum order amount for this coupon is ₹${coupon.min_order_amount}` },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: `Minimum order amount for this coupon is ₹${coupon.min_order_amount}` }, { status: 400 })
       }
 
       let discountAmount = 0
@@ -112,7 +99,6 @@ export async function POST(request: Request) {
       const finalPrice = basePrice - discountAmount
 
       if (finalPrice <= 0) {
-        // Free enrollment — enroll directly
         let profileId: string | null = null
         const { data: existingProfile } = await adminSupabase
           .from('profiles')
@@ -162,7 +148,6 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Failed to create enrollment' }, { status: 500 })
         }
 
-        // Save payment record for free enrollment (so it shows in admin)
         await adminSupabase.from('payments').insert({
           user_id: profileId,
           course_id: null,
@@ -170,13 +155,11 @@ export async function POST(request: Request) {
           coupon_id: coupon.id,
           amount: 0,
           currency: 'INR',
-          razorpay_order_id: null,
-          razorpay_payment_id: null,
-          razorpay_signature: null,
+          order_id: null,
+          cf_order_id: null,
           status: 'completed',
         })
 
-        // Increment coupon used_count
         const { data: couponCheck } = await adminSupabase
           .from('coupons')
           .select('used_count')
@@ -196,31 +179,24 @@ export async function POST(request: Request) {
         }, { headers: rateLimitHeaders })
       }
 
-      amount = finalPrice * 100
+      amount = finalPrice
       couponId = coupon.id
     }
 
-    const receiptId = `prog_${programId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
+    const orderId = `prog_${programId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
 
-    const orderNotes: Record<string, string> = {
-      program_id: programId,
-      program_name: programName || program.name,
-      student_name: studentName,
-      email,
-      phone: safePhone,
-    }
-    if (couponId) {
-      orderNotes.coupon_id = couponId
-    }
-
-    const order = await razorpay.orders.create({
-      amount,
-      currency: 'INR',
-      receipt: receiptId,
-      notes: orderNotes,
+    const cfOrder = await createCashfreeOrder({
+      orderId,
+      orderAmount: amount,
+      orderCurrency: 'INR',
+      customerId: email,
+      customerName: studentName,
+      customerEmail: email,
+      customerPhone: safePhone,
+      returnUrl: `${BASE_URL}/api/programs/verify-payment?order_id={order_id}`,
+      notifyUrl: `${BASE_URL}/api/payments/webhook`,
     })
 
-    // Find profile for this email to save payment record
     const { data: existingProfile } = await adminSupabase
       .from('profiles')
       .select('id')
@@ -229,7 +205,6 @@ export async function POST(request: Request) {
 
     const profileId = existingProfile?.id || null
 
-    // Save payment record (so it shows in admin payments)
     await adminSupabase.from('payments').insert({
       user_id: profileId,
       course_id: null,
@@ -237,17 +212,19 @@ export async function POST(request: Request) {
       coupon_id: couponId,
       amount: amount,
       currency: 'INR',
-      razorpay_order_id: order.id,
-      razorpay_payment_id: null,
-      razorpay_signature: null,
+      order_id: cfOrder.orderId,
+      cf_order_id: cfOrder.cfOrderId,
+      cf_payment_session_id: cfOrder.paymentSessionId,
       status: 'pending',
     })
 
     return NextResponse.json({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      key: RAZORPAY_KEY_ID,
+      orderId: cfOrder.orderId,
+      cfOrderId: cfOrder.cfOrderId,
+      paymentSessionId: cfOrder.paymentSessionId,
+      amount: cfOrder.orderAmount,
+      currency: cfOrder.orderCurrency,
+      env: getCashfreeEnv(),
     }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
     return NextResponse.json(

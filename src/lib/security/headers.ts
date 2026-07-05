@@ -22,13 +22,13 @@ export function getSecurityHeaders(): Record<string, string> {
 export function getContentSecurityPolicy(nonce?: string): Record<string, string> {
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'" + (nonce ? ` 'nonce-${nonce}'` : ''),
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.cashfree.com" + (nonce ? ` 'nonce-${nonce}'` : ''),
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://*.videodelivery.net https://*.r2.cloudflarestorage.com https://img.icons8.com",
     "media-src 'self' blob: https://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://*.videodelivery.net https://*.r2.cloudflarestorage.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://api.razorpay.com https://checkout.razorpay.com",
-    "frame-src 'self' https://checkout.razorpay.com https://*.cloudflarestream.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://api.cashfree.com https://sdk.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com",
+    "frame-src 'self' https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com https://*.cloudflarestream.com",
     "frame-ancestors 'self'",
     "form-action 'self'",
     "base-uri 'self'",

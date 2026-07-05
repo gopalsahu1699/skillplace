@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
-import { waitForRazorpay, getRazorpay } from '@/lib/razorpay-client'
+import { openCashfreeCheckout } from '@/lib/cashfree-client'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
@@ -55,12 +55,6 @@ interface FormData {
 
 type Step = 'info' | 'payment' | 'success' | 'failure'
 
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => { open: () => void }
-  }
-}
-
 export default function EnrollPage() {
   const params = useParams()
   const router = useRouter()
@@ -71,7 +65,7 @@ export default function EnrollPage() {
   const [step, setStep] = useState<Step>('info')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [phoneValid, setPhoneValid] = useState<boolean>(true) // Track phone validation
+  const [phoneValid, setPhoneValid] = useState<boolean>(true)
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -84,6 +78,8 @@ export default function EnrollPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null)
   const [couponError, setCouponError] = useState('')
   const [applyingCoupon, setApplyingCoupon] = useState(false)
+
+  const orderDataRef = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
 
   async function fetchUserProfile() {
     try {
@@ -104,7 +100,6 @@ export default function EnrollPage() {
             phoneNumber: phoneDigits,
           }))
         } else {
-          // Fallback to auth user email if no profile
           if (user.email) {
             setFormData(prev => ({
               ...prev,
@@ -114,7 +109,6 @@ export default function EnrollPage() {
         }
       }
     } catch {
-      // Profile fetch failed, proceed with empty form
     }
   }
 
@@ -144,7 +138,7 @@ export default function EnrollPage() {
     setLoading(false)
   }
 
-  const orderDataRef = useRef<{ key: string; amount: number; currency: string; orderId: string } | null>(null)
+  const orderDataRef2 = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
 
   function getCouponDiscount(): number {
     if (!appliedCoupon || !program) return 0
@@ -171,7 +165,7 @@ export default function EnrollPage() {
 
   useEffect(() => {
     if (step !== 'payment' || !program || displayPrice <= 0) {
-      orderDataRef.current = null
+      orderDataRef2.current = null
       return
     }
     let cancelled = false
@@ -190,16 +184,16 @@ export default function EnrollPage() {
           }),
         })
         const data = await res.json()
-        if (!cancelled && data.orderId) {
-          orderDataRef.current = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        if (!cancelled && data.orderId && data.paymentSessionId) {
+          orderDataRef2.current = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
         }
       } catch {
-        if (!cancelled) orderDataRef.current = null
+        if (!cancelled) orderDataRef2.current = null
       }
     })()
     return () => {
       cancelled = true
-      orderDataRef.current = null
+      orderDataRef2.current = null
     }
   }, [step, program, formData.fullName, formData.email, formData.phoneNumber, appliedCoupon, displayPrice])
 
@@ -248,11 +242,11 @@ export default function EnrollPage() {
     setError('')
 
     try {
-      const preOrderData = orderDataRef.current
+      const preOrderData = orderDataRef2.current
 
-      let orderData = preOrderData
+      let sessionData = preOrderData
 
-      if (!orderData || !orderData.orderId) {
+      if (!sessionData || !sessionData.paymentSessionId) {
         const orderRes = await fetch('/api/programs/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -279,88 +273,19 @@ export default function EnrollPage() {
           return
         }
 
-        if (!data.orderId) {
+        if (!data.paymentSessionId) {
           throw new Error('Unexpected response from payment server')
         }
 
-        orderData = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        sessionData = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
       }
 
-      await waitForRazorpay()
+      const returnUrl = `${window.location.origin}/api/programs/verify-payment?order_id=${sessionData.orderId}`
 
-      const Razorpay = getRazorpay()
-      if (!Razorpay) {
-        throw new Error('Payment gateway not loaded. Please refresh and try again.')
-      }
-
-      if (!orderData || !orderData.orderId) {
-        throw new Error('Payment session expired. Please go back and try again.')
-      }
-
-      const options = {
-        key: orderData.key,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Skillplace Academy',
-        description: `Enrollment - ${program.name}`,
-        order_id: orderData.orderId,
-        handler: async function (response: {
-          razorpay_order_id: string
-          razorpay_payment_id: string
-          razorpay_signature: string
-        }) {
-          try {
-            const verifyRes = await fetch('/api/programs/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                programId: program.id,
-                studentName: formData.fullName,
-                email: formData.email,
-                phone: sanitizePhone(formData.phoneNumber),
-                location: formData.location,
-                notes: formData.notes,
-              }),
-            })
-
-            const verifyData = await verifyRes.json()
-
-            if (verifyData.success) {
-              setStep('success')
-              toast.success('Payment successful! Enrollment confirmed.')
-            } else {
-              setStep('failure')
-              setError(verifyData.error || 'Payment verification failed')
-            }
-          } catch {
-            setStep('failure')
-            setError('Payment verification failed. Please contact support.')
-          } finally {
-            setSubmitting(false)
-          }
-        },
-        prefill: {
-          name: formData.fullName,
-          email: formData.email,
-          contact: sanitizePhone(formData.phoneNumber),
-        },
-        theme: {
-          color: '#2563eb',
-        },
-        modal: {
-          ondismiss: function () {
-            setStep('failure')
-            setError('Payment was cancelled. You can retry when ready.')
-            setSubmitting(false)
-          },
-        },
-      }
-
-      const rzp = new Razorpay(options)
-      rzp.open()
+      await openCashfreeCheckout(sessionData.env, {
+        paymentSessionId: sessionData.paymentSessionId,
+        returnUrl,
+      })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to initiate payment')
       setSubmitting(false)
@@ -513,7 +438,6 @@ export default function EnrollPage() {
                     />
                   </div>
                   <div>
-
                     <PhoneInput
                       value={formData.phoneNumber}
                       onChange={(num) => updateForm({ phoneNumber: num })}
@@ -647,7 +571,7 @@ export default function EnrollPage() {
 
                   <div className="flex items-center gap-2 text-sm text-slate-500">
                     <Shield className="h-4 w-4 text-green-600" />
-                    <span>Secure payment powered by Razorpay</span>
+                    <span>Secure payment powered by Cashfree</span>
                   </div>
                 </div>
               )}

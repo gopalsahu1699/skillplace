@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
-import { waitForRazorpay, getRazorpay } from '@/lib/razorpay-client'
+import { openCashfreeCheckout } from '@/lib/cashfree-client'
 import SecureVideoPlayer from '@/components/course/SecureVideoPlayer'
 import LectureComingSoon from '@/components/course/LectureComingSoon'
 import ErrorBoundary from '@/components/course/ErrorBoundary'
@@ -50,7 +50,7 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
 
   const notesSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeLessonIdRef = useRef<string | null>(null)
-  const paymentOrderRef = useRef<{ key: string; amount: number; currency: string; orderId: string } | null>(null)
+  const paymentOrderRef = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
 
   useEffect(() => {
     activeLessonIdRef.current = activeLesson?.id || null
@@ -233,8 +233,8 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
           body: JSON.stringify({ courseId: course.id, userId: user.id }),
         })
         const data = await res.json()
-        if (!cancelled && data.success === false && data.orderId) {
-          paymentOrderRef.current = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+        if (!cancelled && data.orderId && data.paymentSessionId) {
+          paymentOrderRef.current = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
         }
       } catch {
         if (!cancelled) paymentOrderRef.current = null
@@ -405,9 +405,9 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
       try {
         const preOrder = paymentOrderRef.current
 
-        let orderData = preOrder
+        let sessionData = preOrder
 
-        if (!orderData || !orderData.orderId) {
+        if (!sessionData || !sessionData.paymentSessionId) {
           const res = await fetch('/api/payments/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -420,71 +420,20 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
             return
           }
 
-          if (!data.orderId) {
+          if (!data.paymentSessionId) {
             notify.paymentError('Unexpected response from payment server')
             return
           }
 
-          orderData = { key: data.key, amount: data.amount, currency: data.currency, orderId: data.orderId }
+          sessionData = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
         }
 
-        await waitForRazorpay()
+        const returnUrl = `${window.location.origin}/api/payments/verify?order_id=${sessionData.orderId}&course_slug=${course.slug}`
 
-        const Razorpay = getRazorpay()
-        if (!Razorpay) {
-          notify.paymentError('Payment gateway not loaded. Please refresh and try again.')
-          return
-        }
-
-        if (!orderData || !orderData.orderId) {
-          notify.paymentError('Payment session expired. Please refresh and try again.')
-          return
-        }
-
-        const options = {
-          key: orderData.key,
-          amount: orderData.amount,
-          currency: orderData.currency,
-          name: 'Skillplace Academy',
-          description: course.title,
-          order_id: orderData.orderId,
-          handler: async function (response: {
-            razorpay_order_id: string
-            razorpay_payment_id: string
-            razorpay_signature: string
-          }) {
-            try {
-              const verifyRes = await fetch('/api/payments/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(response),
-              })
-              const verifyData = await verifyRes.json()
-              if (verifyData.success) {
-                setEnrolled(true)
-                notify.paymentSuccess()
-                window.location.href = verifyData.redirectUrl
-              } else {
-                notify.paymentError('Payment verification failed')
-              }
-            } catch {
-              notify.paymentError()
-            }
-          },
-          prefill: {
-            name: user?.user_metadata?.full_name || '',
-            email: user?.email || '',
-          },
-          theme: { color: '#2563eb' },
-          modal: {
-            ondismiss: () => {
-              // User dismissed the payment modal
-            },
-          },
-        }
-
-        const rzp = new Razorpay(options)
-        rzp.open()
+        await openCashfreeCheckout(sessionData.env, {
+          paymentSessionId: sessionData.paymentSessionId,
+          returnUrl,
+        })
       } catch {
         notify.paymentError()
       }

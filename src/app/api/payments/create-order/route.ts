@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createOrder, RAZORPAY_KEY_ID } from '@/lib/razorpay'
+import { createCashfreeOrder, CASHFREE_APP_ID, getCashfreeEnv } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -100,7 +102,6 @@ export async function POST(request: NextRequest) {
 
       if (enrollError) throw enrollError
 
-      // Increment coupon used_count if coupon was applied
       if (couponId) {
         const { data: coupon } = await adminSupabase
           .from('coupons')
@@ -124,17 +125,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const receipt = `crs_${userId.slice(0, 6)}_${courseId.slice(0, 6)}_${Date.now()}`.slice(0, 40)
-    const orderNotes: Record<string, string> = {
-      course_id: courseId,
-      user_id: userId,
-      course_title: course.title,
-    }
-    if (couponId) {
-      orderNotes.coupon_id = couponId
-    }
+    const orderId = `crs_${userId.slice(0, 8)}_${courseId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
 
-    const order = await createOrder(amount, 'INR', receipt, orderNotes)
+    const cfOrder = await createCashfreeOrder({
+      orderId,
+      orderAmount: amount,
+      orderCurrency: 'INR',
+      customerId: userId,
+      customerEmail: '',
+      customerPhone: '',
+      returnUrl: `${BASE_URL}/api/payments/verify?order_id={order_id}`,
+      notifyUrl: `${BASE_URL}/api/payments/webhook`,
+    })
 
     await adminSupabase.from('payments').insert({
       user_id: userId,
@@ -143,17 +145,20 @@ export async function POST(request: NextRequest) {
       coupon_id: couponId,
       amount,
       currency: 'INR',
-      razorpay_order_id: order.id,
+      order_id: cfOrder.orderId,
+      cf_order_id: cfOrder.cfOrderId,
+      cf_payment_session_id: cfOrder.paymentSessionId,
       status: 'pending',
     })
 
     return NextResponse.json({
-      success: false,
-      free: false,
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      key: RAZORPAY_KEY_ID,
+      success: true,
+      orderId: cfOrder.orderId,
+      cfOrderId: cfOrder.cfOrderId,
+      paymentSessionId: cfOrder.paymentSessionId,
+      amount: cfOrder.orderAmount,
+      currency: cfOrder.orderCurrency,
+      env: getCashfreeEnv(),
       course: {
         title: course.title,
         slug: course.slug,

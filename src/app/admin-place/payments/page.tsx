@@ -18,6 +18,10 @@ interface PurchaseRecord {
   razorpay_order_id: string | null
   razorpay_payment_id: string | null
   razorpay_signature: string | null
+  order_id: string | null
+  cf_order_id: string | null
+  cf_payment_id: string | null
+  payment_method: string | null
   coupon_id: string | null
   status: 'pending' | 'completed' | 'failed' | 'refunded'
   created_at: string
@@ -266,7 +270,7 @@ export default function AdminPaymentsPage() {
                         {formatAmount(purchase.amount)}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-500 font-mono">
-                        {purchase.razorpay_order_id || '-'}
+                        {purchase.order_id || purchase.razorpay_order_id || '-'}
                       </td>
                       <td className="px-5 py-3.5">
                         <Badge className={getStatusClasses(purchase.status)}>

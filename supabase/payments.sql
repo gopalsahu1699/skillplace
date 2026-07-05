@@ -1,5 +1,5 @@
 -- RUN THIS IN SUPABASE SQL EDITOR (Dashboard > SQL Editor > New Query)
--- This creates the missing `payments` table required by the payment API routes
+-- This creates the `payments` table required by the payment API routes
 
 CREATE TABLE IF NOT EXISTS public.payments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -8,6 +8,12 @@ CREATE TABLE IF NOT EXISTS public.payments (
   program_id UUID REFERENCES public.training_programs(id) ON DELETE SET NULL,
   amount INTEGER NOT NULL DEFAULT 0,
   currency TEXT DEFAULT 'INR',
+  order_id TEXT,
+  cf_order_id TEXT,
+  cf_payment_session_id TEXT,
+  cf_payment_id TEXT,
+  payment_id TEXT,
+  payment_method TEXT,
   razorpay_order_id TEXT,
   razorpay_payment_id TEXT,
   razorpay_signature TEXT,
@@ -32,5 +38,6 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 CREATE INDEX IF NOT EXISTS idx_payments_user ON public.payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_course ON public.payments(course_id);
 CREATE INDEX IF NOT EXISTS idx_payments_program ON public.payments(program_id);
-CREATE INDEX IF NOT EXISTS idx_payments_order ON public.payments(razorpay_order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_order ON public.payments(order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_cf_order ON public.payments(cf_order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);

@@ -93,6 +93,12 @@ export interface Purchase {
   course_id: string
   amount: number
   currency: string
+  order_id: string | null
+  cf_order_id: string | null
+  cf_payment_session_id: string | null
+  cf_payment_id: string | null
+  payment_id: string | null
+  payment_method: string | null
   razorpay_order_id: string | null
   razorpay_payment_id: string | null
   razorpay_signature: string | null

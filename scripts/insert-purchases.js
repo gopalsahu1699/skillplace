@@ -49,13 +49,13 @@ async function main() {
 
   // Create sample purchases
   const purchases = [
-    { user_id: students[0].id, course_id: courses[0].id, amount: courses[0].price || 4999, currency: 'INR', razorpay_order_id: 'order_abc123', razorpay_payment_id: 'pay_xyz789', status: 'completed' },
-    { user_id: students[1].id, course_id: courses[1 % courses.length].id, amount: courses[1 % courses.length].price || 5999, currency: 'INR', razorpay_order_id: 'order_def456', razorpay_payment_id: 'pay_uvw012', status: 'completed' },
-    { user_id: students[2].id, course_id: courses[2 % courses.length].id, amount: courses[2 % courses.length].price || 7999, currency: 'INR', razorpay_order_id: 'order_ghi789', razorpay_payment_id: 'pay_rst345', status: 'pending' },
-    { user_id: students[3].id, course_id: courses[0].id, amount: courses[0].price || 4999, currency: 'INR', razorpay_order_id: 'order_jkl012', razorpay_payment_id: 'pay_opq678', status: 'completed' },
-    { user_id: students[4].id, course_id: courses[1 % courses.length].id, amount: courses[1 % courses.length].price || 5999, currency: 'INR', razorpay_order_id: 'order_mno345', razorpay_payment_id: 'pay_lmn901', status: 'failed' },
-    { user_id: students[0].id, course_id: courses[2 % courses.length].id, amount: courses[2 % courses.length].price || 7999, currency: 'INR', razorpay_order_id: 'order_pqr678', razorpay_payment_id: 'pay_ijk234', status: 'completed' },
-    { user_id: students[2].id, course_id: courses[0].id, amount: courses[0].price || 4999, currency: 'INR', razorpay_order_id: 'order_stu901', razorpay_payment_id: 'pay_efg567', status: 'refunded' },
+    { user_id: students[0].id, course_id: courses[0].id, amount: courses[0].price || 4999, currency: 'INR', order_id: 'crs_sample_a1b2c3', cf_order_id: '1001', status: 'completed' },
+    { user_id: students[1].id, course_id: courses[1 % courses.length].id, amount: courses[1 % courses.length].price || 5999, currency: 'INR', order_id: 'crs_sample_d4e5f6', cf_order_id: '1002', status: 'completed' },
+    { user_id: students[2].id, course_id: courses[2 % courses.length].id, amount: courses[2 % courses.length].price || 7999, currency: 'INR', order_id: 'crs_sample_g7h8i9', cf_order_id: '1003', status: 'pending' },
+    { user_id: students[3].id, course_id: courses[0].id, amount: courses[0].price || 4999, currency: 'INR', order_id: 'crs_sample_j0k1l2', cf_order_id: '1004', status: 'completed' },
+    { user_id: students[4].id, course_id: courses[1 % courses.length].id, amount: courses[1 % courses.length].price || 5999, currency: 'INR', order_id: 'crs_sample_m3n4o5', cf_order_id: '1005', status: 'failed' },
+    { user_id: students[0].id, course_id: courses[2 % courses.length].id, amount: courses[2 % courses.length].price || 7999, currency: 'INR', order_id: 'crs_sample_p6q7r8', cf_order_id: '1006', status: 'completed' },
+    { user_id: students[2].id, course_id: courses[0].id, amount: courses[0].price || 4999, currency: 'INR', order_id: 'crs_sample_s9t0u1', cf_order_id: '1007', status: 'refunded' },
   ];
 
   for (const p of purchases) {
