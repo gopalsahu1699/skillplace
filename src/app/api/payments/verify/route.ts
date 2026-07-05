@@ -6,7 +6,6 @@ import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 export async function GET(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
   const rateLimit = checkRateLimit(`course-verify:${ip}`, 10, 60000)
-  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
 
   if (!rateLimit.allowed) {
     return NextResponse.redirect(new URL('/payment/error?reason=rate_limit', request.url))

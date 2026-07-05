@@ -76,7 +76,7 @@ export default function AdminLayout({
           .from('employees')
           .select('id, name, email, role, is_active')
           .eq('email', user.email)
-          .single()
+          .maybeSingle()
 
         if (cancelled) return
 

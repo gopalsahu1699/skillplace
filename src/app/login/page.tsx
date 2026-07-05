@@ -79,7 +79,7 @@ function LoginForm() {
           .from('employees')
           .select('role')
           .eq('email', data.user.email)
-          .single()
+          .maybeSingle()
 
         if (employee?.role === 'admin' || employee?.role === 'employee') {
           router.push('/admin-place')

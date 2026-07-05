@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createCashfreeOrder, CASHFREE_APP_ID, getCashfreeEnv } from '@/lib/cashfree'
+import { createCashfreeOrder, getCashfreeEnv } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'

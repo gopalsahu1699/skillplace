@@ -1,5 +1,5 @@
 import { Cashfree as CashfreeSDK, CFEnvironment } from 'cashfree-pg'
-import crypto from 'crypto'
+import * as crypto from 'crypto'
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID || ''
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY || ''
@@ -131,19 +131,27 @@ export function verifyWebhookSignature(rawBody: string, signature: string, times
   if (timestamp) {
     const client = getCashfreeClient()
     try {
-      client.PGVerifyWebhookSignature(signature, rawBody, timestamp)
+      const isValid = client.PGVerifyWebhookSignature(signature, rawBody, timestamp)
+      if (typeof isValid === 'boolean') return isValid
       return true
     } catch {
       return false
     }
   }
 
-  if (!CASHFREE_WEBHOOK_SECRET) return false
+  if (!CASHFREE_WEBHOOK_SECRET) {
+    console.error('CASHFREE_WEBHOOK_SECRET not configured')
+    return false
+  }
   const expectedSignature = crypto
     .createHmac('sha256', CASHFREE_WEBHOOK_SECRET)
     .update(rawBody)
     .digest('base64')
   return expectedSignature === signature
+}
+
+export function getPublicCashfreeEnv(): 'sandbox' | 'production' {
+  return ENV === 'PRODUCTION' ? 'production' : 'sandbox'
 }
 
 export function getCashfreeEnv(): 'sandbox' | 'production' {

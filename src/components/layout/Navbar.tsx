@@ -47,7 +47,7 @@ export default function Navbar() {
             .from('employees')
             .select('role')
             .eq('email', authUser.email)
-            .single()
+            .maybeSingle()
           if (employee?.role === 'admin') setIsAdmin(true)
         }
 

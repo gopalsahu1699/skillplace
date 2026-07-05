@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
-import { openCashfreeCheckout } from '@/lib/cashfree-client'
+import { redirectToCashfreeCheckout } from '@/lib/cashfree-client'
 import SecureVideoPlayer from '@/components/course/SecureVideoPlayer'
 import LectureComingSoon from '@/components/course/LectureComingSoon'
 import ErrorBoundary from '@/components/course/ErrorBoundary'
@@ -50,8 +50,6 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
 
   const notesSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeLessonIdRef = useRef<string | null>(null)
-  const paymentOrderRef = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
-
   useEffect(() => {
     activeLessonIdRef.current = activeLesson?.id || null
   }, [activeLesson?.id])
@@ -219,33 +217,6 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
     }
   }, [])
 
-  useEffect(() => {
-    if (enrolled || !user || course.price <= 0) {
-      paymentOrderRef.current = null
-      return
-    }
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/api/payments/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ courseId: course.id, userId: user.id }),
-        })
-        const data = await res.json()
-        if (!cancelled && data.orderId && data.paymentSessionId) {
-          paymentOrderRef.current = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
-        }
-      } catch {
-        if (!cancelled) paymentOrderRef.current = null
-      }
-    })()
-    return () => {
-      cancelled = true
-      paymentOrderRef.current = null
-    }
-  }, [user, course.id, enrolled])
-
   const saveNotesImmediate = useCallback(async (content: string) => {
     if (!activeLesson || !user) return
     try {
@@ -403,43 +374,30 @@ export default function CourseLearnClient({ course, modules: initialModules }: C
 
     const handlePayment = async () => {
       try {
-        const preOrder = paymentOrderRef.current
+        const res = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId: course.id, userId: user.id }),
+        })
 
-        let sessionData = preOrder
-
-        if (!sessionData || !sessionData.paymentSessionId) {
-          const res = await fetch('/api/payments/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ courseId: course.id, userId: user.id }),
-          })
-
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}))
-            throw new Error(err.error || `Server error (${res.status})`)
-          }
-
-          const data = await res.json()
-
-          if (data.free) {
-            window.location.href = data.redirectUrl
-            return
-          }
-
-          if (!data.paymentSessionId) {
-            notify.paymentError('Unexpected response from payment server')
-            return
-          }
-
-          sessionData = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || `Server error (${res.status})`)
         }
 
-        const returnUrl = `${window.location.origin}/api/payments/verify?order_id=${sessionData.orderId}&course_slug=${course.slug}`
+        const data = await res.json()
 
-        await openCashfreeCheckout(sessionData.env, {
-          paymentSessionId: sessionData.paymentSessionId,
-          returnUrl,
-        })
+        if (data.free) {
+          window.location.href = data.redirectUrl
+          return
+        }
+
+        if (!data.paymentSessionId) {
+          notify.paymentError('Unexpected response from payment server')
+          return
+        }
+
+        redirectToCashfreeCheckout(data.paymentSessionId)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Payment failed. Please try again.'
         notify.paymentError(message)

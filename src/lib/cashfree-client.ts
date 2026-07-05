@@ -1,44 +1,24 @@
-import { load } from '@cashfreepayments/cashfree-js'
-
-let cashfreeMode: 'sandbox' | 'production' | null = null
-let cashfreeInstance: Awaited<ReturnType<typeof load>> | null = null
-
-export async function getCashfreeClient(mode: 'sandbox' | 'production' = 'sandbox') {
-  if (typeof window === 'undefined') return null
-  if (cashfreeMode !== mode) {
-    cashfreeInstance = await load({ mode })
-    cashfreeMode = mode
-  } else if (!cashfreeInstance) {
-    cashfreeInstance = await load({ mode })
-    cashfreeMode = mode
-  }
-  return cashfreeInstance
+function getClientEnv(): 'sandbox' | 'production' {
+  if (typeof window === 'undefined') return 'sandbox'
+  const env = process.env.NEXT_PUBLIC_CASHFREE_ENV || 'SANDBOX'
+  return env.toUpperCase() === 'PRODUCTION' ? 'production' : 'sandbox'
 }
 
-export interface CashfreeCheckoutOptions {
-  paymentSessionId: string
-  returnUrl: string
+function getCheckoutBaseUrl(): string {
+  return getClientEnv() === 'production'
+    ? 'https://payments.cashfree.com'
+    : 'https://payments-test.cashfree.com'
 }
 
-export async function openCashfreeCheckout(
-  mode: 'sandbox' | 'production',
-  options: CashfreeCheckoutOptions
-) {
-  const cashfree = await getCashfreeClient(mode)
-  if (!cashfree) {
-    throw new Error('Cashfree SDK failed to initialize')
-  }
+function getCheckoutUrl(paymentSessionId: string): string {
+  return `${getCheckoutBaseUrl()}/checkout/pay/${paymentSessionId}`
+}
 
-  const checkoutOptions = {
-    paymentSessionId: options.paymentSessionId,
-    returnUrl: options.returnUrl,
-  }
+export function getRedirectCheckoutUrl(paymentSessionId: string): string {
+  return getCheckoutUrl(paymentSessionId)
+}
 
-  const result = await cashfree.checkout(checkoutOptions)
-
-  if (result.error) {
-    throw new Error(result.error.message || 'Payment cancelled')
-  }
-
-  return result
+export function redirectToCashfreeCheckout(paymentSessionId: string): void {
+  const checkoutUrl = getRedirectCheckoutUrl(paymentSessionId)
+  window.location.href = checkoutUrl
 }

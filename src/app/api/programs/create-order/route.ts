@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { programId, programName, studentName, email, phone, couponCode } = await request.json()
+    const { programId, studentName, email, phone, couponCode } = await request.json()
 
     if (!programId || !studentName || !email || !phone) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -175,6 +175,11 @@ export async function POST(request: Request) {
     const orderId = `prog_${programId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
     const cfCustomerId = `prog_${safePhone}`
 
+    console.log(`[create-order] Creating Cashfree order - orderId: ${orderId}, amount: ${amount}, currency: INR`)
+    console.log(`[create-order] Customer - name: ${studentName}, email: ${email}, phone: ${safePhone}`)
+    console.log(`[create-order] returnUrl: ${BASE_URL}/api/programs/verify-payment?order_id={order_id}`)
+    console.log(`[create-order] notifyUrl: ${BASE_URL}/api/payment/webhook`)
+
     const cfOrder = await createCashfreeOrder({
       orderId,
       orderAmount: amount,
@@ -187,6 +192,13 @@ export async function POST(request: Request) {
       notifyUrl: `${BASE_URL}/api/payment/webhook`,
     })
 
+    console.log(`[create-order] Cashfree response - cfOrderId: ${cfOrder.cfOrderId}, paymentSessionId: ${cfOrder.paymentSessionId}, orderStatus: ${cfOrder.orderStatus}`)
+
+    if (!cfOrder.paymentSessionId) {
+      console.error('[create-order] Cashfree returned empty paymentSessionId')
+      throw new Error('Cashfree failed to generate payment session')
+    }
+
     const { data: existingProfile } = await adminSupabase
       .from('profiles')
       .select('id')
@@ -195,7 +207,9 @@ export async function POST(request: Request) {
 
     const profileId = existingProfile?.id || null
 
-    await adminSupabase.from('payments').insert({
+    console.log(`[create-order] Saving payment record - profileId: ${profileId}, orderId: ${cfOrder.orderId}`)
+
+    const { error: insertError } = await adminSupabase.from('payments').insert({
       user_id: profileId,
       course_id: null,
       program_id: programId,
@@ -207,6 +221,11 @@ export async function POST(request: Request) {
       cf_payment_session_id: cfOrder.paymentSessionId,
       status: 'pending',
     })
+
+    if (insertError) {
+      console.error('[create-order] Failed to save payment record:', insertError)
+      throw new Error('Failed to save payment record')
+    }
 
     return NextResponse.json({
       orderId: cfOrder.orderId,

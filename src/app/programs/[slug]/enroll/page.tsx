@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Check, ChevronRight, ChevronLeft, Loader2, CreditCard, Shield, X } from 'lucide-react'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
-import { openCashfreeCheckout } from '@/lib/cashfree-client'
+import { redirectToCashfreeCheckout } from '@/lib/cashfree-client'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
@@ -138,8 +138,6 @@ export default function EnrollPage() {
     setLoading(false)
   }
 
-  const orderDataRef2 = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
-
   function getCouponDiscount(): number {
     if (!appliedCoupon || !program) return 0
     const basePrice = program.discount_price || program.price
@@ -162,40 +160,6 @@ export default function EnrollPage() {
     Promise.resolve().then(() => fetchUserProfile())
     Promise.resolve().then(() => fetchProgram())
   }, [slug])
-
-  useEffect(() => {
-    if (step !== 'payment' || !program || displayPrice <= 0) {
-      orderDataRef2.current = null
-      return
-    }
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/api/programs/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            programId: program.id,
-            programName: program.name,
-            studentName: formData.fullName,
-            email: formData.email,
-            phone: sanitizePhone(formData.phoneNumber),
-            couponCode: appliedCoupon?.code || null,
-          }),
-        })
-        const data = await res.json()
-        if (!cancelled && data.orderId && data.paymentSessionId) {
-          orderDataRef2.current = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
-        }
-      } catch {
-        if (!cancelled) orderDataRef2.current = null
-      }
-    })()
-    return () => {
-      cancelled = true
-      orderDataRef2.current = null
-    }
-  }, [step, program, formData.fullName, formData.email, formData.phoneNumber, appliedCoupon, displayPrice])
 
   function updateForm(updates: Partial<FormData>) {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -236,56 +200,42 @@ export default function EnrollPage() {
     setCouponError('')
   }
 
-  const openRazorpay = useCallback(async () => {
+  const openCashfreePayment = useCallback(async () => {
     if (!program) return
     setSubmitting(true)
     setError('')
 
     try {
-      const preOrderData = orderDataRef2.current
+      const orderRes = await fetch('/api/programs/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          programId: program.id,
+          studentName: formData.fullName,
+          email: formData.email,
+          phone: sanitizePhone(formData.phoneNumber),
+          couponCode: appliedCoupon?.code || null,
+        }),
+      })
 
-      let sessionData = preOrderData
+      const data = await orderRes.json()
 
-      if (!sessionData || !sessionData.paymentSessionId) {
-        const orderRes = await fetch('/api/programs/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            programId: program.id,
-            programName: program.name,
-            studentName: formData.fullName,
-            email: formData.email,
-            phone: sanitizePhone(formData.phoneNumber),
-            couponCode: appliedCoupon?.code || null,
-          }),
-        })
-
-        const data = await orderRes.json()
-
-        if (!orderRes.ok) {
-          throw new Error(data.error || 'Failed to create payment order')
-        }
-
-        if (data.free) {
-          setStep('success')
-          toast.success('Enrollment confirmed!')
-          setSubmitting(false)
-          return
-        }
-
-        if (!data.paymentSessionId) {
-          throw new Error('Unexpected response from payment server')
-        }
-
-        sessionData = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
+      if (!orderRes.ok) {
+        throw new Error(data.error || 'Failed to create payment order')
       }
 
-      const returnUrl = `${window.location.origin}/api/programs/verify-payment?order_id=${sessionData.orderId}`
+      if (data.free) {
+        setStep('success')
+        toast.success('Enrollment confirmed!')
+        setSubmitting(false)
+        return
+      }
 
-      await openCashfreeCheckout(sessionData.env, {
-        paymentSessionId: sessionData.paymentSessionId,
-        returnUrl,
-      })
+      if (!data.paymentSessionId) {
+        throw new Error('Unexpected response from payment server')
+      }
+
+      redirectToCashfreeCheckout(data.paymentSessionId)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to initiate payment')
       setSubmitting(false)
@@ -646,7 +596,7 @@ export default function EnrollPage() {
                       </Button>
                     ) : (
                       <Button
-                        onClick={openRazorpay}
+                        onClick={openCashfreePayment}
                         disabled={submitting || !canProceed || !formData.acceptTerms}
                         className="bg-green-600 hover:bg-green-700 gap-1"
                       >
@@ -665,7 +615,7 @@ export default function EnrollPage() {
                     )
                   ) : (
                     <Button
-                      onClick={openRazorpay}
+                      onClick={openCashfreePayment}
                       disabled={submitting}
                       className="bg-blue-600 hover:bg-blue-700 gap-2"
                     >

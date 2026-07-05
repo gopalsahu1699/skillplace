@@ -5,34 +5,48 @@ import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const orderId = searchParams.get('order_id')
+  const { searchParams } = new URL(request.url)
+  const orderId = searchParams.get('order_id')
+  const paymentSessionId = searchParams.get('payment_session_id')
+  console.log(`[verify-payment] GET called - orderId: ${orderId}, paymentSessionId: ${paymentSessionId}`)
 
+  try {
     if (!orderId) {
+      console.error('[verify-payment] Missing order_id parameter')
       return NextResponse.redirect(new URL('/enroll/error?reason=missing_order', request.url))
     }
 
-    const { data: payment } = await adminSupabase
+    const { data: payment, error: dbError } = await adminSupabase
       .from('payments')
       .select('*')
       .eq('order_id', orderId)
       .single()
 
-    if (!payment) {
+    if (dbError || !payment) {
+      console.error(`[verify-payment] Payment not found for order ${orderId}:`, dbError)
       return NextResponse.redirect(new URL('/enroll/error?reason=not_found', request.url))
     }
 
+    console.log(`[verify-payment] Payment found - id: ${payment.id}, status: ${payment.status}`)
+
     if (payment.status === 'completed') {
+      console.log(`[verify-payment] Payment ${orderId} already completed`)
       return NextResponse.redirect(new URL('/enroll/success', request.url))
     }
 
+    console.log(`[verify-payment] Fetching payments from Cashfree for order ${orderId}`)
     const payments = await fetchCashfreePayments(orderId)
+    console.log(`[verify-payment] Cashfree payments response:`, JSON.stringify(payments))
+
     const successfulPayment = payments.find((p) => p.paymentStatus === 'SUCCESS')
 
     if (!successfulPayment) {
+      const statuses = payments.map((p) => p.paymentStatus).join(', ')
+      console.log(`[verify-payment] No SUCCESS payment found for order ${orderId}. Statuses: [${statuses}]`)
       return NextResponse.redirect(new URL(`/enroll/status?order_id=${orderId}&status=failed`, request.url))
     }
+
+    console.log(`[verify-payment] SUCCESS payment found - cfPaymentId: ${successfulPayment.cfPaymentId}`)
 
     const updateData: Record<string, unknown> = {
       status: 'completed',

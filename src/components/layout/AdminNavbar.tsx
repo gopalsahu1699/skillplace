@@ -30,7 +30,7 @@ export default function AdminNavbar() {
             .from('employees')
             .select('name')
             .eq('email', authUser.email)
-            .single()
+            .maybeSingle()
           if (employee?.name) setProfileName(employee.name)
         }
       }

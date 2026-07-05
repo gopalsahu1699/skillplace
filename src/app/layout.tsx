@@ -131,7 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={websiteSchema()} />
         <JsonLd data={localBusinessSchema()} />
       </head>
-      <body className={`${inter.className} ${jakarta.className} antialiased`}>
+      <body className={`${inter.className} ${jakarta.className} antialiased`} suppressHydrationWarning>
         <Toaster position="top-right" richColors closeButton duration={4000} />
         <Navbar />
         <main className="min-h-screen">{children}</main>

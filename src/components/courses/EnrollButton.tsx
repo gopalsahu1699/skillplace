@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
-import { openCashfreeCheckout } from '@/lib/cashfree-client'
+import { redirectToCashfreeCheckout } from '@/lib/cashfree-client'
 import { ShoppingCart, CheckCircle, Loader2, CreditCard, Lock, AlertCircle, X, Check } from 'lucide-react'
 
 interface CouponData {
@@ -43,9 +43,6 @@ export default function EnrollButton({
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null)
   const [couponError, setCouponError] = useState('')
   const [applyingCoupon, setApplyingCoupon] = useState(false)
-
-  const orderDataRef = useRef<{ orderId: string; paymentSessionId: string; env: 'sandbox' | 'production' } | null>(null)
-
   const basePrice = discountPrice || price
   const couponDiscount = appliedCoupon
     ? appliedCoupon.discount_type === 'percent'
@@ -75,33 +72,6 @@ export default function EnrollButton({
   useEffect(() => {
     Promise.resolve().then(() => checkAuth())
   }, [courseId])
-
-  useEffect(() => {
-    if (!user || enrolled || loading) {
-      orderDataRef.current = null
-      return
-    }
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/api/payments/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
-        })
-        const data = await res.json()
-        if (!cancelled && data.orderId && data.paymentSessionId) {
-          orderDataRef.current = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
-        }
-      } catch {
-        if (!cancelled) orderDataRef.current = null
-      }
-    })()
-    return () => {
-      cancelled = true
-      orderDataRef.current = null
-    }
-  }, [user, courseId, appliedCoupon, enrolled, loading])
 
   async function applyCoupon() {
     if (!couponCode.trim()) return
@@ -178,43 +148,30 @@ export default function EnrollButton({
     setError('')
 
     try {
-      const orderData = orderDataRef.current
+      const res = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
+      })
+      const data = await res.json()
 
-      let sessionData = orderData
-
-      if (!sessionData || !sessionData.paymentSessionId) {
-        const res = await fetch('/api/payments/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ courseId, userId: user.id, couponCode: appliedCoupon?.code || null }),
-        })
-        const data = await res.json()
-
-        if (!res.ok) {
-          throw new Error(data.error || 'Payment initiation failed. Please try again.')
-        }
-
-        if (data.free) {
-          setEnrolled(true)
-          notify.enrollSuccess(title)
-          router.push(data.redirectUrl)
-          setProcessing(false)
-          return
-        }
-
-        if (!data.paymentSessionId) {
-          throw new Error('Unexpected response from payment server')
-        }
-
-        sessionData = { orderId: data.orderId, paymentSessionId: data.paymentSessionId, env: (data.env || 'sandbox') as 'sandbox' | 'production' }
+      if (!res.ok) {
+        throw new Error(data.error || 'Payment initiation failed. Please try again.')
       }
 
-      const returnUrl = `${window.location.origin}/api/payments/verify?order_id=${sessionData.orderId}&course_slug=${courseSlug}`
+      if (data.free) {
+        setEnrolled(true)
+        notify.enrollSuccess(title)
+        router.push(data.redirectUrl)
+        setProcessing(false)
+        return
+      }
 
-      await openCashfreeCheckout(sessionData.env, {
-        paymentSessionId: sessionData.paymentSessionId,
-        returnUrl,
-      })
+      if (!data.paymentSessionId) {
+        throw new Error('Unexpected response from payment server')
+      }
+
+      redirectToCashfreeCheckout(data.paymentSessionId)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
       setError(message)
