@@ -1,6 +1,7 @@
 function getClientEnv(): 'sandbox' | 'production' {
-  if (typeof window === 'undefined') return 'sandbox'
-  const env = process.env.NEXT_PUBLIC_CASHFREE_ENV || 'SANDBOX'
+  const env = (typeof window !== 'undefined'
+    ? process.env.NEXT_PUBLIC_CASHFREE_ENV
+    : (process.env.NEXT_PUBLIC_CASHFREE_ENV || process.env.CASHFREE_ENV)) || 'SANDBOX'
   return env.toUpperCase() === 'PRODUCTION' ? 'production' : 'sandbox'
 }
 
@@ -11,7 +12,7 @@ function getCheckoutBaseUrl(): string {
 }
 
 function getCheckoutUrl(paymentSessionId: string): string {
-  return `${getCheckoutBaseUrl()}/checkout/pay/${paymentSessionId}`
+  return `${getCheckoutBaseUrl()}/checkout/pay/session/${paymentSessionId}`
 }
 
 export function getRedirectCheckoutUrl(paymentSessionId: string): string {

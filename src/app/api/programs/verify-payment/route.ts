@@ -5,6 +5,12 @@ import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
 
 export async function GET(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`program-verify:${ip}`, 10, 60000)
+  if (!rateLimit.allowed) {
+    return NextResponse.redirect(new URL('/enroll/error?reason=rate_limit', request.url))
+  }
+
   const { searchParams } = new URL(request.url)
   const orderId = searchParams.get('order_id')
   const paymentSessionId = searchParams.get('payment_session_id')
@@ -48,15 +54,31 @@ export async function GET(request: NextRequest) {
 
     console.log(`[verify-payment] SUCCESS payment found - cfPaymentId: ${successfulPayment.cfPaymentId}`)
 
-    const updateData: Record<string, unknown> = {
-      status: 'completed',
-      cf_payment_id: String(successfulPayment.cfPaymentId),
-      payment_id: successfulPayment.paymentId,
-      payment_method: successfulPayment.paymentMethod,
-      updated_at: new Date().toISOString(),
+    // Atomic transition: only update if still pending (prevents double-run from webhook + return URL)
+    const { data: updated, error: updateError } = await adminSupabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        cf_payment_id: String(successfulPayment.cfPaymentId),
+        payment_id: successfulPayment.paymentId,
+        payment_method: successfulPayment.paymentMethod,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', payment.id)
+      .eq('status', 'pending') // only update if still pending
+      .select('id')
+      .maybeSingle()
+
+    if (updateError) {
+      console.error('[verify-payment] Failed to update payment status:', updateError)
+      return NextResponse.redirect(new URL('/enroll/error?reason=verification_failed', request.url))
     }
 
-    await adminSupabase.from('payments').update(updateData).eq('id', payment.id)
+    // If null, another process already completed this — just redirect successfully
+    if (!updated) {
+      console.log(`[verify-payment] Payment ${orderId} was already completed by another request`)
+      return NextResponse.redirect(new URL('/enroll/success', request.url))
+    }
 
     if (payment.program_id) {
       let profileId = payment.user_id
@@ -73,8 +95,8 @@ export async function GET(request: NextRequest) {
               .maybeSingle()
             profileId = profile?.id || null
           }
-        } catch {
-          return NextResponse.redirect(new URL('/enroll/error?reason=profile_not_found', request.url))
+        } catch (err) {
+          console.error('[verify-payment] Failed to fetch Cashfree order for profile lookup:', err)
         }
       }
 
@@ -87,12 +109,18 @@ export async function GET(request: NextRequest) {
           .maybeSingle()
 
         if (!existingEnrollment) {
-          await adminSupabase.from('enrollments').insert({
+          const { error: enrollError } = await adminSupabase.from('enrollments').insert({
             user_id: profileId,
             program_id: payment.program_id,
             status: 'active',
           })
+          if (enrollError) {
+            console.error('[verify-payment] Failed to create enrollment:', enrollError)
+          }
         }
+      } else {
+        // Profile not found — log for admin to manually handle
+        console.error(`[verify-payment] CRITICAL: Payment ${payment.id} completed but no profile found for enrollment. program_id: ${payment.program_id}`)
       }
     }
 
@@ -152,15 +180,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, status: payment.status })
     }
 
-    const updateData: Record<string, unknown> = {
-      status: 'completed',
-      cf_payment_id: String(successfulPayment.cfPaymentId),
-      payment_id: successfulPayment.paymentId,
-      payment_method: successfulPayment.paymentMethod,
-      updated_at: new Date().toISOString(),
+    // Atomic transition: only update if still pending
+    const { data: updated, error: updateError } = await adminSupabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        cf_payment_id: String(successfulPayment.cfPaymentId),
+        payment_id: successfulPayment.paymentId,
+        payment_method: successfulPayment.paymentMethod,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', payment.id)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle()
+
+    if (updateError) {
+      console.error('[verify-payment POST] Failed to update payment status:', updateError)
+      return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
     }
 
-    await adminSupabase.from('payments').update(updateData).eq('id', payment.id)
+    // If updated is null, another process already completed this payment — just return success
+    if (!updated) {
+      return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId })
+    }
 
     const safePhone = phone ? (validatePhoneServer(phone).formatted || phone) : null
 

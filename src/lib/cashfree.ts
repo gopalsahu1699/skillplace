@@ -1,11 +1,19 @@
 import { Cashfree as CashfreeSDK, CFEnvironment } from 'cashfree-pg'
 import * as crypto from 'crypto'
 
-const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID || ''
-const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY || ''
-const CASHFREE_WEBHOOK_SECRET = process.env.CASHFREE_WEBHOOK_SECRET || ''
+const ENV = (process.env.NEXT_PUBLIC_CASHFREE_ENV || process.env.CASHFREE_ENV || 'SANDBOX').toUpperCase() === 'PRODUCTION' ? 'PRODUCTION' : 'SANDBOX'
 
-const ENV = (process.env.CASHFREE_ENV || 'SANDBOX').toUpperCase() === 'PRODUCTION' ? 'PRODUCTION' : 'SANDBOX'
+const CASHFREE_APP_ID = ENV === 'PRODUCTION'
+  ? (process.env.CASHFREE_PRODUCTION_APP_ID || process.env.CASHFREE_APP_ID || '')
+  : (process.env.CASHFREE_SANDBOX_APP_ID || process.env.CASHFREE_APP_ID || '')
+
+const CASHFREE_SECRET_KEY = ENV === 'PRODUCTION'
+  ? (process.env.CASHFREE_PRODUCTION_SECRET_KEY || process.env.CASHFREE_SECRET_KEY || '')
+  : (process.env.CASHFREE_SANDBOX_SECRET_KEY || process.env.CASHFREE_SECRET_KEY || '')
+
+const CASHFREE_WEBHOOK_SECRET = ENV === 'PRODUCTION'
+  ? (process.env.CASHFREE_PRODUCTION_WEBHOOK_SECRET || process.env.CASHFREE_WEBHOOK_SECRET || '')
+  : (process.env.CASHFREE_SANDBOX_WEBHOOK_SECRET || process.env.CASHFREE_WEBHOOK_SECRET || '')
 
 let cashfreeClient: CashfreeSDK | null = null
 

@@ -148,6 +148,8 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Failed to create enrollment' }, { status: 500 })
         }
 
+        const freeOrderId = `free_prg_${programId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
+
         await adminSupabase.from('payments').insert({
           user_id: profileId,
           course_id: null,
@@ -155,8 +157,8 @@ export async function POST(request: Request) {
           coupon_id: coupon.id,
           amount: 0,
           currency: 'INR',
-          order_id: null,
-          cf_order_id: null,
+          order_id: freeOrderId,
+          cf_order_id: freeOrderId,
           status: 'completed',
         })
 

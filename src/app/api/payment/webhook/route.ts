@@ -53,14 +53,22 @@ export async function POST(request: NextRequest) {
         updateData.payment_method = data.payment.payment_method
       }
 
-      const { error: updateError } = await adminSupabase
+      const { data: updatedWebhook, error: updateError } = await adminSupabase
         .from('payments')
         .update(updateData)
         .eq('id', existingPayment.id)
+        .eq('status', 'pending')
+        .select('id')
+        .maybeSingle()
 
       if (updateError) {
         console.error('Webhook: Failed to update payment status:', updateError)
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 })
+      }
+
+      if (!updatedWebhook) {
+        console.log(`Webhook: Payment ${existingPayment.id} already completed by verify route`)
+        return NextResponse.json({ received: true, already_processed: true })
       }
 
       if (existingPayment.course_id) {

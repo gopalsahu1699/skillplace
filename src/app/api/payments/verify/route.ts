@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/payment/error?reason=not_found', request.url))
     }
 
+    // Already completed — just redirect, do NOT re-increment coupon or re-enroll
     if (payment.status === 'completed') {
       return NextResponse.redirect(new URL(`/courses/${payment.courses?.slug}/learn`, request.url))
     }
@@ -40,15 +41,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(`/payment/status?order_id=${orderId}&status=failed`, request.url))
     }
 
-    const updateData: Record<string, unknown> = {
-      status: 'completed',
-      cf_payment_id: String(successfulPayment.cfPaymentId),
-      payment_id: successfulPayment.paymentId,
-      payment_method: successfulPayment.paymentMethod,
-      updated_at: new Date().toISOString(),
+    // Atomic update: only proceed if we are the one transitioning pending→completed
+    const { data: updated, error: updateError } = await adminSupabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        cf_payment_id: String(successfulPayment.cfPaymentId),
+        payment_id: successfulPayment.paymentId,
+        payment_method: successfulPayment.paymentMethod,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('order_id', orderId)
+      .eq('status', 'pending') // only update if still pending (prevents double-run)
+      .select('id')
+      .maybeSingle()
+
+    if (updateError) {
+      console.error('payments/verify: failed to update payment:', updateError)
+      return NextResponse.redirect(new URL('/payment/error?reason=verification_failed', request.url))
     }
 
-    await adminSupabase.from('payments').update(updateData).eq('order_id', orderId)
+    // If updated is null, another request already completed this payment — just redirect
+    if (!updated) {
+      return NextResponse.redirect(new URL(`/courses/${payment.courses?.slug}/learn`, request.url))
+    }
 
     const { data: existingEnrollment } = await adminSupabase
       .from('course_enrollments')
@@ -65,6 +81,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Only increment coupon if webhook hasn't already done it
+    // Webhook is the primary handler; this is the fallback for local/non-webhook environments
     if (payment.coupon_id) {
       await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
@@ -102,6 +120,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
+    // Already completed — return success without re-running side effects
     if (payment.status === 'completed') {
       return NextResponse.json({ success: true, redirectUrl: `/courses/${payment.courses?.slug}/learn` })
     }
@@ -113,15 +132,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, status: payment.status })
     }
 
-    const updateData: Record<string, unknown> = {
-      status: 'completed',
-      cf_payment_id: String(successfulPayment.cfPaymentId),
-      payment_id: successfulPayment.paymentId,
-      payment_method: successfulPayment.paymentMethod,
-      updated_at: new Date().toISOString(),
-    }
+    // Atomic transition: only update if still pending
+    const { data: updated } = await adminSupabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        cf_payment_id: String(successfulPayment.cfPaymentId),
+        payment_id: successfulPayment.paymentId,
+        payment_method: successfulPayment.paymentMethod,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('order_id', orderId)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle()
 
-    await adminSupabase.from('payments').update(updateData).eq('order_id', orderId)
+    // Another request already handled this — just return success
+    if (!updated) {
+      return NextResponse.json({ success: true, redirectUrl: `/courses/${courseSlug || payment.courses?.slug}/learn` })
+    }
 
     const { data: existingEnrollment } = await adminSupabase
       .from('course_enrollments')
