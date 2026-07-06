@@ -110,14 +110,17 @@ export async function GET(request: NextRequest) {
   const id = searchParams.get('id')
   const filter = searchParams.get('filter')
   const value = searchParams.get('value')
+  const join = searchParams.get('join')
 
   if (!table || !(ALLOWED_TABLES.has(table) || READ_ONLY_TABLES.has(table))) {
     return NextResponse.json({ error: 'Invalid table' }, { status: 400, headers: rateLimitHeaders })
   }
 
   try {
+    // Build select string — use join if provided, otherwise select all columns
+    const selectStr = join ? `*, ${join}` : '*'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = adminSupabase.from(table).select('*')
+    let query: any = adminSupabase.from(table).select(selectStr)
 
     if (id) {
       query = query.eq('id', id).single()

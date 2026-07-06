@@ -49,8 +49,9 @@ export default async function MyProgramsPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {list.map((enrollment: { id: string; status: string; enrolled_at: string; training_programs: { name: string; slug: string; duration_weeks: number | null; program_type: string }[] | null }) => {
-              const program = enrollment.training_programs?.[0] ?? null
+            {list.map((enrollment: any) => {
+              const rawProgram = enrollment.training_programs
+              const program = Array.isArray(rawProgram) ? (rawProgram[0] ?? null) : (rawProgram ?? null)
               const isActive = enrollment.status === 'active'
               const isCompleted = enrollment.status === 'completed'
               return (
@@ -60,7 +61,7 @@ export default async function MyProgramsPage() {
                   className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors group"
                 >
                   <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                    <span className="text-sm font-bold text-blue-600">
+                     <span className="text-sm font-bold text-blue-600">
                       {program?.name?.charAt(0) || '?'}
                     </span>
                   </div>
