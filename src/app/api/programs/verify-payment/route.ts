@@ -87,16 +87,42 @@ export async function GET(request: NextRequest) {
         try {
           const orderData = await fetchCashfreeOrder(orderId)
           const customerEmail = orderData.customer_details?.customer_email
+          const customerName = orderData.customer_details?.customer_name || 'Student'
+          const customerPhone = orderData.customer_details?.customer_phone || null
+
           if (customerEmail) {
             const { data: profile } = await adminSupabase
               .from('profiles')
               .select('id')
               .eq('email', customerEmail)
               .maybeSingle()
-            profileId = profile?.id || null
+
+            if (profile) {
+              profileId = profile.id
+            } else {
+              const { data: newProfile } = await adminSupabase
+                .from('profiles')
+                .insert({
+                  email: customerEmail,
+                  full_name: customerName,
+                  phone: customerPhone,
+                  role: 'student',
+                  is_active: true,
+                })
+                .select('id')
+                .single()
+
+              if (newProfile) {
+                profileId = newProfile.id
+              }
+            }
+
+            if (profileId) {
+              await adminSupabase.from('payments').update({ user_id: profileId }).eq('id', payment.id)
+            }
           }
         } catch (err) {
-          console.error('[verify-payment] Failed to fetch Cashfree order for profile lookup:', err)
+          console.error('[verify-payment] Failed to fetch Cashfree order or resolve profile:', err)
         }
       }
 

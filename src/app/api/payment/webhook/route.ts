@@ -95,25 +95,80 @@ export async function POST(request: NextRequest) {
       }
 
       if (existingPayment.program_id) {
-        const { data: enrollment } = await adminSupabase
-          .from('enrollments')
-          .select('id')
-          .eq('user_id', existingPayment.user_id)
-          .eq('program_id', existingPayment.program_id)
-          .maybeSingle()
+        let profileId = existingPayment.user_id
 
-        if (!enrollment) {
-          const { error: enrollError } = await adminSupabase
-            .from('enrollments')
-            .insert({
-              user_id: existingPayment.user_id,
-              program_id: existingPayment.program_id,
-              status: 'active',
-            })
+        if (!profileId) {
+          const customerDetails = data.customer_details || {}
+          const email = customerDetails.customer_email || data.customer_email || ''
+          const name = customerDetails.customer_name || data.customer_name || 'Student'
+          const phone = customerDetails.customer_phone || data.customer_phone || null
 
-          if (enrollError) {
-            console.error('Webhook: Failed to create program enrollment:', enrollError)
+          if (email) {
+            const { data: existingProfile } = await adminSupabase
+              .from('profiles')
+              .select('id')
+              .eq('email', email)
+              .maybeSingle()
+
+            if (existingProfile) {
+              profileId = existingProfile.id
+              if (phone || name) {
+                await adminSupabase
+                  .from('profiles')
+                  .update({
+                    ...(name ? { full_name: name } : {}),
+                    ...(phone ? { phone } : {}),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', profileId)
+              }
+            } else {
+              const { data: newProfile } = await adminSupabase
+                .from('profiles')
+                .insert({
+                  email,
+                  full_name: name,
+                  phone: phone,
+                  role: 'student',
+                  is_active: true,
+                })
+                .select('id')
+                .single()
+
+              if (newProfile) {
+                profileId = newProfile.id
+              }
+            }
+
+            if (profileId) {
+              await adminSupabase.from('payments').update({ user_id: profileId }).eq('id', existingPayment.id)
+            }
           }
+        }
+
+        if (profileId) {
+          const { data: enrollment } = await adminSupabase
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', profileId)
+            .eq('program_id', existingPayment.program_id)
+            .maybeSingle()
+
+          if (!enrollment) {
+            const { error: enrollError } = await adminSupabase
+              .from('enrollments')
+              .insert({
+                user_id: profileId,
+                program_id: existingPayment.program_id,
+                status: 'active',
+              })
+
+            if (enrollError) {
+              console.error('Webhook: Failed to create program enrollment:', enrollError)
+            }
+          }
+        } else {
+          console.error(`Webhook: CRITICAL - Payment ${existingPayment.id} completed but no profile found/created for enrollment`)
         }
       }
 

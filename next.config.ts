@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
             "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflare.com https://*.cloudflarestream.com https://api.cashfree.com https://sdk.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com",
             "frame-src 'self' https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com https://*.cloudflarestream.com",
             "frame-ancestors 'self'",
-            "form-action 'self'",
+            "form-action 'self' https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com",
             "base-uri 'self'",
             "object-src 'none'",
             "manifest-src 'self'",
