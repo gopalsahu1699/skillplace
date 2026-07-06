@@ -1,7 +1,8 @@
 declare module '@cashfreepayments/cashfree-js' {
   interface CashfreeCheckoutArgs {
     paymentSessionId: string
-    returnUrl: string
+    returnUrl?: string
+    redirectTarget?: string
   }
 
   interface CashfreeCheckoutResult {

@@ -19,7 +19,25 @@ export function getRedirectCheckoutUrl(paymentSessionId: string): string {
   return getCheckoutUrl(paymentSessionId)
 }
 
-export function redirectToCashfreeCheckout(paymentSessionId: string): void {
-  const checkoutUrl = getRedirectCheckoutUrl(paymentSessionId)
-  window.location.href = checkoutUrl
+export async function redirectToCashfreeCheckout(paymentSessionId: string): Promise<void> {
+  if (typeof window === 'undefined') return
+  try {
+    const { load } = await import('@cashfreepayments/cashfree-js')
+    const mode = getClientEnv()
+    const cashfree = await load({ mode })
+    if (!cashfree) {
+      throw new Error('Failed to load Cashfree SDK')
+    }
+    const result = await cashfree.checkout({
+      paymentSessionId,
+      redirectTarget: '_self',
+    })
+    if (result?.error) {
+      throw new Error(result.error.message || 'Cashfree checkout failed')
+    }
+  } catch (err) {
+    console.error('Cashfree SDK checkout failed, falling back to manual redirect:', err)
+    const checkoutUrl = getRedirectCheckoutUrl(paymentSessionId)
+    window.location.href = checkoutUrl
+  }
 }
