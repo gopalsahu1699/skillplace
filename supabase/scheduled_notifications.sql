@@ -1,33 +1,31 @@
--- =====================================================
--- scheduled_notifications table
--- Queue for notifications to be sent at a future time
--- =====================================================
+create table public.scheduled_notifications (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  target_user_id uuid null,
+  title text not null,
+  message text null,
+  type text null default 'info'::text,
+  scheduled_at timestamp with time zone not null,
+  sent_at timestamp with time zone null,
+  status text null default 'pending'::text,
+  metadata jsonb null default '{"is_scheduled": true}'::jsonb,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint scheduled_notifications_pkey primary key (id),
+  constraint scheduled_notifications_status_check check (
+    (
+      status = any (
+        array[
+          'pending'::text,
+          'sent'::text,
+          'failed'::text,
+          'cancelled'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS scheduled_notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  target_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  message TEXT,
-  type TEXT DEFAULT 'info',
-  scheduled_at TIMESTAMPTZ NOT NULL,
-  status TEXT DEFAULT 'pending',
-  sent_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+create index IF not exists idx_scheduled_notifications_status on public.scheduled_notifications using btree (status) TABLESPACE pg_default;
 
--- Index for cron job query
-CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_status ON scheduled_notifications(status, scheduled_at);
-CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_target ON scheduled_notifications(target_user_id);
-
--- RLS: only service role
-ALTER TABLE scheduled_notifications ENABLE ROW LEVEL SECURITY;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'scheduled_notifications' AND policyname = 'scheduled_notifications_service_only'
-  ) THEN
-    CREATE POLICY scheduled_notifications_service_only ON scheduled_notifications
-      FOR ALL USING (false);
-  END IF;
-END $$;
+create index IF not exists idx_scheduled_notifications_at on public.scheduled_notifications using btree (scheduled_at) TABLESPACE pg_default;

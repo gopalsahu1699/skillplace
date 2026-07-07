@@ -1,30 +1,16 @@
--- =====================================================
--- revoked_tokens table
--- Stores revoked session tokens for logout/session invalidation
--- =====================================================
+create table public.revoked_tokens (
+  id uuid not null default gen_random_uuid (),
+  token text not null,
+  user_id uuid not null,
+  revoked_at timestamp with time zone null default now(),
+  reason text null,
+  ip_address inet null,
+  constraint revoked_tokens_pkey primary key (id),
+  constraint revoked_tokens_token_key unique (token)
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS revoked_tokens (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  token TEXT NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  reason TEXT DEFAULT 'logout',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+create index IF not exists idx_revoked_tokens_token on public.revoked_tokens using btree (token) TABLESPACE pg_default;
 
--- Index for fast token lookup
-CREATE INDEX IF NOT EXISTS idx_revoked_tokens_token ON revoked_tokens(token);
-CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user_id ON revoked_tokens(user_id);
+create index IF not exists idx_revoked_tokens_user on public.revoked_tokens using btree (user_id) TABLESPACE pg_default;
 
--- RLS: only admins/service role can read
-ALTER TABLE revoked_tokens ENABLE ROW LEVEL SECURITY;
-
--- Only service role can manage revoked tokens
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'revoked_tokens' AND policyname = 'revoked_tokens_service_only'
-  ) THEN
-    CREATE POLICY revoked_tokens_service_only ON revoked_tokens
-      FOR ALL USING (false);
-  END IF;
-END $$;
+create index IF not exists idx_revoked_tokens on public.revoked_tokens using btree (token) TABLESPACE pg_default;

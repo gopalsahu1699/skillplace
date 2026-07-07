@@ -145,11 +145,7 @@ export default function ProgramsPage() {
 
       <section className="px-margin-mobile md:px-margin-desktop pt-16 pb-12 md:pt-24 md:pb-section-gap">
         <div className="max-w-container-max mx-auto text-center">
-          <nav aria-label="Breadcrumb" className="text-sm text-on-surface-variant mb-6">
-            <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
-            <span className="mx-2">/</span>
-            <span className="text-on-surface">Programs</span>
-          </nav>
+      
           <span className="text-secondary font-label-md tracking-widest uppercase mb-4 block">Industry-Led Excellence</span>
           <h1 className="font-display-lg text-display-lg mb-6 max-w-3xl mx-auto">Job-Oriented Training Programs</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
@@ -291,19 +287,21 @@ export default function ProgramsPage() {
                         <span className="text-on-surface-variant line-through text-sm font-normal ml-1">₹40,000</span>
                       </div>
                     </div>
-                    <ul className="space-y-3 mb-8 flex-grow">
-                      {(program.features || []).slice(0, 4).map((feature, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="w-2 h-2 mt-2 bg-secondary rounded-sm shrink-0"></span>
-                          <span className="text-on-surface-variant text-sm">{feature}</span>
-                        </li>
-                      ))}
-                      {(program.features || []).length > 4 && (
-                        <li className="text-sm text-secondary font-medium">
-                          + {(program.features || []).length - 4} more features
-                        </li>
-                      )}
-                    </ul>
+                    <Link href={`/programs/${program.slug}`} className="block">
+                      <ul className="space-y-3 mb-8 flex-grow">
+                        {(program.features || []).slice(0, 4).map((feature, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <span className="w-2 h-2 mt-2 bg-secondary rounded-sm shrink-0"></span>
+                            <span className="text-on-surface-variant text-sm">{feature}</span>
+                          </li>
+                        ))}
+                        {(program.features || []).length > 4 && (
+                          <li className="text-sm text-secondary font-medium">
+                            + {(program.features || []).length - 4} more features
+                          </li>
+                        )}
+                      </ul>
+                    </Link>
                     <Link
                       href={`/programs/${program.slug}`}
                       className="w-full py-4 border-2 border-secondary text-secondary font-label-md rounded-lg hover:bg-secondary hover:text-on-primary transition-all text-center block mt-auto"

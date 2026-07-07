@@ -546,7 +546,7 @@ export default function ProgramDetailPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-caption font-bold mb-2 text-on-surface">Phone Number</label>
+                    
                       <PhoneInput
                         value={inquirePhone}
                         onChange={setInquirePhone}

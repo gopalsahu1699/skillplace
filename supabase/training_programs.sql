@@ -1,46 +1,51 @@
--- ============================================
--- Table: training_programs
--- Bundled program offerings (online/offline/hybrid)
--- Rows: 5
--- ============================================
+create table public.training_programs (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  slug text not null,
+  description text null,
+  short_description text null,
+  program_type text not null,
+  branch_id uuid null,
+  price integer not null default 0,
+  discount_price integer null,
+  duration_weeks integer null,
+  features text[] null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  is_featured boolean null default false,
+  skill_level text null,
+  career_outcome text null,
+  student_count integer null default 0,
+  rating numeric(2, 1) null default 0,
+  display_order integer null default 0,
+  constraint training_programs_pkey primary key (id),
+  constraint training_programs_slug_key unique (slug),
+  constraint training_programs_branch_id_fkey foreign KEY (branch_id) references branches (id) on delete set null,
+  constraint training_programs_program_type_check check (
+    (
+      program_type = any (
+        array['online'::text, 'offline'::text, 'hybrid'::text]
+      )
+    )
+  ),
+  constraint training_programs_skill_level_check check (
+    (
+      skill_level = any (
+        array[
+          'beginner'::text,
+          'intermediate'::text,
+          'advanced'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS public.training_programs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  slug TEXT UNIQUE NOT NULL,
-  description TEXT,
-  short_description TEXT,
-  program_type TEXT CHECK (program_type IN ('online', 'offline', 'hybrid')),
-  branch_id UUID REFERENCES public.branches(id),
-  price INTEGER NOT NULL DEFAULT 0,
-  discount_price INTEGER,
-  duration_weeks INTEGER,
-  features JSONB,
-  is_featured BOOLEAN DEFAULT false,
-  skill_level TEXT CHECK (skill_level IN ('beginner', 'intermediate', 'advanced')),
-  career_outcome TEXT,
-  student_count INTEGER DEFAULT 0,
-  rating NUMERIC(2, 1) DEFAULT 0,
-  display_order INTEGER DEFAULT 0,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+create index IF not exists idx_training_programs_is_featured on public.training_programs using btree (is_featured) TABLESPACE pg_default;
 
--- RLS
-ALTER TABLE public.training_programs ENABLE ROW LEVEL SECURITY;
+create index IF not exists idx_training_programs_display_order on public.training_programs using btree (display_order) TABLESPACE pg_default;
 
-DO $$ BEGIN
-  CREATE POLICY "Anyone can view active programs" ON public.training_programs FOR SELECT USING (is_active = true);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
+create index IF not exists idx_training_programs_branch on public.training_programs using btree (branch_id) TABLESPACE pg_default;
 
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage programs" ON public.training_programs FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_training_programs_slug ON public.training_programs(slug);
-CREATE INDEX IF NOT EXISTS idx_training_programs_branch ON public.training_programs(branch_id);
-CREATE INDEX IF NOT EXISTS idx_training_programs_type ON public.training_programs(program_type);
+create index IF not exists idx_training_programs_type on public.training_programs using btree (program_type) TABLESPACE pg_default;

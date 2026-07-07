@@ -1,40 +1,24 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import SectionReveal from './SectionReveal'
 import { SafeImg } from '@/components/ui/safe-image'
+import { supabase } from '@/lib/supabase/client'
 
-const partners = [
-  {
-    name: 'Autommensor Automation Pvt Ltd',
-    short: 'Autommensor',
-    desc: 'Industrial automation & control systems',
-    type: 'Training Partner',
-    logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Logo%20for%20Automensor.png',
-    color: 'bg-blue-600',
-  },
-  {
-    name: 'Dozert AI',
-    short: 'Dozert',
-    desc: 'AI-powered technology solutions',
-    type: 'Technology Partner',
-    logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Dozer%20ai.png',
-    color: 'bg-violet-600',
-  },
-  {
-    name: 'Himanshu Construction',
-    short: 'Himanshu',
-    desc: 'Civil construction & infrastructure',
-    type: 'Hiring Partner',
-    logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Himanshu.png',
-    color: 'bg-amber-600',
-  },
-]
+interface Partner {
+  id: string
+  name: string
+  short: string
+  description: string
+  type: string
+  logo: string | null
+  color: string
+}
 
-function PartnerLogo({ partner }: { partner: typeof partners[0] }) {
+function PartnerLogo({ partner }: { partner: Partner }) {
   return (
     <div className="mx-auto mb-4 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 border border-border-subtle rounded-2xl bg-white p-4 max-w-[140px] min-w-[80px] group-hover:scale-105">
       <SafeImg
-        src={partner.logo}
+        src={partner.logo || undefined}
         alt={`${partner.name} logo`}
         width={140}
         height={80}
@@ -50,8 +34,28 @@ function PartnerLogo({ partner }: { partner: typeof partners[0] }) {
 }
 
 export default function IndustryPartners() {
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    async function fetchPartners() {
+      const { data, error } = await supabase
+        .from('partners')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+      if (error) {
+        console.error('Error fetching partners:', error)
+      }
+      if (data) {
+        setPartners(data)
+      }
+      setLoading(false)
+    }
+    fetchPartners()
+  }, [])
 
   const handleScroll = () => {
     if (!scrollRef.current) return
@@ -74,13 +78,20 @@ export default function IndustryPartners() {
             Trusted Partners
           </span>
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">
-            Companies That Trust{' '}
-            <span className="gradient-text">SkillPlace</span>
+            <span className="gradient-text">SkillPlace {' '} </span>
+           Sponsored by Leading Companies
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
             We collaborate with leading companies to ensure our curriculum stays current and our students get real industry exposure.
           </p>
         </SectionReveal>
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin" />
+          </div>
+        ) : (
+        <>
 
         {/* DESKTOP: 3-column grid */}
         <SectionReveal stagger>
@@ -92,7 +103,7 @@ export default function IndustryPartners() {
               >
                 <PartnerLogo partner={partner} />
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{partner.name}</h3>
-                <p className="text-body-md text-on-surface-variant mb-4">{partner.desc}</p>
+                <p className="text-body-md text-on-surface-variant mb-4">{partner.description}</p>
                 <span className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-secondary/10 text-secondary">
                   <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>handshake</span>
                   {partner.type}
@@ -117,7 +128,7 @@ export default function IndustryPartners() {
               >
                 <PartnerLogo partner={partner} />
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{partner.name}</h3>
-                <p className="text-body-md text-on-surface-variant mb-4">{partner.desc}</p>
+                <p className="text-body-md text-on-surface-variant mb-4">{partner.description}</p>
                 <span className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-secondary/10 text-secondary">
                   <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>handshake</span>
                   {partner.type}
@@ -146,6 +157,9 @@ export default function IndustryPartners() {
             Swipe to see all partners
           </p>
         </div>
+
+        </>
+        )}
 
         <SectionReveal className="mt-10 text-center">
           <p className="text-body-md text-on-surface-variant max-w-2xl mx-auto">

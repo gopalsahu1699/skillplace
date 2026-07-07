@@ -1,35 +1,17 @@
--- ============================================
--- Table: certificates
--- Issued certificates
--- Rows: 1
--- ============================================
+create table public.certificates (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  course_id uuid null,
+  certificate_number text not null,
+  issued_at timestamp with time zone null default now(),
+  pdf_url text null,
+  certificate_type text null default 'course_completion'::text,
+  theme text null default 'classic_blue'::text,
+  organization_name text null,
+  custom_message text null,
+  constraint certificates_pkey primary key (id),
+  constraint certificates_certificate_number_key unique (certificate_number),
+  constraint certificates_user_id_course_id_key unique (user_id, course_id)
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS public.certificates (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  course_id UUID REFERENCES public.courses(id),
-  certificate_number TEXT UNIQUE NOT NULL,
-  issued_at TIMESTAMPTZ DEFAULT NOW(),
-  pdf_url TEXT,
-  certificate_type TEXT,
-  theme TEXT,
-  organization_name TEXT,
-  custom_message TEXT
-);
-
--- RLS
-ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
-
-DO $$ BEGIN
-  CREATE POLICY "Users can view own certificates" ON public.certificates FOR SELECT USING (auth.uid() = user_id);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage certificates" ON public.certificates FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_certificates_user ON public.certificates(user_id);
-CREATE INDEX IF NOT EXISTS idx_certificates_number ON public.certificates(certificate_number);
+create index IF not exists idx_certificates_user on public.certificates using btree (user_id) TABLESPACE pg_default;

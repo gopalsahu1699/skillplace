@@ -30,6 +30,7 @@ async function seed() {
 
   // Clear existing data (in correct order for FK constraints)
   console.log('Clearing existing data...');
+  await supabase.from('partners').delete().neq('id', '');
   await supabase.from('testimonials').delete().neq('id', '');
   await supabase.from('courses').delete().neq('id', '');
   await supabase.from('categories').delete().neq('id', '');
@@ -101,6 +102,25 @@ async function seed() {
     process.exit(1);
   }
   console.log(`✅ Inserted ${insertedCourses.length} courses`);
+
+  // Insert Partners
+  console.log('Inserting partners...');
+  const partners = [
+    { name: 'Autommensor Automation Pvt Ltd', short: 'Autommensor', description: 'Industrial automation & control systems', type: 'Sponsor', logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Logo%20for%20Automensor.png', color: 'bg-blue-600', display_order: 1, is_active: true },
+    { name: 'Dozert AI', short: 'Dozert', description: 'AI-powered technology solutions', type: 'Sponsor', logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Dozer%20ai.png', color: 'bg-violet-600', display_order: 2, is_active: true },
+    { name: 'Himanshu Construction', short: 'Himanshu', description: 'Civil construction & infrastructure', type: 'Sponsor', logo: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Himanshu.png', color: 'bg-amber-600', display_order: 3, is_active: true },
+  ];
+
+  const { data: insertedPartners, error: partnerError } = await supabase
+    .from('partners')
+    .insert(partners)
+    .select();
+
+  if (partnerError) {
+    console.error('Partner insert error:', partnerError);
+    process.exit(1);
+  }
+  console.log(`✅ Inserted ${insertedPartners.length} partners`);
 
   // Insert Testimonials
   console.log('Inserting testimonials...');

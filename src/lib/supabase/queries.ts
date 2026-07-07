@@ -208,6 +208,19 @@ export async function getMentors() {
   return data || []
 }
 
+export async function getPartners() {
+  const { data, error } = await adminSupabase
+    .from('partners')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
 export async function getRecentPayments() {
   const { data, error } = await adminSupabase
     .from('purchases')

@@ -1,39 +1,33 @@
--- ============================================
--- Table: enrollments
--- Student enrollments in programs
--- Rows: 7
--- ============================================
+create table public.enrollments (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  program_id uuid null,
+  branch_id uuid null,
+  status text null default 'pending'::text,
+  notes text null,
+  enrolled_at timestamp with time zone null default now(),
+  completed_at timestamp with time zone null,
+  program_type text null,
+  constraint enrollments_pkey primary key (id),
+  constraint enrollments_branch_id_fkey foreign KEY (branch_id) references branches (id) on delete set null,
+  constraint enrollments_program_id_fkey foreign KEY (program_id) references training_programs (id) on delete CASCADE,
+  constraint enrollments_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE,
+  constraint enrollments_status_check check (
+    (
+      status = any (
+        array[
+          'pending'::text,
+          'active'::text,
+          'completed'::text,
+          'cancelled'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS public.enrollments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  program_id UUID REFERENCES public.training_programs(id) ON DELETE CASCADE,
-  course_id UUID NULL DEFAULT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
-  branch_id UUID REFERENCES public.branches(id),
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'pending', 'expired')),
-  notes TEXT,
-  enrolled_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-  program_type TEXT CHECK (program_type IN ('online', 'offline', 'hybrid')),
-  CONSTRAINT chk_enrollment_target CHECK (course_id IS NOT NULL OR program_id IS NOT NULL)
-);
+create index IF not exists idx_enrollments_status on public.enrollments using btree (status) TABLESPACE pg_default;
 
--- RLS
-ALTER TABLE public.enrollments ENABLE ROW LEVEL SECURITY;
+create index IF not exists idx_enrollments_user on public.enrollments using btree (user_id) TABLESPACE pg_default;
 
-DO $$ BEGIN
-  CREATE POLICY "Users can view own enrollments" ON public.enrollments FOR SELECT USING (auth.uid() = user_id);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage enrollments" ON public.enrollments FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_enrollments_user ON public.enrollments(user_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_program ON public.enrollments(program_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_course ON public.enrollments(course_id) WHERE course_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_enrollments_branch ON public.enrollments(branch_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_status ON public.enrollments(status);
+create index IF not exists idx_enrollments_program on public.enrollments using btree (program_id) TABLESPACE pg_default;

@@ -1,30 +1,12 @@
--- ============================================
--- Table: program_courses
--- Junction: which courses belong to which programs
--- Rows: 32
--- ============================================
+create table public.program_courses (
+  id uuid not null default gen_random_uuid (),
+  program_id uuid null,
+  course_id uuid null,
+  order_index integer null default 0,
+  constraint program_courses_pkey primary key (id),
+  constraint program_courses_program_id_course_id_key unique (program_id, course_id),
+  constraint program_courses_course_id_fkey foreign KEY (course_id) references courses (id) on delete CASCADE,
+  constraint program_courses_program_id_fkey foreign KEY (program_id) references training_programs (id) on delete CASCADE
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS public.program_courses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  program_id UUID REFERENCES public.training_programs(id) ON DELETE CASCADE,
-  course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
-  order_index INTEGER DEFAULT 0,
-  UNIQUE(program_id, course_id)
-);
-
--- RLS
-ALTER TABLE public.program_courses ENABLE ROW LEVEL SECURITY;
-
-DO $$ BEGIN
-  CREATE POLICY "Anyone can view program courses" ON public.program_courses FOR SELECT USING (true);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage program courses" ON public.program_courses FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_program_courses_program ON public.program_courses(program_id);
-CREATE INDEX IF NOT EXISTS idx_program_courses_course ON public.program_courses(course_id);
+create index IF not exists idx_program_courses_program on public.program_courses using btree (program_id) TABLESPACE pg_default;

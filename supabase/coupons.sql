@@ -1,44 +1,28 @@
--- ============================================
--- Table: coupons
--- Promo codes for discounts
--- Rows: 1
--- ============================================
+create table public.coupons (
+  id uuid not null default gen_random_uuid (),
+  code text not null,
+  discount_type text not null,
+  discount_rate numeric not null,
+  min_order_amount numeric null default 0,
+  max_uses integer null,
+  used_count integer null default 0,
+  valid_from timestamp with time zone null default now(),
+  valid_until timestamp with time zone null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  max_discount_amount numeric null,
+  constraint coupons_pkey primary key (id),
+  constraint coupons_code_unique unique (code),
+  constraint coupons_discount_type_check check (
+    (
+      discount_type = any (array['percent'::text, 'amount'::text])
+    )
+  )
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS public.coupons (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  code TEXT UNIQUE NOT NULL,
-  discount_type TEXT CHECK (discount_type IN ('amount', 'percent')),
-  discount_rate INTEGER NOT NULL DEFAULT 0,
-  min_order_amount INTEGER DEFAULT 0,
-  max_discount_amount NUMERIC NULL DEFAULT NULL,
-  max_uses INTEGER DEFAULT 0,
-  used_count INTEGER DEFAULT 0,
-  valid_from TIMESTAMPTZ DEFAULT NOW(),
-  valid_until TIMESTAMPTZ,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+create index IF not exists idx_coupons_code on public.coupons using btree (code) TABLESPACE pg_default;
 
--- RLS
-ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
-
-DO $$ BEGIN
-  CREATE POLICY "Anyone can view active coupons" ON public.coupons FOR SELECT USING (is_active = true);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage coupons" ON public.coupons FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_coupons_code ON public.coupons(code);
-CREATE INDEX IF NOT EXISTS idx_coupons_max_discount ON public.coupons(max_discount_amount) WHERE max_discount_amount IS NOT NULL;
-
--- Documentation for max_discount_amount:
--- NULL = no cap (percentage discount applies fully)
--- NUMERIC value = maximum discount cap for percentage coupons
---   Example: discount_rate=20, max_discount_amount=4000 → 20% off upto Rs. 4,000
--- Ignored when discount_type = 'amount'
+create index IF not exists idx_coupons_max_discount on public.coupons using btree (max_discount_amount) TABLESPACE pg_default
+where
+  (max_discount_amount is not null);

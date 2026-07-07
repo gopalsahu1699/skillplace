@@ -55,11 +55,7 @@ export default function ContactPage() {
         <div className="absolute top-12 -left-24 w-64 h-64 bg-primary-fixed opacity-10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="max-w-container-max mx-auto relative z-10">
-          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-on-surface-variant">
-            <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
-            <span className="mx-2">/</span>
-            <span className="text-on-surface">Contact</span>
-          </nav>
+       
           <span className="inline-block py-1 px-3 bg-secondary-fixed text-secondary font-label-md text-[12px] rounded-full mb-6 tracking-wider uppercase">
             Support Center
           </span>
@@ -289,12 +285,12 @@ export default function ContactPage() {
             >
               View Programs
             </Link>
-            <Link
+            {/* <Link
               href="/courses"
               className="border-2 border-on-primary-container text-on-primary-container px-10 py-4 rounded-lg font-bold text-headline-md hover:bg-on-primary-container hover:text-primary-container transition-all"
             >
               Browse Courses
-            </Link>
+            </Link> */}
           </div>
         </div>
       </section>

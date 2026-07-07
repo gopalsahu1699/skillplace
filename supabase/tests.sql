@@ -1,32 +1,14 @@
--- ============================================
--- Table: tests
--- Course tests/quizzes
--- Rows: 1
--- ============================================
+create table public.tests (
+  id uuid not null default gen_random_uuid (),
+  course_id uuid null,
+  title text not null,
+  description text null,
+  passing_score integer null default 70,
+  time_limit_minutes integer null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  constraint tests_pkey primary key (id),
+  constraint tests_course_id_fkey foreign KEY (course_id) references courses (id) on delete CASCADE
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS public.tests (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  passing_score INTEGER DEFAULT 60,
-  time_limit_minutes INTEGER,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- RLS
-ALTER TABLE public.tests ENABLE ROW LEVEL SECURITY;
-
-DO $$ BEGIN
-  CREATE POLICY "Anyone can view active tests" ON public.tests FOR SELECT USING (is_active = true);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage tests" ON public.tests FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_tests_course ON public.tests(course_id);
+create index IF not exists idx_tests_course on public.tests using btree (course_id) TABLESPACE pg_default;

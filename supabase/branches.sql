@@ -1,31 +1,12 @@
--- ============================================
--- Table: branches
--- Engineering disciplines
--- Rows: 4
--- ============================================
-
-CREATE TABLE IF NOT EXISTS public.branches (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  slug TEXT UNIQUE NOT NULL,
-  description TEXT,
-  icon TEXT,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- RLS
-ALTER TABLE public.branches ENABLE ROW LEVEL SECURITY;
-
-DO $$ BEGIN
-  CREATE POLICY "Anyone can view branches" ON public.branches FOR SELECT USING (true);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage branches" ON public.branches FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_branches_slug ON public.branches(slug);
+create table public.branches (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  slug text not null,
+  description text null,
+  icon text null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  constraint branches_pkey primary key (id),
+  constraint branches_name_key unique (name),
+  constraint branches_slug_key unique (slug)
+) TABLESPACE pg_default;

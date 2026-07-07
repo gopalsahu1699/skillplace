@@ -1,35 +1,26 @@
--- ============================================
--- Table: employees
--- Staff members (instructors, counselors)
--- Rows: 6
--- ============================================
-
-CREATE TABLE IF NOT EXISTS public.employees (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  phone TEXT,
-  role TEXT CHECK (role IN ('admin', 'instructor', 'counselor', 'support')),
-  department TEXT,
-  bio TEXT,
-  photo_url TEXT,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- RLS
-ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
-
-DO $$ BEGIN
-  CREATE POLICY "Anyone can view employees" ON public.employees FOR SELECT USING (true);
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage employees" ON public.employees FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_employees_role ON public.employees(role);
-CREATE INDEX IF NOT EXISTS idx_employees_department ON public.employees(department);
+create table public.employees (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  email text not null,
+  phone text null,
+  role text null default 'instructor'::text,
+  department text null,
+  bio text null,
+  photo_url text null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  constraint employees_pkey primary key (id),
+  constraint employees_email_key unique (email),
+  constraint employees_role_check check (
+    (
+      role = any (
+        array[
+          'admin'::text,
+          'instructor'::text,
+          'counselor'::text,
+          'support'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;

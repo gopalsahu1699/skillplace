@@ -1,33 +1,15 @@
--- =====================================================
--- user_activity table
--- Audit trail for user actions (session validate, logout, etc.)
--- =====================================================
+create table public.user_activity (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  session_id uuid null,
+  action text not null,
+  resource text null,
+  ip_address inet null,
+  user_agent text null,
+  created_at timestamp with time zone null default now(),
+  constraint user_activity_pkey primary key (id),
+  constraint user_activity_session_id_fkey foreign KEY (session_id) references user_sessions (id) on delete CASCADE,
+  constraint user_activity_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS user_activity (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  session_id UUID REFERENCES user_sessions(id) ON DELETE SET NULL,
-  action TEXT NOT NULL,
-  resource TEXT,
-  ip_address TEXT,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Index for user activity queries
-CREATE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_user_activity_action ON user_activity(action);
-CREATE INDEX IF NOT EXISTS idx_user_activity_created_at ON user_activity(created_at);
-
--- RLS: only admins/service role can read
-ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'user_activity' AND policyname = 'user_activity_service_only'
-  ) THEN
-    CREATE POLICY user_activity_service_only ON user_activity
-      FOR ALL USING (false);
-  END IF;
-END $$;
+create index IF not exists idx_user_activity_user on public.user_activity using btree (user_id, created_at desc) TABLESPACE pg_default;

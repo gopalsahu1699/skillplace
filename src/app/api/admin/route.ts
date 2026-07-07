@@ -16,6 +16,7 @@ const ALLOWED_TABLES = new Set([
   'training_programs',
   'program_courses',
   'profiles',
+  'students',
   'enrollments',
   'course_enrollments',
   'purchases',

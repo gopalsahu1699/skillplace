@@ -116,7 +116,7 @@ export default function MeetMentors() {
                 className="relative bg-white rounded-2xl border border-border-subtle overflow-hidden group hover:border-secondary/30 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1"
               >
                 {/* Gradient accent top */}
-                <div className={`h-2 bg-gradient-to-r ${mentor.gradient}`} />
+                {/* <div className={`h-2 bg-gradient-to-r ${mentor.gradient}`} /> */}
                 
                 <div className="p-8 flex flex-col items-center text-center">
                   <MentorPhoto mentor={mentor} />
@@ -139,7 +139,7 @@ export default function MeetMentors() {
                   
                   <p className="text-body-md text-on-surface-variant mt-4 leading-relaxed">{mentor.bio}</p>
                   
-                  <a
+                  {/* <a
                     href={mentor.linkedin_url || '#'}
                     target={mentor.linkedin_url ? '_blank' : undefined}
                     rel={mentor.linkedin_url ? 'noopener noreferrer' : undefined}
@@ -147,7 +147,7 @@ export default function MeetMentors() {
                   >
                     <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: '"FILL" 1' }}>person</span>
                     View LinkedIn
-                  </a>
+                  </a> */}
                 </div>
               </div>
             ))}
@@ -184,7 +184,7 @@ export default function MeetMentors() {
                     </span>
                   </div>
                   <p className="text-body-md text-on-surface-variant mt-4">{mentor.bio}</p>
-                  <a
+                  {/* <a
                     href={mentor.linkedin_url || '#'}
                     target={mentor.linkedin_url ? '_blank' : undefined}
                     rel={mentor.linkedin_url ? 'noopener noreferrer' : undefined}
@@ -192,7 +192,7 @@ export default function MeetMentors() {
                   >
                     <span className="material-symbols-outlined text-[18px]">person</span>
                     View LinkedIn
-                  </a>
+                  </a> */}
                 </div>
               </div>
             ))}

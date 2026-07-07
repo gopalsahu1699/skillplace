@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getSupabaseImageUrl } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
-import { getMentors } from '@/lib/supabase/queries'
+import { getMentors, getPartners } from '@/lib/supabase/queries'
 import JsonLd from '@/components/seo/JsonLd'
 import { createMetadata } from '@/lib/seo/metadata'
 import { breadcrumbSchema, pageSchema, personSchema } from '@/lib/seo/json-ld'
@@ -24,7 +24,10 @@ const whyChooseUs = [
 ]
 
 export default async function AboutPage() {
-  const teamMembers = await getMentors()
+  const [teamMembers, partners] = await Promise.all([
+    getMentors(),
+    getPartners(),
+  ])
 
   return (
     <>
@@ -54,11 +57,7 @@ export default async function AboutPage() {
 
           <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
             <div className="max-w-2xl">
-              <nav aria-label="Breadcrumb" className="mb-6 text-sm text-white/60">
-                <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
-                <span className="mx-2">/</span>
-                <span className="text-white">About</span>
-              </nav>
+          
               <h1 className="font-display-lg text-display-lg text-white mb-6 leading-tight">
                 Empowering Engineers with Practical Skills
               </h1>
@@ -154,26 +153,50 @@ export default async function AboutPage() {
 
         <section className="py-section-gap bg-surface-container-lowest">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-            <div className="mb-20">
+            <div className="mb-16">
               <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4">Our Mentors</h2>
               <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
                 Our leadership consists of experienced engineers and educators who are passionate about transforming technical education.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-              {teamMembers.map((member: { name: string; image?: string; position: string; company?: string; experience?: string }) => (
-                <div key={member.name} className="text-center group" itemScope itemType="https://schema.org/Person">
-                  <div className="relative mb-8 mx-auto w-64 h-64 overflow-hidden rounded-2xl bg-surface-container">
-                    <SafeImg
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {teamMembers.map((member: { name: string; image?: string; position: string; company?: string; experience?: string; gradient?: string; bio?: string; expertise?: string; initials?: string }) => (
+                <div key={member.name} className="bg-white rounded-2xl border border-border-subtle overflow-hidden group hover:border-secondary/30 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1" itemScope itemType="https://schema.org/Person">
+                  <div className={`h-2 bg-gradient-to-r ${member.gradient || 'from-secondary to-primary'}`} />
+                  <div className="p-8 flex flex-col items-center text-center">
+                    <div className="relative mb-6 w-32 h-32 rounded-full overflow-hidden bg-surface-container ring-4 ring-secondary/10 group-hover:ring-secondary/30 transition-all duration-500">
+                      <SafeImg
+                        src={member.image}
+                        alt={member.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                    <h4 className="font-headline-md text-headline-md text-on-surface" itemProp="name">{member.name}</h4>
+                    <p className="text-secondary font-bold text-sm mt-1" itemProp="jobTitle">{member.position}</p>
+                    {member.company && (
+                      <p className="text-on-surface-variant text-sm mt-0.5">{member.company}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-4">
+                      {member.experience && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/10 rounded-full text-caption font-bold text-secondary">
+                          <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: '"FILL" 1' }}>schedule</span>
+                          {member.experience}
+                        </span>
+                      )}
+                 
+                    </div>
+                     <div className="flex items-center gap-2 mt-4">
+                           {member.expertise && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-violet-50 rounded-full text-caption font-bold text-violet-700">
+                          <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>
+                          {member.expertise}
+                        </span>
+                      )}
+                      </div>
+                    {member.bio && (
+                      <p className="text-body-md text-on-surface-variant mt-4 leading-relaxed line-clamp-3">{member.bio}</p>
+                    )}
                   </div>
-                  <h4 className="font-headline-md text-headline-md text-on-surface" itemProp="name">{member.name}</h4>
-                  <p className="text-secondary font-label-md text-label-md mb-2" itemProp="jobTitle">{member.position}</p>
-                  <p className="text-on-surface-variant font-body-md text-body-md">{member.company}</p>
-                  <p className="text-primary font-label-md text-label-md">{member.experience}</p>
                 </div>
               ))}
             </div>
@@ -182,30 +205,27 @@ export default async function AboutPage() {
 
         <section className="py-20 border-y border-border-subtle bg-white overflow-hidden">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-            <p className="text-center text-on-surface-variant font-label-md text-label-md mb-12 tracking-widest uppercase">
+            <p className="text-center text-on-surface-variant font-label-md text-label-md mb-16 tracking-widest uppercase">
               Trusted by Industry Leaders
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-20 grayscale-0 opacity-100 transition-all duration-500 cursor-default">
-              <div className="flex flex-col items-center">
-                <img
-                  src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Logo%20for%20Automensor.png"
-                  alt="Autommensor Automation Pvt Ltd"
-                  className="w-32 h-16 object-contain mb-2"
-                  loading="lazy"
-                />
-                <span className="font-bold text-xl tracking-tight">Autommensor Automation Pvt. Ltd.</span>
-                <span className="text-xs uppercase font-label-md">Sponsored</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <img
-                  src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/Himanshu.png"
-                  alt="Himanshu Construction"
-                  className="w-32 h-16 object-contain mb-2"
-                  loading="lazy"
-                />
-                <span className="font-bold text-xl tracking-tight">Himanshu Construction</span>
-                <span className="text-xs uppercase font-label-md">Industry Partner</span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {partners.map((partner: { id: string; name: string; short: string; logo: string | null; type: string }) => (
+                <div key={partner.id} className="group bg-surface-container-lowest rounded-2xl border border-border-subtle p-8 flex flex-col items-center text-center hover:border-secondary/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-full h-20 flex items-center justify-center mb-6 px-4">
+                    <img
+                      src={partner.logo || ''}
+                      alt={partner.name}
+                      className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                  </div>
+                  <h4 className="font-headline-md text-headline-md text-on-surface mb-2">{partner.name}</h4>
+                  <span className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-secondary/10 text-secondary">
+                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>handshake</span>
+                    {partner.type}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </section>
