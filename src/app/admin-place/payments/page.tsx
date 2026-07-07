@@ -31,8 +31,8 @@ interface PurchaseRecord {
   training_programs: { name: string | null } | null
 }
 
-function formatAmount(paise: number): string {
-  return `₹${(paise / 100).toLocaleString()}`
+function formatAmount(amount: number): string {
+  return `₹${amount.toLocaleString()}`
 }
 
 function getStatusClasses(status: string): string {
@@ -213,7 +213,7 @@ export default function AdminPaymentsPage() {
                   Amount
                 </th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">
-                  Razorpay Order ID
+                  Cashfree Order ID
                 </th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">
                   Status
