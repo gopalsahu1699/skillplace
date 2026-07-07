@@ -290,4 +290,5 @@ export interface EmployeePermission {
   can_manage_notifications: boolean
   can_manage_video_security: boolean
   can_manage_certificates: boolean
+  can_manage_faqs: boolean
 }

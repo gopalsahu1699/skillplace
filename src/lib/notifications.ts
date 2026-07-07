@@ -66,6 +66,10 @@ export const notify = {
   testimonialUpdated: () => toast.success('Testimonial updated!'),
   testimonialDeleted: () => toast.success('Testimonial deleted.'),
 
+  faqCreated: () => toast.success('FAQ created!'),
+  faqUpdated: () => toast.success('FAQ updated!'),
+  faqDeleted: () => toast.success('FAQ deleted.'),
+
   comingSoon: () => toast.info('Coming soon!'),
   copied: () => toast.success('Copied to clipboard!'),
 

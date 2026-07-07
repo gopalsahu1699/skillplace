@@ -1,58 +1,25 @@
 import Link from 'next/link'
 import JsonLd from '@/components/seo/JsonLd'
 import { breadcrumbSchema, faqSchema, pageSchema } from '@/lib/seo/json-ld'
+import { getFaqs } from '@/lib/supabase/queries'
 
-const allFaqItems = [
-  {
-    q: 'Who can join SkillPlace Academy?',
-    a: 'Anyone who wants to build a career in engineering — fresh graduates, diploma holders, working professionals looking to upskill, or students. No prior experience required for most programs.',
-  },
-  {
-    q: 'Is prior experience required?',
-    a: 'No. Our programs are designed for beginners and intermediate learners. We start with fundamentals and build up to advanced topics. All you need is dedication and a willingness to learn.',
-  },
-  {
-    q: 'Will I receive a certificate?',
-    a: 'Yes! Every program includes an industry-recognized certificate upon successful completion. Our certificates are valued by companies across India.',
-  },
-  {
-    q: 'Is placement support available?',
-    a: 'Absolutely. We provide 100% placement assistance including resume building, interview preparation, mock interviews, and direct connections with hiring partners.',
-  },
-  {
-    q: 'Are classes online or offline?',
-    a: 'We offer both. Choose the format that works best for you — online for flexibility, offline for hands-on lab access, or hybrid for the best of both worlds.',
-  },
-  {
-    q: 'Do you provide career guidance?',
-    a: 'Yes, career guidance is part of our core offering. From career planning to LinkedIn optimization, freelancing guidance to startup mentorship — we cover it all.',
-  },
-  {
-    q: 'What engineering branches do you cover?',
-    a: 'We offer programs in Civil Engineering, Mechanical Engineering, Electrical Engineering, and Electronics & Automation. Each program is designed with industry-relevant tools and real-world projects.',
-  },
-  {
-    q: 'How long are the programs?',
-    a: 'Program duration varies by branch and format — typically between 12 to 48 weeks. Part-time and weekend options are also available for working professionals.',
-  },
-  {
-    q: 'What is the fee structure?',
-    a: 'Our fees are affordable and vary by program. We also offer EMI options and scholarships for deserving students. Check our Programs page for current pricing.',
-  },
-  {
-    q: 'Can I attend a demo class before enrolling?',
-    a: 'Yes! We offer free demo classes for all programs. You can schedule a demo from our website or contact our admissions team. We want you to feel confident before you commit.',
-  },
-]
+export const dynamic = 'force-dynamic'
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const faqItems = await getFaqs()
+
+  const faqData = faqItems.map((item) => ({
+    q: item.question,
+    a: item.answer,
+  }))
+
   return (
     <>
       <JsonLd data={breadcrumbSchema([
         { name: 'Home', url: '/' },
         { name: 'FAQ', url: '/faq' },
       ])} />
-      <JsonLd data={faqSchema(allFaqItems)} />
+      <JsonLd data={faqSchema(faqData)} />
       <JsonLd data={pageSchema('/faq', 'Frequently Asked Questions | Skillplace Academy', 'Find answers to common questions about admissions, courses, fees, certifications, placement support, online/offline classes, and career guidance at Skillplace Academy.')} />
 
       <>
@@ -79,8 +46,8 @@ export default function FAQPage() {
               role="region"
               aria-label="Frequently asked questions"
             >
-              {allFaqItems.map((item, idx) => (
-                <FAQItem key={idx} question={item.q} answer={item.a} index={idx} />
+              {faqItems.map((item, idx) => (
+                <FAQItem key={item.id} question={item.question} answer={item.answer} index={idx} total={faqItems.length} />
               ))}
             </div>
 
@@ -105,7 +72,7 @@ export default function FAQPage() {
   )
 }
 
-function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
+function FAQItem({ question, answer, index, total }: { question: string; answer: string; index: number; total: number }) {
   return (
     <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
       <details className="group">
@@ -122,7 +89,7 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
           <p className="text-body-md text-on-surface-variant" itemProp="text">{answer}</p>
         </div>
       </details>
-      {index < allFaqItems.length - 1 && (
+      {index < total - 1 && (
         <div className="border-t border-border-subtle" />
       )}
     </div>

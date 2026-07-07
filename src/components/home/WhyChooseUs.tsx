@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import SectionReveal from './SectionReveal'
+import { useAuth } from '@/hooks/useAuth'
 
 const comparisonTraditional = [
   'Theory-only classroom lectures',
@@ -26,6 +27,8 @@ const comparisonSkillPlace = [
 ]
 
 export default function WhyChooseUs() {
+  const { user } = useAuth()
+
   return (
     <section className="relative py-section-gap px-margin-mobile md:px-margin-desktop bg-surface overflow-hidden">
       {/* Background accents */}
@@ -204,13 +207,13 @@ export default function WhyChooseUs() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/register"
+                  href={user ? '/programs' : '/register'}
                   className="shimmer-btn bg-gradient-to-r from-blue-600 to-blue-500 text-white px-10 py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-600/25 hover:shadow-xl hover:-translate-y-0.5 duration-300"
                 >
                   <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: '"FILL" 1' }}>
                     rocket_launch
                   </span>
-                  Start Learning Today
+                Start Learning Today
                 </Link>
                 <Link
                   href="/contact"

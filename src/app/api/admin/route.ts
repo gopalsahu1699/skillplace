@@ -39,6 +39,7 @@ const ALLOWED_TABLES = new Set([
   'course_progress',
   'lesson_progress',
   'test_attempts',
+  'faqs',
 ])
 
 const READ_ONLY_TABLES = new Set([

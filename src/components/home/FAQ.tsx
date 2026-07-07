@@ -1,34 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import SectionReveal from './SectionReveal'
+import { supabase } from '@/lib/supabase/client'
 
-const faqItems = [
-  {
-    q: 'Who can join SkillPlace Academy?',
-    a: 'Anyone who wants to build a career in engineering — fresh graduates, diploma holders, working professionals looking to upskill, or students. No prior experience required for most programs.',
-  },
-  {
-    q: 'Is prior experience required?',
-    a: 'No. Our programs are designed for beginners and intermediate learners. We start with fundamentals and build up to advanced topics. All you need is dedication and a willingness to learn.',
-  },
-  {
-    q: 'Will I receive a certificate?',
-    a: 'Yes! Every program includes an industry-recognized certificate upon successful completion. Our certificates are valued by companies across India.',
-  },
-  {
-    q: 'Is placement support available?',
-    a: 'Absolutely. We provide 100% placement assistance including resume building, interview preparation, mock interviews, and direct connections with hiring partners.',
-  },
-  {
-    q: 'Are the classes online or offline?',
-    a: 'We offer all three modes — 100% Offline (at our Bilaspur campus), 100% Online (live + recorded), and Hybrid (online lectures + weekend labs). Choose what fits your schedule.',
-  },
-]
+interface FaqItem {
+  id: string
+  question: string
+  answer: string
+  display_order: number
+}
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [faqItems, setFaqItems] = useState<FaqItem[]>([])
+
+  useEffect(() => {
+    async function fetchFaqs() {
+      const { data } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true })
+      if (data) setFaqItems(data)
+    }
+    fetchFaqs()
+  }, [])
 
   function toggle(idx: number) {
     setOpenIndex(openIndex === idx ? null : idx)
@@ -52,7 +51,7 @@ export default function FAQ() {
         <SectionReveal>
           <div className="bg-white rounded-2xl border border-border-subtle overflow-hidden card-shadow" role="region" aria-label="Frequently asked questions">
             {faqItems.map((item, idx) => (
-              <div key={idx} className="faq-accordion-item">
+              <div key={item.id} className="faq-accordion-item">
                 <button
                   className="w-full flex items-center justify-between p-6 text-left hover:bg-surface-container-low/50 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:ring-inset"
                   onClick={() => toggle(idx)}
@@ -60,7 +59,7 @@ export default function FAQ() {
                   aria-controls={`faq-panel-${idx}`}
                   id={`faq-trigger-${idx}`}
                 >
-                  <span className="font-bold text-on-surface pr-4">{item.q}</span>
+                  <span className="font-bold text-on-surface pr-4">{item.question}</span>
                   <span
                     className={`material-symbols-outlined text-on-surface-variant flex-shrink-0 transition-transform duration-300 ${
                       openIndex === idx ? 'rotate-180' : ''
@@ -77,7 +76,7 @@ export default function FAQ() {
                   data-open={openIndex === idx}
                 >
                   <div>
-                    <p className="px-6 pb-6 text-body-md text-on-surface-variant leading-relaxed">{item.a}</p>
+                    <p className="px-6 pb-6 text-body-md text-on-surface-variant leading-relaxed">{item.answer}</p>
                   </div>
                 </div>
               </div>

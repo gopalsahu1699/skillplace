@@ -53,7 +53,7 @@ export default function JobCoursesSection({
         {/* 1. DESKTOP VIEW: Bento Grid */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Civil Bento */}
-          <div className="md:col-span-8 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-secondary/30 hover:-translate-y-1 transition-all duration-300">
+          <Link href="/courses" className="md:col-span-8 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-secondary/30 hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-headline-md text-headline-md text-primary">Civil Engineering</h3>
@@ -67,14 +67,14 @@ export default function JobCoursesSection({
                 ))}
               </div>
             </div>
-            <Link className="inline-flex items-center gap-2 font-bold text-secondary self-start" href="/courses">
+            <span className="inline-flex items-center gap-2 font-bold text-secondary self-start group-hover:gap-3 transition-all">
               Explore Civil Courses
               <span className="material-symbols-outlined">trending_flat</span>
-            </Link>
-          </div>
+            </span>
+          </Link>
 
           {/* Mechanical Bento */}
-          <div className="md:col-span-4 bg-primary-container text-white p-8 rounded-2xl flex flex-col justify-between shadow-lg">
+          <Link href="/courses" className="md:col-span-4 bg-primary-container text-white p-8 rounded-2xl flex flex-col justify-between shadow-lg group cursor-pointer hover:-translate-y-1 transition-all duration-300">
             <div>
               <h3 className="font-headline-md text-headline-md mb-6">Mechanical</h3>
               <div className="space-y-4 mb-8">
@@ -88,14 +88,14 @@ export default function JobCoursesSection({
                 })}
               </div>
             </div>
-            <Link className="text-secondary-fixed-dim font-bold flex items-center gap-2 group" href="/courses">
+            <span className="text-secondary-fixed-dim font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
               Explore
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-            </Link>
-          </div>
+            </span>
+          </Link>
 
           {/* Electrical Bento */}
-          <div className="md:col-span-4 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-sky-300 hover:-translate-y-1 transition-all duration-300">
+          <Link href="/courses" className="md:col-span-4 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-sky-300 hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
             <div>
               <h3 className="font-headline-md text-headline-md text-primary mb-6">Electrical</h3>
               <ul className="space-y-3 mb-8">
@@ -104,10 +104,10 @@ export default function JobCoursesSection({
                 ))}
               </ul>
             </div>
-            <Link className="text-secondary font-bold flex items-center gap-2" href="/courses">
+            <span className="text-secondary font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
               Explore <span className="material-symbols-outlined">open_in_new</span>
-            </Link>
-          </div>
+            </span>
+          </Link>
 
           {/* Electronics Bento */}
           {/* <div className="md:col-span-5 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300">
@@ -125,7 +125,7 @@ export default function JobCoursesSection({
           </div> */}
 
           {/* Soft Skills Bento */}
-          <div className="md:col-span-3 bg-secondary text-white p-8 rounded-2xl flex flex-col justify-between">
+          <Link href="/courses" className="md:col-span-3 bg-secondary text-white p-8 rounded-2xl flex flex-col justify-between group cursor-pointer hover:-translate-y-1 transition-all duration-300">
             <div>
               <h3 className="font-headline-md text-headline-md mb-4">Soft Skills</h3>
               <p className="text-white/80 text-body-md mb-6">Complete career preparation included in all programs.</p>
@@ -135,8 +135,8 @@ export default function JobCoursesSection({
                 <li key={idx}>{'\u2022'} {item}</li>
               ))}
             </ul>
-            <Link className="text-white font-bold underline decoration-2 underline-offset-4" href="/courses">Explore More</Link>
-          </div>
+            <span className="text-white font-bold underline decoration-2 underline-offset-4 group-hover:decoration-4 transition-all">Explore More</span>
+          </Link>
         </div>
 
         {/* 2. MOBILE VIEW: Horizontal Scroll Carousel */}
@@ -149,7 +149,7 @@ export default function JobCoursesSection({
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
           >
             {/* Civil Card */}
-            <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm">
+            <Link href="/courses" className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm group cursor-pointer">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-headline-md font-bold text-primary">Civil Engineering</h4>
@@ -166,14 +166,14 @@ export default function JobCoursesSection({
                   ))}
                 </div>
               </div>
-              <Link className="w-full bg-secondary text-white py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors" href="/courses">
+              <span className="w-full bg-secondary text-white py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 group-hover:bg-secondary/90 transition-colors">
                 Explore Civil Courses
                 <span className="material-symbols-outlined text-[18px]">trending_flat</span>
-              </Link>
-            </div>
+              </span>
+            </Link>
 
             {/* Mechanical Card */}
-            <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-primary-container text-white p-6 rounded-2xl flex flex-col justify-between min-h-[320px] shadow-lg">
+            <Link href="/courses" className="snap-center shrink-0 w-[calc(100%-2rem)] bg-primary-container text-white p-6 rounded-2xl flex flex-col justify-between min-h-[320px] shadow-lg group cursor-pointer">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-headline-md font-bold text-white">Mechanical</h4>
@@ -193,14 +193,14 @@ export default function JobCoursesSection({
                   })}
                 </div>
               </div>
-              <Link className="w-full bg-white text-primary-container py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-white/90 transition-colors" href="/courses">
+              <span className="w-full bg-white text-primary-container py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 group-hover:bg-white/90 transition-colors">
                 Explore Mechanical
                 <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-              </Link>
-            </div>
+              </span>
+            </Link>
 
             {/* Electrical Card */}
-            <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm">
+            <Link href="/courses" className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm group cursor-pointer">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-headline-md font-bold text-primary">Electrical</h4>
@@ -217,11 +217,11 @@ export default function JobCoursesSection({
                   ))}
                 </ul>
               </div>
-              <Link className="w-full border border-sky-500 text-sky-600 py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-sky-500/5 transition-colors" href="/courses">
+              <span className="w-full border border-sky-500 text-sky-600 py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 group-hover:bg-sky-500/5 transition-colors">
                 Explore Electrical
                 <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-              </Link>
-            </div>
+              </span>
+            </Link>
 
             {/* Electronics Card */}
             {/* <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-white p-6 rounded-2xl border border-border-subtle flex flex-col justify-between min-h-[320px] shadow-sm">
@@ -247,7 +247,7 @@ export default function JobCoursesSection({
             </div> */}
 
             {/* Soft Skills Card */}
-            <div className="snap-center shrink-0 w-[calc(100%-2rem)] bg-secondary text-white p-6 rounded-2xl flex flex-col justify-between min-h-[320px] shadow-md">
+            <Link href="/courses" className="snap-center shrink-0 w-[calc(100%-2rem)] bg-secondary text-white p-6 rounded-2xl flex flex-col justify-between min-h-[320px] shadow-md group cursor-pointer">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-headline-md font-bold text-white">Soft Skills</h4>
@@ -265,10 +265,10 @@ export default function JobCoursesSection({
                   ))}
                 </ul>
               </div>
-              <Link className="w-full bg-white text-secondary py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-white/90 transition-all" href="/courses">
+              <span className="w-full bg-white text-secondary py-3 rounded-xl font-bold text-sm text-center flex items-center justify-center gap-2 group-hover:bg-white/90 transition-all">
                 Explore More
-              </Link>
-            </div>
+              </span>
+            </Link>
           </div>
 
           {/* Dot indicators */}

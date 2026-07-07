@@ -102,12 +102,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
             Bridge the gap between academic knowledge and industrial excellence. Our curriculum is crafted by domain experts to ensure immediate employment and long-term career growth in engineering.
           </p>
           <div className="flex flex-wrap gap-4">
-            <Link
-              href="/programs"
-              className="px-8 py-4 bg-on-background text-on-primary font-label-md text-label-md rounded-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              Explore All Programs
-            </Link>
+  
             <Link
               href="/contact"
               className="px-8 py-4 border border-secondary text-secondary font-label-md text-label-md rounded-lg hover:bg-secondary/5 transition-all"
@@ -189,91 +184,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
         </section>
       )}
 
-      {/* Course Categories Overview Grid */}
-      <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-          {/* Standard branch cards */}
-          {categories.slice(0, 4).map((branch) => {
-            const branchCourses = categoryCourseMap[branch.id] || []
-            return (
-              <div key={branch.id} className="tonal-card rounded-xl p-8 flex flex-col group">
-                <div className="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
-                  <span className="material-symbols-outlined text-3xl transition-transform duration-300 group-hover:-translate-y-1">
-                    {getBranchIcon(branch.slug)}
-                  </span>
-                </div>
-                <h3 className="font-headline-md text-headline-md text-on-surface mb-4">{branch.name}</h3>
-                <p className="text-on-surface-variant text-body-md mb-8">{getBranchDesc(branch.slug)}</p>
-                <ul className="space-y-4 mb-10 flex-grow">
-                  {branchCourses.slice(0, 4).map((c) => (
-                    <li key={c.id} className="flex items-center gap-3">
-                      <span className="w-2 h-2 bg-secondary rounded-sm shrink-0" />
-                      <span className="font-body-md text-on-surface-variant line-clamp-1">{c.title}</span>
-                    </li>
-                  ))}
-                  {branchCourses.length === 0 && (
-                    <li className="text-on-surface-variant text-sm opacity-60">Courses coming soon…</li>
-                  )}
-                </ul>
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => {
-                      setSelectedBranch(branch.id)
-                      document.getElementById('courses-grid')?.scrollIntoView({ behavior: 'smooth' })
-                    }}
-                    className="w-full py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform"
-                  >
-                    Explore {branch.name}
-                  </button>
-                  <Link
-                    href="/contact"
-                    className="w-full py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
-                    Speak to Expert
-                  </Link>
-                </div>
-              </div>
-            )
-          })}
-
-          {/* Wide Professional Skills card */}
-          <div className="tonal-card rounded-xl p-8 lg:col-span-2 flex flex-col md:flex-row gap-8 group">
-            <div className="flex-1">
-              <div className="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors duration-300">
-                <span className="material-symbols-outlined text-3xl transition-transform duration-300 group-hover:-translate-y-1">school</span>
-              </div>
-              <h3 className="font-headline-md text-headline-md text-on-surface mb-4">Core Professional Skills</h3>
-              <p className="text-on-surface-variant text-body-md mb-8">
-                Complementary technical and soft skills essential for modern engineering placements.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                {['Project Management (PMP)', 'Digital Marketing for Eng.', 'Data Science Foundation', 'Soft Skills & Interviews'].map((skill) => (
-                  <div key={skill} className="flex items-center gap-3">
-                    <span className="w-2 h-2 bg-secondary rounded-sm shrink-0" />
-                    <span className="font-body-md text-on-surface-variant">{skill}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/programs" className="px-8 py-3 bg-on-background text-on-primary font-label-md text-label-md rounded-lg active:scale-95 transition-transform">
-                  View Programs
-                </Link>
-                <Link href="/contact" className="px-8 py-3 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors">
-                  Speak to Expert
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block w-1/3 rounded-xl overflow-hidden relative min-h-[200px]">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url('${getSupabaseImageUrl('courses-hero-bg.jpg')}')` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent" />
-            </div>
-          </div>
-        </div>
-      </section>
+   
 
       {/* All Courses Grid with Search & Filter */}
       <section id="courses-grid" className="bg-surface-container-low/40 py-section-gap px-margin-mobile md:px-margin-desktop">

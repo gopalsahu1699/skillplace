@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getCourseBySlug, getCourses } from '@/lib/supabase/queries'
+import { getCourseBySlug, getCourses, getFaqs } from '@/lib/supabase/queries'
 import { notFound } from 'next/navigation'
 import { adminSupabase } from '@/lib/supabase/admin'
 import EnrollButton from '@/components/courses/EnrollButton'
@@ -53,12 +53,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
   const formattedCount = ((enrollmentCount || 0) + 1200).toLocaleString()
   const branchName = course.branches?.name || 'Engineering'
 
-  const faqs = [
-    { q: `What will I learn in the ${course.title} course?`, a: `The ${course.title} course at Skillplace Academy covers comprehensive practical training including industry-standard workflows, hands-on projects, and real-world applications in ${branchName}.` },
-    { q: `How long is the ${course.title} program?`, a: course.duration_hours ? `The program spans ${course.duration_hours} hours of intensive training with flexible scheduling options.` : 'Program duration varies. Contact our admissions team for specific details.' },
-    { q: 'Will I receive a certificate?', a: `Yes! Upon completing the ${course.title} course, you will receive a Certificate of Completion, a Project Certificate (2 projects), and an Industrial Training Certificate.` },
-    { q: 'Is placement assistance included?', a: 'Absolutely. All Skillplace Academy courses include 100% placement assistance with resume building, mock interviews, and direct connections with 200+ hiring partners.' },
-  ]
+  const faqs = await getFaqs()
 
   return (
     <>
@@ -82,7 +77,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
 
       <div className="bg-background text-on-surface font-body-md overflow-x-hidden">
 
-        <section className="relative bg-primary-container text-on-primary py-20 lg:py-24 overflow-hidden">
+        <section className="relative bg-primary-container text-on-primary py-16 md:py-20 lg:py-24 overflow-hidden">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
             <nav aria-label="Breadcrumb" className="mb-6 text-sm text-on-primary-container/70">
               <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
@@ -109,7 +104,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                   {course.short_description || course.description}
                 </p>
 
-                <div className="grid grid-cols-3 gap-4 md:gap-6 mb-10 p-6 bg-white/5 rounded-xl border border-white/10 backdrop-blur-md">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-10 p-4 md:p-6 bg-white/5 rounded-xl border border-white/10 backdrop-blur-md">
                   <div>
                     <p className="text-caption text-on-primary-container uppercase tracking-widest mb-1">Duration</p>
                     <p className="font-headline-md text-headline-md font-bold text-white">
@@ -128,20 +123,20 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                   <div className="flex flex-col">
                     {course.discount_price ? (
                       <>
                         <span className="text-on-primary-container line-through text-caption">₹{course.price.toLocaleString()}</span>
-                        <span className="text-4xl font-extrabold text-white">₹{course.discount_price.toLocaleString()}</span>
+                        <span className="text-3xl sm:text-4xl font-extrabold text-white">₹{course.discount_price.toLocaleString()}</span>
                       </>
                     ) : (
-                      <span className="text-4xl font-extrabold text-white">
+                      <span className="text-3xl sm:text-4xl font-extrabold text-white">
                         {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
                       </span>
                     )}
                   </div>
-                  <div>
+                  <div className="w-full sm:w-auto">
                     <EnrollButton
                       courseId={course.id}
                       courseSlug={course.slug}
@@ -331,14 +326,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
             <h2 className="font-headline-lg text-headline-lg text-primary mb-8 text-center">Frequently Asked Questions</h2>
             <div className="max-w-3xl mx-auto space-y-4">
-              {faqs.map((faq, i) => (
-                <details key={i} className="bg-white rounded-xl border border-border-subtle group">
+              {faqs.map((faq) => (
+                <details key={faq.id} className="bg-white rounded-xl border border-border-subtle group">
                   <summary className="flex items-center justify-between p-6 cursor-pointer list-none font-bold text-on-surface hover:bg-surface-container-low transition-colors rounded-xl">
-                    {faq.q}
+                    {faq.question}
                     <span className="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
                   </summary>
                   <div className="px-6 pb-6">
-                    <p className="text-body-md text-on-surface-variant">{faq.a}</p>
+                    <p className="text-body-md text-on-surface-variant">{faq.answer}</p>
                   </div>
                 </details>
               ))}

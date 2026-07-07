@@ -162,9 +162,7 @@ function generateClassicTemplate(data: CertificateData): string {
     <div style="position:absolute;width:4.7%;aspect-ratio:1;border:0.19vw solid ${theme.borderOuter};bottom:2.9%;right:2.9%;border-left:none;border-top:none;"></div>
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:clamp(50px,9.5vw,100px);font-family:'Playfair Display',serif;color:rgba(0,0,0,0.03);font-weight:700;pointer-events:none;white-space:nowrap;user-select:none;">SKILLPLACE</div>
     <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5% 6%;text-align:center;">
-      <div style="width:6.6%;aspect-ratio:1;background:linear-gradient(135deg,${theme.primary},${theme.secondary});border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.4%;box-shadow:0 0.4vw 2vw rgba(0,0,0,0.15);">
-        <span style="color:white;font-size:clamp(16px,2.6vw,28px);font-weight:700;font-family:'Playfair Display',serif;">S</span>
-      </div>
+      <img src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg" alt="Skillplace Academy" style="width:auto;height:clamp(30px,5vw,55px);margin-bottom:1.4%;" />
       <div style="font-family:'Playfair Display',serif;font-size:clamp(14px,2.3vw,24px);font-weight:700;color:${theme.primary};letter-spacing:0.38vw;text-transform:uppercase;margin-bottom:0.3%;">Skillplace Academy</div>
       <div style="font-size:clamp(8px,1.04vw,11px);color:#64748b;letter-spacing:0.28vw;text-transform:uppercase;margin-bottom:2%;">Learn | Practice | Get Placed</div>
       <div style="font-family:'Playfair Display',serif;font-size:clamp(24px,4.5vw,48px);font-weight:700;color:${theme.textColor};margin:1% 0 0.8%;letter-spacing:0.47vw;text-transform:uppercase;">${content.title}</div>
@@ -212,9 +210,7 @@ function generateModernTemplate(data: CertificateData): string {
     <div style="position:absolute;top:0;right:0;width:3px;height:100%;background:${theme.accent};"></div>
     <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:6% 6% 6% 10%;text-align:left;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:3%;">
-        <div style="width:48px;height:48px;background:linear-gradient(135deg,${theme.primary},${theme.secondary});border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          <span style="color:white;font-size:20px;font-weight:700;font-family:'Inter',sans-serif;">S</span>
-        </div>
+        <img src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg" alt="Skillplace Academy" style="width:auto;height:clamp(28px,3.5vw,48px);border-radius:6px;" />
         <div>
           <div style="font-family:'Inter',sans-serif;font-size:clamp(12px,1.8vw,18px);font-weight:700;color:${theme.primary};text-transform:uppercase;letter-spacing:0.1vw;">Skillplace Academy</div>
           <div style="font-size:clamp(7px,0.9vw,10px);color:#94a3b8;letter-spacing:0.15vw;text-transform:uppercase;">Learn | Practice | Get Placed</div>
@@ -262,11 +258,7 @@ function generateAcademicTemplate(data: CertificateData): string {
     <div style="position:absolute;inset:2.5%;border:1px solid ${theme.borderInner};"></div>
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:clamp(45px,8.5vw,90px);font-family:'Playfair Display',serif;color:rgba(0,0,0,0.025);font-weight:700;pointer-events:none;white-space:nowrap;user-select:none;">SKILLPLACE</div>
     <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4% 6%;text-align:center;">
-      <svg width="60" height="70" viewBox="0 0 60 70" style="margin-bottom:1%;">
-        <polygon points="30,2 58,18 58,52 30,68 2,52 2,18" fill="none" stroke="${theme.primary}" stroke-width="2"/>
-        <polygon points="30,10 50,22 50,48 30,60 10,48 10,22" fill="${theme.primary}" opacity="0.1"/>
-        <text x="30" y="42" text-anchor="middle" font-family="Playfair Display,serif" font-size="20" font-weight="700" fill="${theme.primary}">S</text>
-      </svg>
+      <img src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg" alt="Skillplace Academy" style="width:auto;height:clamp(32px,5vw,60px);margin-bottom:1%;" />
       <div style="font-family:'Playfair Display',serif;font-size:clamp(13px,2vw,20px);font-weight:700;color:${theme.primary};letter-spacing:0.3vw;text-transform:uppercase;margin-bottom:0.2%;">Skillplace Academy</div>
       <div style="font-size:clamp(7px,0.9vw,10px);color:#94a3b8;letter-spacing:0.2vw;text-transform:uppercase;margin-bottom:2.5%;">Department of Education</div>
       <div style="font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,44px);font-weight:700;color:${theme.textColor};margin:0.5% 0;letter-spacing:0.3vw;text-transform:uppercase;">${content.title}</div>
@@ -315,9 +307,7 @@ function generateCorporateTemplate(data: CertificateData): string {
   <button class="print-btn" onclick="downloadPDF()">Download PDF</button>
   <div class="certificate">
     <div style="position:absolute;top:0;left:0;right:0;height:70px;background:linear-gradient(90deg,${theme.primary},${theme.secondary});display:flex;align-items:center;padding:0 6%;">
-      <div style="width:40px;height:40px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-right:14px;">
-        <span style="font-size:18px;font-weight:700;color:${theme.primary};font-family:'Inter',sans-serif;">S</span>
-      </div>
+      <img src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg" alt="Skillplace Academy" style="width:auto;height:clamp(24px,3vw,40px);margin-right:14px;border-radius:4px;" />
       <div style="font-family:'Inter',sans-serif;font-size:clamp(11px,1.6vw,16px);font-weight:700;color:white;text-transform:uppercase;letter-spacing:0.15vw;">Skillplace Academy</div>
       <div style="margin-left:auto;font-size:clamp(7px,0.85vw,9px);color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.1vw;">Verification of Completion</div>
     </div>
@@ -363,10 +353,7 @@ function generateCreativeTemplate(data: CertificateData): string {
   <button class="print-btn" onclick="downloadPDF()">Download PDF</button>
   <div class="certificate">
     <div style="position:absolute;top:0;left:0;width:33%;height:100%;background:linear-gradient(180deg,${theme.primary},${theme.secondary});display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5%;color:white;">
-      <svg width="50" height="50" viewBox="0 0 50 50" style="margin-bottom:8%;">
-        <polygon points="25,2 31,18 49,18 35,28 40,46 25,35 10,46 15,28 1,18 19,18" fill="${theme.accent}" stroke="white" stroke-width="1"/>
-      </svg>
-      <div style="font-family:'Playfair Display',serif;font-size:clamp(14px,2vw,20px);font-weight:700;text-align:center;line-height:1.3;">Skillplace Academy</div>
+      <img src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg" alt="Skillplace Academy" style="width:auto;height:clamp(40px,6vw,70px);margin-bottom:5%;filter:brightness(0) invert(1);" />
       <div style="font-size:clamp(7px,0.9vw,10px);opacity:0.8;margin-top:6px;letter-spacing:0.15vw;text-transform:uppercase;text-align:center;">Learn | Practice | Get Placed</div>
       <div style="width:40px;height:2px;background:${theme.accent};margin:12px 0;"></div>
       <div style="font-size:clamp(8px,1vw,11px);opacity:0.7;text-align:center;">${data.issuedDate}</div>
@@ -415,9 +402,7 @@ function generateElegantTemplate(data: CertificateData): string {
     <div style="position:absolute;inset:1.8%;border:0.5px solid ${theme.borderInner};"></div>
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:clamp(40px,7vw,80px);font-family:'Playfair Display',serif;color:rgba(0,0,0,0.02);font-weight:400;font-style:italic;pointer-events:none;white-space:nowrap;user-select:none;">DISTINCTION</div>
     <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8% 10%;text-align:center;">
-      <div style="width:40px;height:40px;border:1px solid ${theme.accent};border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:2%;">
-        <span style="font-size:16px;font-weight:400;color:${theme.accent};font-family:'Playfair Display',serif;font-style:italic;">S</span>
-      </div>
+      <img src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg" alt="Skillplace Academy" style="width:auto;height:clamp(20px,3vw,40px);margin-bottom:2%;opacity:0.7;" />
       <div style="font-family:'Playfair Display',serif;font-size:clamp(11px,1.5vw,15px);font-weight:400;color:${theme.primary};letter-spacing:0.4vw;text-transform:uppercase;margin-bottom:0.3%;">Skillplace Academy</div>
       <div style="font-size:clamp(7px,0.8vw,9px);color:#94a3b8;letter-spacing:0.2vw;text-transform:uppercase;margin-bottom:4%;">Learn | Practice | Get Placed</div>
       <div style="font-family:'Playfair Display',serif;font-size:clamp(24px,4.2vw,44px);font-weight:400;color:${theme.textColor};letter-spacing:0.05em;font-style:italic;margin-bottom:0.5%;">${content.title}</div>

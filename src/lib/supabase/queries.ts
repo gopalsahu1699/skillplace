@@ -221,6 +221,20 @@ export async function getPartners() {
   return data || []
 }
 
+export async function getFaqs() {
+  const { data, error } = await adminSupabase
+    .from('faqs')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
 export async function getRecentPayments() {
   const { data, error } = await adminSupabase
     .from('purchases')

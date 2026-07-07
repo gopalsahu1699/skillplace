@@ -11,7 +11,9 @@ create table public.certificates (
   custom_message text null,
   constraint certificates_pkey primary key (id),
   constraint certificates_certificate_number_key unique (certificate_number),
-  constraint certificates_user_id_course_id_key unique (user_id, course_id)
+  constraint certificates_user_id_course_id_key unique (user_id, course_id),
+  constraint certificates_user_id_fkey foreign key (user_id) references profiles (id) on delete set null,
+  constraint certificates_course_id_fkey foreign key (course_id) references courses (id) on delete set null
 ) TABLESPACE pg_default;
 
 create index IF not exists idx_certificates_user on public.certificates using btree (user_id) TABLESPACE pg_default;

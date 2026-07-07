@@ -150,11 +150,13 @@ export default function Footer() {
                   80857 82471
                 </a>
               </div>
+             <a href="https://maps.app.goo.gl/GHu1A1t9ZmafCgFF9" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
               <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
                 <p className="text-sm font-medium text-white mb-1">Location</p>
                 <p className="text-sm text-slate-400">
-1st floor, SD EPITOME, Gandhi chowk, beside Patel tutorial, Old High Court Rd, Bilaspur, Telipara, Chhattisgarh 495004, Bilaspur, India, 495004</p>
+1st floor, SD EPITOME, Gandhi chowk, beside Patel tutorial, Old High Court Rd, Bilaspur, Telipara, Chhattisgarh, India, 495004</p>
               </div>
+             </a>
             </div>
          
           </div>

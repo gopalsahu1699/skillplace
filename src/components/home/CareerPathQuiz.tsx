@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import Link from 'next/link'
+import { useAuth } from '@/hooks/useAuth'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 import { getSupabaseImageUrl } from '@/lib/utils'
@@ -16,6 +17,7 @@ interface QuizAnswers {
 }
 
 export default function CareerPathQuiz() {
+  const { user } = useAuth()
   const [step, setStep] = useState<number>(1)
   const [answers, setAnswers] = useState<QuizAnswers>({
     status: '',
@@ -325,61 +327,84 @@ Recommended Program: ${rec.title}
                 </div>
               </div>
 
-              {/* Lead Form */}
-              <div className="lg:col-span-6 bg-surface-container p-6 rounded-2xl border border-border-subtle">
-                <h4 className="font-headline-md text-headline-md text-primary mb-2">Unlock Syllabus & Career Call</h4>
-                <p className="text-caption text-on-surface-variant mb-4 leading-normal">
-                  Enter your details to download the complete {rec.title} curriculum PDF and schedule a free guidance call with our advisor.
-                </p>
-
-                <form onSubmit={handleSubmitLead} className="space-y-4">
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Your Full Name"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md input-focus-ring"
-                    />
+              {/* Lead Form or Direct CTA for logged-in users */}
+              {user ? (
+                <div className="lg:col-span-6 bg-gradient-to-br from-secondary/[0.04] to-accent/[0.04] p-8 rounded-2xl border border-secondary/15 text-center flex flex-col items-center justify-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-secondary text-3xl" style={{ fontVariationSettings: '"FILL" 1' }}>
+                      rocket_launch
+                    </span>
                   </div>
-                  <div>
-                    <input
-                      type="email"
-                      placeholder="Your Email Address"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md input-focus-ring"
-                    />
-                  </div>
-                  <PhoneInput
-                    value={phone}
-                    onChange={setPhone}
-                    required
-                  />
-
-                  {error && <p className="text-caption text-error bg-error/10 p-2 rounded">{error}</p>}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-secondary text-white py-3 rounded-xl font-bold hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
+                  <h4 className="font-headline-md text-headline-md text-primary">You're Already Part of SkillPlace!</h4>
+                  <p className="text-body-md text-on-surface-variant leading-relaxed">
+                    Head over to your training programs and start building your career right away.
+                  </p>
+                  <Link
+                    href="/programs"
+                    className="inline-flex items-center gap-2 bg-secondary text-white px-8 py-3.5 rounded-xl font-bold hover:bg-secondary/90 transition-all shadow-lg shadow-secondary/20 mt-2"
                   >
-                    {loading ? (
-                      <>
-                        <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                        Generating Path...
-                      </>
-                    ) : (
-                      <>
-                        Unlock Syllabus & Recommended Path
-                        <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-                      </>
-                    )}
-                  </button>
-                </form>
-              </div>
+                    <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>
+                      school
+                    </span>
+                    Go to Training Programs
+                  </Link>
+                </div>
+              ) : (
+                <div className="lg:col-span-6 bg-surface-container p-6 rounded-2xl border border-border-subtle">
+                  <h4 className="font-headline-md text-headline-md text-primary mb-2">Unlock Syllabus & Career Call</h4>
+                  <p className="text-caption text-on-surface-variant mb-4 leading-normal">
+                    Enter your details to download the complete {rec.title} curriculum PDF and schedule a free guidance call with our advisor.
+                  </p>
+
+                  <form onSubmit={handleSubmitLead} className="space-y-4">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Your Full Name"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md input-focus-ring"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="email"
+                        placeholder="Your Email Address"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-body-md input-focus-ring"
+                      />
+                    </div>
+                    <PhoneInput
+                      value={phone}
+                      onChange={setPhone}
+                      required
+                    />
+
+                    {error && <p className="text-caption text-error bg-error/10 p-2 rounded">{error}</p>}
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-secondary text-white py-3 rounded-xl font-bold hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                          Generating Path...
+                        </>
+                      ) : (
+                        <>
+                          Unlock Syllabus & Recommended Path
+                          <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              )}
 
             </div>
           )}
