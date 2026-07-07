@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { data: payment, error: dbError } = await adminSupabase
       .from('payments')
-      .select('*')
+      .select('*, training_programs(slug)')
       .eq('order_id', orderId)
       .single()
 
@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
 
     if (payment.status === 'completed') {
       console.log(`[verify-payment] Payment ${orderId} already completed`)
+      const slug = (payment as any).training_programs?.slug
+      if (slug) {
+        return NextResponse.redirect(new URL(`/programs/${slug}/learn`, request.url))
+      }
       return NextResponse.redirect(new URL('/enroll/success', request.url))
     }
 
@@ -77,6 +81,10 @@ export async function GET(request: NextRequest) {
     // If null, another process already completed this — just redirect successfully
     if (!updated) {
       console.log(`[verify-payment] Payment ${orderId} was already completed by another request`)
+      const slug = (payment as any).training_programs?.slug
+      if (slug) {
+        return NextResponse.redirect(new URL(`/programs/${slug}/learn`, request.url))
+      }
       return NextResponse.redirect(new URL('/enroll/success', request.url))
     }
 
@@ -154,6 +162,10 @@ export async function GET(request: NextRequest) {
       await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
 
+    const slug = (payment as any).training_programs?.slug
+    if (slug) {
+      return NextResponse.redirect(new URL(`/programs/${slug}/learn`, request.url))
+    }
     return NextResponse.redirect(new URL('/enroll/success', request.url))
   } catch (err) {
     console.error('programs/verify-payment GET error:', err)
@@ -187,7 +199,7 @@ export async function POST(request: NextRequest) {
 
     const { data: payment } = await adminSupabase
       .from('payments')
-      .select('*')
+      .select('*, training_programs(slug)')
       .eq('order_id', orderId)
       .single()
 
@@ -195,8 +207,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
+    const getRedirectUrl = () => {
+      const slug = (payment as any).training_programs?.slug
+      return slug ? `/programs/${slug}/learn` : '/enroll/success'
+    }
+
     if (payment.status === 'completed') {
-      return NextResponse.json({ success: true })
+      return NextResponse.json({ success: true, redirectUrl: getRedirectUrl() })
     }
 
     const payments = await fetchCashfreePayments(orderId)
@@ -228,7 +245,7 @@ export async function POST(request: NextRequest) {
 
     // If updated is null, another process already completed this payment — just return success
     if (!updated) {
-      return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId })
+      return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId, redirectUrl: getRedirectUrl() })
     }
 
     const safePhone = phone ? (validatePhoneServer(phone).formatted || phone) : null
@@ -298,7 +315,7 @@ export async function POST(request: NextRequest) {
       await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: payment.coupon_id })
     }
 
-    return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId })
+    return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId, redirectUrl: getRedirectUrl() })
   } catch (err) {
     console.error('programs/verify-payment POST error:', err)
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })

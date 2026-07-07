@@ -225,9 +225,7 @@ export default function EnrollPage() {
       }
 
       if (data.free) {
-        setStep('success')
-        toast.success('Enrollment confirmed!')
-        setSubmitting(false)
+        router.push(data.redirectUrl || `/programs/${slug}/learn`)
         return
       }
 
@@ -537,11 +535,11 @@ export default function EnrollPage() {
                     You will receive a confirmation email shortly.
                   </p>
                   <div className="flex justify-center gap-3">
-                    <Link href="/dashboard">
-                      <Button className="bg-blue-600 hover:bg-blue-700">Go to Dashboard</Button>
+                    <Link href={`/programs/${slug}/learn`}>
+                      <Button className="bg-blue-600 hover:bg-blue-700">Go to Learning</Button>
                     </Link>
-                    <Link href="/programs">
-                      <Button variant="outline">Browse More Programs</Button>
+                    <Link href="/dashboard">
+                      <Button variant="outline">Go to Dashboard</Button>
                     </Link>
                   </div>
                 </div>

@@ -105,7 +105,7 @@ export default function AdminLayout({
           .from('employee_permissions')
           .select('*')
           .eq('employee_id', employee.id)
-          .single()
+          .maybeSingle()
 
         if (cancelled) return
 

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     const { data: program } = await adminSupabase
       .from('training_programs')
-      .select('price, discount_price, name')
+      .select('price, discount_price, name, slug')
       .eq('id', programId)
       .single()
 
@@ -167,6 +167,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           free: true,
           success: true,
+          redirectUrl: `/programs/${program.slug}/learn`,
         }, { headers: rateLimitHeaders })
       }
 
@@ -236,6 +237,7 @@ export async function POST(request: Request) {
       amount: cfOrder.orderAmount,
       currency: cfOrder.orderCurrency,
       env: getCashfreeEnv(),
+      slug: program.slug,
     }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
     console.error('programs/create-order error:', error)

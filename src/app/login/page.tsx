@@ -72,7 +72,7 @@ function LoginForm() {
         .eq('id', data.user.id)
         .single()
 
-      if (profile?.role === 'admin' || profile?.role === 'employee') {
+        if (profile?.role === 'admin') {
         router.push('/admin-place')
       } else {
         const { data: employee } = await supabase
@@ -81,7 +81,7 @@ function LoginForm() {
           .eq('email', data.user.email)
           .maybeSingle()
 
-        if (employee?.role === 'admin' || employee?.role === 'employee') {
+        if (employee) {
           router.push('/admin-place')
         } else {
           router.push(redirectedFrom)

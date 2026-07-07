@@ -10,7 +10,7 @@ import { notify } from '@/lib/notifications'
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/programs', label: 'Training Programs' },
-  // { href: '/courses', label: 'Courses' },
+  { href: '/courses', label: 'Courses' },
   // { href: '/placements', label: 'Placements' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
