@@ -62,6 +62,7 @@ export default function SecureVideoPlayer({
   const [playbackMode, setPlaybackMode] = useState<'hls' | 'direct' | 'none'>('none')
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(1)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
@@ -168,7 +169,7 @@ export default function SecureVideoPlayer({
       if (!cancelled && tokenData) {
         setStreamUrl(tokenData.streamUrl)
       }
-    }, 45000)
+    }, 120000)
 
     return () => {
       cancelled = true
@@ -355,6 +356,20 @@ export default function SecureVideoPlayer({
     setMuted(videoRef.current.muted)
   }, [])
 
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!videoRef.current) return
+    const val = Number(e.target.value)
+    videoRef.current.volume = val
+    setVolume(val)
+    if (val === 0) {
+      videoRef.current.muted = true
+      setMuted(true)
+    } else if (muted) {
+      videoRef.current.muted = false
+      setMuted(false)
+    }
+  }, [muted])
+
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!videoRef.current) return
     const val = Number(e.target.value)
@@ -499,6 +514,16 @@ export default function SecureVideoPlayer({
             <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors" aria-label={muted ? 'Unmute' : 'Mute'}>
               {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={muted ? 0 : volume}
+              onChange={handleVolumeChange}
+              className="w-16 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+              aria-label="Volume"
+            />
             <span className="text-white/70 text-xs font-mono">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>

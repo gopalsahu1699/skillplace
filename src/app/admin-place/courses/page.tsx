@@ -3,10 +3,17 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
-import { Search, Plus, Edit, Trash2, X } from 'lucide-react'
+import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { SafeImg } from '@/components/ui/safe-image'
+import ImageUpload from '@/components/ui/image-upload'
 import { notify } from '@/lib/notifications'
 import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 
@@ -36,10 +43,16 @@ interface Branch {
   is_active: boolean
 }
 
+function autoResize(el: HTMLTextAreaElement) {
+  el.style.height = 'auto'
+  el.style.height = el.scrollHeight + 'px'
+}
+
 export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [search, setSearch] = useState('')
+  const [branchFilter, setBranchFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -179,8 +192,9 @@ export default function AdminCoursesPage() {
 
   const filteredCourses = courses.filter(
     (c) =>
-      (c.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.slug || '').toLowerCase().includes(search.toLowerCase())
+      ((c.title || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.slug || '').toLowerCase().includes(search.toLowerCase())) &&
+      (branchFilter === '' || c.branch_id === branchFilter)
   )
 
   return (
@@ -204,40 +218,42 @@ export default function AdminCoursesPage() {
         </Button>
       </div>
 
-      {showForm && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-slate-900">
+      <Dialog
+        open={showForm}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowForm(false)
+            setEditingCourse(null)
+            resetForm()
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
               {editingCourse ? 'Edit Course' : 'Add New Course'}
-            </h2>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => {
-                setShowForm(false)
-                setEditingCourse(null)
-                resetForm()
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+            </DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700">Title *</label>
-              <Input
+              <textarea
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="border-slate-300"
+                onInput={(e) => autoResize(e.currentTarget)}
+                rows={1}
+                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
                 required
               />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700">Slug *</label>
-              <Input
+              <textarea
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="border-slate-300"
+                onInput={(e) => autoResize(e.currentTarget)}
+                rows={1}
+                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
                 required
               />
             </div>
@@ -246,25 +262,27 @@ export default function AdminCoursesPage() {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onInput={(e) => autoResize(e.currentTarget)}
                 rows={3}
-                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
               />
             </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700">Short Description</label>
-              <Input
+              <textarea
                 value={formData.short_description}
                 onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-                className="border-slate-300"
+                onInput={(e) => autoResize(e.currentTarget)}
+                rows={1}
+                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">Thumbnail URL</label>
-              <Input
+              <label className="text-sm font-medium text-slate-700">Thumbnail</label>
+              <ImageUpload
+                folder="courses"
                 value={formData.thumbnail_url}
-                onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                className="border-slate-300"
-                placeholder="https://example.com/image.jpg"
+                onChange={(url) => setFormData({ ...formData, thumbnail_url: url })}
               />
             </div>
             <div>
@@ -363,30 +381,18 @@ export default function AdminCoursesPage() {
                 </button>
               </div>
             </div>
-            <div className="flex items-end gap-2">
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={submitting}>
+            <div className="sm:col-span-2">
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 w-full" disabled={submitting}>
                 {submitting
                   ? 'Saving...'
                   : editingCourse
                     ? 'Update Course'
                     : 'Create Course'}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowForm(false)
-                  setEditingCourse(null)
-                  resetForm()
-                }}
-                className="border-slate-300"
-              >
-                Cancel
-              </Button>
             </div>
           </form>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
@@ -398,6 +404,18 @@ export default function AdminCoursesPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <select
+          value={branchFilter}
+          onChange={(e) => setBranchFilter(e.target.value)}
+          className="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="">All Branches</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">

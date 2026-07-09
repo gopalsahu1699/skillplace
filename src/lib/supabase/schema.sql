@@ -36,6 +36,7 @@ CREATE TABLE public.courses (
   short_description TEXT,
   thumbnail_url TEXT,
   preview_video_url TEXT,
+  features TEXT[],
   price INTEGER NOT NULL DEFAULT 0,
   discount_price INTEGER,
   duration_hours INTEGER,

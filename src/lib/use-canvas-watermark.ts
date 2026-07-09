@@ -10,10 +10,10 @@ interface WatermarkConfig {
   lessonTitle?: string
 }
 
-const WATERMARK_LINES = ['name', 'email', 'id', 'course', 'time'] as const
-const WATERMARK_COLOR = 'rgba(255,255,255,0.55)'
-const WATERMARK_BG = 'rgba(0,0,0,0.25)'
-const WATERMARK_FONT_SIZE = 13
+const WATERMARK_LINES = ['name', 'email'] as const
+const WATERMARK_COLOR = 'rgba(255,255,255,0.30)'
+const WATERMARK_BG = 'rgba(0,0,0,0.12)'
+const WATERMARK_FONT_SIZE = 12
 const WATERMARK_ROTATION = -15
 const POSITION_COLS = 4
 const POSITION_ROWS = 3
@@ -34,17 +34,10 @@ function getPositions(): { x: number; y: number }[] {
   return positions
 }
 
-function getWatermarkLines(config: WatermarkConfig, now: Date): string[] {
-  const time = now.toLocaleString('en-IN', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
+function getWatermarkLines(config: WatermarkConfig): string[] {
   return [
     config.studentName,
     config.studentEmail,
-    config.studentId ? `ID: ${config.studentId.slice(0, 8)}` : '',
-    config.courseTitle || '',
-    time,
   ].filter(Boolean)
 }
 
@@ -90,7 +83,7 @@ export function useCanvasWatermark(
     const positions = positionsRef.current
     const activeIdx = positionIdxRef.current
     const pos = positions[activeIdx % positions.length]
-    const lines = getWatermarkLines(config, new Date())
+    const lines = getWatermarkLines(config)
 
     const fontSize = Math.max(10, WATERMARK_FONT_SIZE * (rect.width / 800))
     ctx.font = `500 ${fontSize}px system-ui, sans-serif`

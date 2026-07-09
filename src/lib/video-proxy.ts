@@ -174,103 +174,107 @@ export interface AccessValidation {
   lessonTitle?: string
 }
 
-async function fetchLessonSafe(lessonId: string): Promise<Record<string, unknown> | null> {
-  const { data, error } = await adminSupabase
-    .from('lessons')
-    .select('id, title, is_active, is_free, module_id, video_id, r2_source_key, video_url, content_type')
-    .eq('id', lessonId)
-    .maybeSingle()
-  if (data) return data
-  if (error && (error.message || '').includes('content_type')) {
-    const { data: fallback } = await adminSupabase
-      .from('lessons')
-      .select('id, title, is_active, is_free, module_id, video_id, r2_source_key, video_url')
-      .eq('id', lessonId)
-      .maybeSingle()
-    if (fallback) {
-      const isVideo = !!(fallback.video_id || fallback.r2_source_key || fallback.video_url)
-      return { ...fallback, content_type: isVideo ? 'video' : 'text', is_video_content: isVideo }
-    }
-    return null
-  }
-  return null
-}
-
 export async function validateVideoAccess(
   lessonId: string,
   user: AuthenticatedUser
 ): Promise<AccessValidation> {
   try {
-    const lesson = await fetchLessonSafe(lessonId)
-    if (!lesson) return { allowed: false, error: 'Lesson not found', status: 404 }
-    if (!lesson.is_active) return { allowed: false, error: 'Lesson is not available', status: 403 }
+    // Single query with joins to get lesson → module → course in one round trip
+    const { data: lesson, error: lessonError } = await adminSupabase
+      .from('lessons')
+      .select('id, title, is_active, is_free, video_id, r2_source_key, video_url, content_type, module:module_id(course_id)')
+      .eq('id', lessonId)
+      .maybeSingle()
+
+    if (lessonError || !lesson) {
+      // Fallback: try without content_type column
+      if (lessonError && lessonError.message?.includes('content_type')) {
+        const { data: fallback } = await adminSupabase
+          .from('lessons')
+          .select('id, title, is_active, is_free, video_id, r2_source_key, video_url, module:module_id(course_id)')
+          .eq('id', lessonId)
+          .maybeSingle()
+        if (!fallback) return { allowed: false, error: 'Lesson not found', status: 404 }
+        const isVideo = !!(fallback.video_id || fallback.r2_source_key || fallback.video_url)
+        return validateVideoAccessWithCourse(fallback as Record<string, unknown>, user, isVideo)
+      }
+      return { allowed: false, error: 'Lesson not found', status: 404 }
+    }
 
     const isVideo = lesson.content_type === 'video' ||
       !!(lesson.video_id || lesson.r2_source_key || lesson.video_url)
-    if (!isVideo) return { allowed: false, error: 'Lesson is not a video', status: 400 }
 
-    const { data: module } = await adminSupabase
-      .from('modules')
-      .select('course_id')
-      .eq('id', lesson.module_id)
-      .maybeSingle()
-    if (!module) return { allowed: false, error: 'Module not found', status: 404 }
-
-    const { data: course } = await adminSupabase
-      .from('courses')
-      .select('id, title, is_active, price')
-      .eq('id', module.course_id)
-      .maybeSingle()
-    if (!course) return { allowed: false, error: 'Course not found', status: 404 }
-    if (!course.is_active) return { allowed: false, error: 'Course is not available', status: 403 }
-
-    if (lesson.is_free) {
-      return { allowed: true, courseId: course.id, courseTitle: course.title, lessonTitle: lesson.title as string }
-    }
-
-    const { data: courseEnrollment } = await adminSupabase
-      .from('course_enrollments')
-      .select('id, status')
-      .eq('user_id', user.id)
-      .eq('course_id', course.id)
-      .in('status', ['active', 'completed'])
-      .limit(1)
-      .maybeSingle()
-    if (courseEnrollment) {
-      return { allowed: true, courseId: course.id, courseTitle: course.title, lessonTitle: lesson.title as string }
-    }
-
-    const { data: programEnrollments } = await adminSupabase
-      .from('enrollments')
-      .select('id, status, program_id')
-      .eq('user_id', user.id)
-      .in('status', ['active', 'completed'])
-    if (programEnrollments && programEnrollments.length > 0) {
-      const programIds = programEnrollments.map(e => e.program_id).filter(Boolean)
-      if (programIds.length > 0) {
-        const { data: programCourses } = await adminSupabase
-          .from('program_courses')
-          .select('course_id')
-          .in('program_id', programIds)
-          .eq('course_id', course.id)
-        if (programCourses && programCourses.length > 0) {
-          return { allowed: true, courseId: course.id, courseTitle: course.title, lessonTitle: lesson.title as string }
-        }
-      }
-    }
-
-    return { allowed: false, error: 'Enrollment required', status: 403 }
+    return validateVideoAccessWithCourse(lesson as Record<string, unknown>, user, !!isVideo)
   } catch {
     return { allowed: false, error: 'Access validation failed', status: 500 }
   }
+}
+
+async function validateVideoAccessWithCourse(
+  lesson: Record<string, unknown>,
+  user: AuthenticatedUser,
+  isVideo: boolean
+): Promise<AccessValidation> {
+  if (!lesson.is_active) return { allowed: false, error: 'Lesson is not available', status: 403 }
+  if (!isVideo) return { allowed: false, error: 'Lesson is not a video', status: 400 }
+
+  const modRaw = lesson.module as unknown
+  const modData = Array.isArray(modRaw) ? modRaw[0] : modRaw
+  const courseId = modData?.course_id
+  if (!courseId) return { allowed: false, error: 'Module not found', status: 404 }
+
+  const { data: course } = await adminSupabase
+    .from('courses')
+    .select('id, title, is_active, price')
+    .eq('id', courseId)
+    .maybeSingle()
+  if (!course) return { allowed: false, error: 'Course not found', status: 404 }
+  if (!course.is_active) return { allowed: false, error: 'Course is not available', status: 403 }
+
+  if (lesson.is_free) {
+    return { allowed: true, courseId: course.id, courseTitle: course.title, lessonTitle: lesson.title as string }
+  }
+
+  const { data: courseEnrollment } = await adminSupabase
+    .from('course_enrollments')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .eq('course_id', course.id)
+    .in('status', ['active', 'completed'])
+    .limit(1)
+    .maybeSingle()
+  if (courseEnrollment) {
+    return { allowed: true, courseId: course.id, courseTitle: course.title, lessonTitle: lesson.title as string }
+  }
+
+  const { data: programEnrollments } = await adminSupabase
+    .from('enrollments')
+    .select('id, status, program_id')
+    .eq('user_id', user.id)
+    .in('status', ['active', 'completed'])
+  if (programEnrollments && programEnrollments.length > 0) {
+    const programIds = programEnrollments.map(e => e.program_id).filter(Boolean)
+    if (programIds.length > 0) {
+      const { data: programCourses } = await adminSupabase
+        .from('program_courses')
+        .select('course_id')
+        .in('program_id', programIds)
+        .eq('course_id', course.id)
+      if (programCourses && programCourses.length > 0) {
+        return { allowed: true, courseId: course.id, courseTitle: course.title, lessonTitle: lesson.title as string }
+      }
+    }
+  }
+
+  return { allowed: false, error: 'Enrollment required', status: 403 }
 }
 
 // ============================================
 // Lesson Video Info
 // ============================================
 
-const lessonVideoCache = new Map<string, { videoId: string | null; r2Key: string | null; fetchedAt: number }>()
-const CACHE_TTL = 30_000
+const lessonVideoCache = new Map<string, { videoId: string | null; r2Key: string | null; courseId: string; fetchedAt: number }>()
+const CACHE_TTL = 60_000
 
 async function getLessonVideoInfoRaw(lessonId: string): Promise<{
   videoId: string | null
@@ -278,25 +282,24 @@ async function getLessonVideoInfoRaw(lessonId: string): Promise<{
   streamStatus: string | null
   courseId: string
 } | null> {
+  // Single query with join to get module → course in one round trip
   const { data, error } = await adminSupabase
     .from('lessons')
-    .select('video_id, r2_source_key, stream_status, module_id, video_url')
+    .select('video_id, r2_source_key, stream_status, video_url, module:module_id(course_id)')
     .eq('id', lessonId)
     .maybeSingle()
+
   if (error) return null
   if (!data) return null
 
-  const { data: mod } = await adminSupabase
-    .from('modules')
-    .select('course_id')
-    .eq('id', data.module_id)
-    .maybeSingle()
+  const moduleRaw = data.module as unknown
+  const moduleData = Array.isArray(moduleRaw) ? moduleRaw[0] : moduleRaw
 
   return {
     videoId: data.video_id,
     r2SourceKey: data.r2_source_key || null,
     streamStatus: data.stream_status || null,
-    courseId: mod?.course_id || '',
+    courseId: moduleData?.course_id || '',
   }
 }
 
@@ -314,10 +317,10 @@ export async function getLessonVideoInfo(lessonId: string): Promise<{
 export async function getLessonVideoInfoCached(lessonId: string): ReturnType<typeof getLessonVideoInfo> {
   const cached = lessonVideoCache.get(lessonId)
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
-    return Promise.resolve({ videoId: cached.videoId, r2SourceKey: cached.r2Key, streamStatus: null, courseId: '' })
+    return Promise.resolve({ videoId: cached.videoId, r2SourceKey: cached.r2Key, streamStatus: null, courseId: cached.courseId })
   }
   return getLessonVideoInfo(lessonId).then((info) => {
-    lessonVideoCache.set(lessonId, { videoId: info.videoId, r2Key: info.r2SourceKey, fetchedAt: Date.now() })
+    lessonVideoCache.set(lessonId, { videoId: info.videoId, r2Key: info.r2SourceKey, courseId: info.courseId, fetchedAt: Date.now() })
     return info
   })
 }
@@ -364,14 +367,43 @@ export async function logVideoPlayback(entry: VideoPlaybackLog): Promise<void> {
 // Stream Proxy (Cloudflare Stream HLS)
 // ============================================
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _CF_STREAM_DOMAIN = process.env.CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net'
+
+// Cache signed playback URLs in memory to avoid Cloudflare API call per segment
+const playbackUrlCache = new Map<string, { playbackUrl: string; expiresAt: number }>()
+const PLAYBACK_URL_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+async function getCachedPlaybackUrl(videoId: string): Promise<string> {
+  const cached = playbackUrlCache.get(videoId)
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.playbackUrl
+  }
+
+  // Request a 10-minute signed URL; cache for 5 minutes
+  const { playbackUrl } = await getSignedPlaybackUrl(videoId, 10)
+  playbackUrlCache.set(videoId, {
+    playbackUrl,
+    expiresAt: Date.now() + PLAYBACK_URL_CACHE_TTL,
+  })
+
+  return playbackUrl
+}
+
+// Clean expired entries periodically
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, record] of playbackUrlCache.entries()) {
+    if (now > record.expiresAt) {
+      playbackUrlCache.delete(key)
+    }
+  }
+}, 5 * 60 * 1000)
 
 export async function fetchAndRewriteManifest(
   videoId: string,
   proxyBaseUrl: string
 ): Promise<{ manifest: string; contentType: string }> {
-  const { playbackUrl } = await getSignedPlaybackUrl(videoId, 1)
+  const playbackUrl = await getCachedPlaybackUrl(videoId)
 
   const response = await fetch(playbackUrl, {
     headers: { 'Accept': 'application/vnd.apple.mpegurl' },
@@ -403,7 +435,7 @@ export async function fetchStreamSegment(
   videoId: string,
   segmentPath: string
 ): Promise<{ body: ReadableStream<Uint8Array> | null; contentType: string; contentLength: number; status: number }> {
-  const { playbackUrl } = await getSignedPlaybackUrl(videoId, 1)
+  const playbackUrl = await getCachedPlaybackUrl(videoId)
   const baseUrl = playbackUrl.replace('/manifest/video.m3u8', '')
   const segmentUrl = `${baseUrl}/${segmentPath}`
 

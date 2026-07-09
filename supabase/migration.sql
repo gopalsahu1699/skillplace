@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.courses (
   short_description TEXT,
   thumbnail_url TEXT,
   preview_video_url TEXT,
+  features TEXT[],
   price INTEGER NOT NULL DEFAULT 0,
   discount_price INTEGER,
   duration_hours INTEGER,
@@ -81,3 +82,6 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_courses_category ON public.courses(category_id);
 CREATE INDEX IF NOT EXISTS idx_courses_slug ON public.courses(slug);
+
+-- Add features column to existing courses table (safe to run multiple times)
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS features TEXT[];

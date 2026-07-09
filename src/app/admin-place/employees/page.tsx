@@ -15,6 +15,7 @@ import {
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { SafeImg } from '@/components/ui/safe-image'
+import ImageUpload from '@/components/ui/image-upload'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone } from '@/lib/validation/phone'
@@ -357,12 +358,11 @@ export default function AdminEmployeesPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Photo URL</label>
-              <Input
+              <label className="text-sm font-medium text-slate-700">Photo</label>
+              <ImageUpload
+                folder="employees"
                 value={formData.photo_url}
-                onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-                className="border-slate-300"
-                placeholder="https://..."
+                onChange={(url) => setFormData({ ...formData, photo_url: url })}
               />
             </div>
             <div className="sm:col-span-2">

@@ -53,6 +53,27 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
   const formattedCount = ((enrollmentCount || 0) + 1200).toLocaleString()
   const branchName = course.branches?.name || 'Engineering'
 
+  const featuresList: string[] = (() => {
+    if (Array.isArray(course.features) && course.features.length > 0) return course.features
+    if (typeof course.features === 'string' && course.features) {
+      const raw = course.features
+      if (raw.startsWith('[') && raw.endsWith(']')) {
+        try { return JSON.parse(raw) } catch {}
+      }
+      if (raw.startsWith('{') && raw.endsWith('}')) {
+        return raw.slice(1, -1).split(',').map((s: string) => s.trim().replace(/^"|"$/g, '')).filter(Boolean)
+      }
+      return raw.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+    }
+    if (course.description) {
+      const lines = course.description.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+      if (lines.length > 1) return lines
+    }
+    return []
+  })()
+
+  const aboutDescription = course.short_description || course.description || 'Master practical technical drafting and design skills. Learn to transform conceptual ideas into professional-grade engineering documentation with industry-standard workflows.'
+
   const faqs = await getFaqs()
 
   return (
@@ -180,12 +201,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
               <div>
                 <h2 className="font-headline-lg text-headline-lg mb-6 text-primary">About This Course</h2>
                 <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-                  {course.description || 'Master practical technical drafting and design skills. Learn to transform conceptual ideas into professional-grade engineering documentation with industry-standard workflows.'}
+                  {aboutDescription}
                 </p>
               </div>
 
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-border-subtle">
-                {['Architectural Planning', 'Layer Management', 'Annotation & Scaling', 'Plotting & Publishing'].map((item) => (
+                {featuresList.map((item) => (
                   <div key={item} className="flex items-center gap-3 text-on-surface">
                     <span className="w-2 h-2 bg-secondary rounded-sm shrink-0"></span>
                     <span className="font-body-md">{item}</span>

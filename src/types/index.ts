@@ -27,6 +27,7 @@ export interface Course {
   description: string | null
   short_description: string | null
   thumbnail_url: string | null
+  features?: string[] | null
   price: number
   discount_price: number | null
   duration_hours: number | null

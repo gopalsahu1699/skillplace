@@ -146,7 +146,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                     </span>
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* <div className="flex items-center gap-2 mb-3">
                       {course.level && (
                         <span className={`font-label-md text-[10px] uppercase px-2 py-0.5 rounded ${
                           course.level === 'beginner' ? 'bg-success-green/10 text-success-green' :
@@ -162,7 +162,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                           {course.duration_hours}h
                         </span>
                       )}
-                    </div>
+                    </div> */}
                     <h3 className="font-headline-md text-headline-md text-on-surface mb-2 line-clamp-2 group-hover:text-secondary transition-colors">
                       {course.title}
                     </h3>
@@ -272,7 +272,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
 
                     {/* Content */}
                     <div className="p-6 flex flex-col flex-grow">
-                      <div className="flex items-center gap-2 mb-3">
+                      {/* <div className="flex items-center gap-2 mb-3">
                         {course.level && (
                           <span className={`font-label-md text-[10px] uppercase px-2 py-0.5 rounded ${
                             course.level === 'beginner' ? 'bg-success-green/10 text-success-green' :
@@ -288,7 +288,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                             {course.duration_hours}h
                           </span>
                         )}
-                      </div>
+                      </div> */}
 
                       <h3 className="font-headline-md text-headline-md text-on-surface mb-2 line-clamp-2 group-hover:text-secondary transition-colors">
                         {course.title}

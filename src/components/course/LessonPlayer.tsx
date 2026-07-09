@@ -16,6 +16,7 @@ import {
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import { cn } from '@/lib/utils'
+import Hls from 'hls.js'
 import LectureComingSoon from './LectureComingSoon'
 import { useCanvasWatermark } from '@/lib/use-canvas-watermark'
 import { ForensicSampler } from '@/lib/video-forensics'
@@ -57,6 +58,7 @@ export default function LessonPlayer({
   drmConfig,
 }: LessonPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const hlsRef = useRef<Hls | null>(null)
   const lastProgressRef = useRef(0)
   const tokenRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const drmSessionRef = useRef<DrmSession | null>(null)
@@ -64,11 +66,13 @@ export default function LessonPlayer({
   const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(1)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [loading, setLoading] = useState(true)
   const [streamUrl, setStreamUrl] = useState<string | null>(null)
+  const [playbackMode, setPlaybackMode] = useState<'hls' | 'direct' | 'none'>('none')
   const [videoError, setVideoError] = useState(false)
   const [showControls, setShowControls] = useState(true)
 
@@ -84,10 +88,14 @@ export default function LessonPlayer({
     return () => {
       if (controlsTimeout.current) clearTimeout(controlsTimeout.current)
       if (tokenRefreshRef.current) clearInterval(tokenRefreshRef.current)
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
     }
   }, [])
 
-  const fetchPlaybackUrl = useCallback(async () => {
+  const fetchPlaybackUrl = useCallback(async (): Promise<{ streamUrl: string; sourceType: 'stream' | 'r2' | 'none' } | null> => {
     if (!lesson.id) return null
     try {
       const res = await fetch(`/api/video/playback-token?lessonId=${lesson.id}`, {
@@ -98,7 +106,10 @@ export default function LessonPlayer({
         return null
       }
       const data = await res.json()
-      return data.streamUrl as string
+      return {
+        streamUrl: data.streamUrl as string,
+        sourceType: (data.source?.type as 'stream' | 'r2' | 'none') || 'direct',
+      }
     } catch {
       setVideoError(true)
       return null
@@ -113,14 +124,15 @@ export default function LessonPlayer({
     const RETRY_DELAY = 2000
 
     setStreamUrl(null)
+    setPlaybackMode('none')
     setVideoError(false)
     setLoading(true)
 
-    async function fetchWithRetry(): Promise<string | null> {
+    async function fetchWithRetry(): Promise<{ streamUrl: string; sourceType: 'stream' | 'r2' | 'none' } | null> {
       while (retries < MAX_RETRIES) {
         if (cancelled) return null
-        const url = await fetchPlaybackUrl()
-        if (url) return url
+        const result = await fetchPlaybackUrl()
+        if (result) return result
         retries++
         if (retries < MAX_RETRIES) {
           await new Promise(r => setTimeout(r, RETRY_DELAY * retries))
@@ -130,25 +142,70 @@ export default function LessonPlayer({
     }
 
     ;(async () => {
-      const url = await fetchWithRetry()
-      if (!cancelled && url) {
-        setStreamUrl(url)
+      const result = await fetchWithRetry()
+      if (!cancelled && result) {
+        setStreamUrl(result.streamUrl)
+        setPlaybackMode(result.sourceType === 'stream' ? 'hls' : 'direct')
       }
     })()
 
     tokenRefreshRef.current = setInterval(async () => {
       if (cancelled) return
       retries = 0
-      const url = await fetchWithRetry()
-      if (!cancelled && url) {
-        setStreamUrl(url)
+      const result = await fetchWithRetry()
+      if (!cancelled && result) {
+        setStreamUrl(result.streamUrl)
+        setPlaybackMode(result.sourceType === 'stream' ? 'hls' : 'direct')
       }
-    }, 45000)
+    }, 120000)
 
     return () => {
       cancelled = true
     }
   }, [lesson.id, lesson.content_type, fetchPlaybackUrl])
+
+  // HLS.js initialization for stream content
+  useEffect(() => {
+    if (playbackMode !== 'hls' || !streamUrl || !videoRef.current) {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+      return
+    }
+
+    let destroyed = false
+    const video = videoRef.current
+    const url: string = streamUrl
+
+    if (Hls.isSupported()) {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+      }
+      const hls = new Hls()
+      hlsRef.current = hls
+      hls.loadSource(url)
+      hls.attachMedia(video)
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (!destroyed) setLoading(false)
+      })
+      hls.on(Hls.Events.ERROR, (_event, errData) => {
+        if (errData.fatal && !destroyed) {
+          setVideoError(true)
+        }
+      })
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url
+    }
+
+    return () => {
+      destroyed = true
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+    }
+  }, [playbackMode, streamUrl])
 
   useEffect(() => {
     if (playing) {
@@ -254,6 +311,20 @@ export default function LessonPlayer({
     setMuted(videoRef.current.muted)
   }, [])
 
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!videoRef.current) return
+    const val = Number(e.target.value)
+    videoRef.current.volume = val
+    setVolume(val)
+    if (val === 0) {
+      videoRef.current.muted = true
+      setMuted(true)
+    } else if (muted) {
+      videoRef.current.muted = false
+      setMuted(false)
+    }
+  }, [muted])
+
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!videoRef.current) return
     const val = Number(e.target.value)
@@ -322,9 +393,13 @@ export default function LessonPlayer({
                 onClick={() => {
                   setVideoError(false)
                   setLoading(true)
+                  setPlaybackMode('none')
                   setStreamUrl(null)
-                  fetchPlaybackUrl().then((url) => {
-                    if (url) setStreamUrl(url)
+                  fetchPlaybackUrl().then((result) => {
+                    if (result) {
+                      setStreamUrl(result.streamUrl)
+                      setPlaybackMode(result.sourceType === 'stream' ? 'hls' : 'direct')
+                    }
                   })
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
@@ -345,9 +420,10 @@ export default function LessonPlayer({
             onLoadedMetadata={handleLoadedMetadata}
             onCanPlay={() => setLoading(false)}
             onLoadStart={() => setLoading(true)}
+            onError={() => setVideoError(true)}
             onClick={togglePlay}
           >
-            {streamUrl && (
+            {playbackMode === 'direct' && streamUrl && (
               <source src={streamUrl} type="video/mp4" />
             )}
           </video>
@@ -394,6 +470,16 @@ export default function LessonPlayer({
                 <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors" aria-label={muted ? 'Unmute' : 'Mute'}>
                   {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={muted ? 0 : volume}
+                  onChange={handleVolumeChange}
+                  className="w-16 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                  aria-label="Volume"
+                />
                 <span className="text-white/70 text-xs font-mono">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>

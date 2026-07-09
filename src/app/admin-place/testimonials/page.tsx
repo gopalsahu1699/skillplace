@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog'
 import { Star, Trash2, Eye, EyeOff, Plus, Edit } from 'lucide-react'
+import ImageUpload from '@/components/ui/image-upload'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 
@@ -382,14 +383,11 @@ export default function AdminTestimonialsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Student Photo URL</label>
-              <Input
+              <label className="text-sm font-medium text-slate-700">Student Photo</label>
+              <ImageUpload
+                folder="testimonials"
                 value={formData.student_photo}
-                onChange={(e) =>
-                  setFormData({ ...formData, student_photo: e.target.value })
-                }
-                className="border-slate-300 mt-1"
-                placeholder="https://... (optional)"
+                onChange={(url) => setFormData({ ...formData, student_photo: url })}
               />
             </div>
             <div>
