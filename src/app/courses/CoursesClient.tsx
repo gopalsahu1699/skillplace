@@ -135,11 +135,11 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                         </span>
                       </div>
                     )}
-                    {branch && (
+                    {/* {branch && (
                       <span className="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-label-md text-[10px] uppercase px-2 py-1 rounded">
                         {branch.name}
                       </span>
-                    )}
+                    )} */}
                     <span className="absolute top-3 right-3 bg-success-green/90 text-white font-label-md text-[10px] uppercase px-2 py-1 rounded flex items-center gap-1">
                       <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>check_circle</span>
                       Enrolled
@@ -263,11 +263,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                           </span>
                         </div>
                       )}
-                      {branch && (
-                        <span className="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-label-md text-[10px] uppercase px-2 py-1 rounded">
-                          {branch.name}
-                        </span>
-                      )}
+                
                     </div>
 
                     {/* Content */}

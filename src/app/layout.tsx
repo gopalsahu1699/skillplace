@@ -4,6 +4,7 @@ import "./globals.css"
 import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
 import { Toaster } from "sonner"
+import ClientLayout from "@/components/ClientLayout"
 import { SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS } from "@/lib/seo/metadata"
 import JsonLd from "@/components/seo/JsonLd"
 import { organizationSchema, websiteSchema, localBusinessSchema } from "@/lib/seo/json-ld"
@@ -132,10 +133,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={localBusinessSchema()} />
       </head>
       <body className={`${inter.className} ${jakarta.className} antialiased`} suppressHydrationWarning>
-        <Toaster position="top-right" richColors closeButton duration={4000} />
-        <Navbar />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <ClientLayout>
+          <Toaster position="top-right" richColors closeButton duration={4000} />
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+        </ClientLayout>
       </body>
     </html>
   )

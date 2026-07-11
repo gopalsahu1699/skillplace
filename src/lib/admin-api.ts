@@ -105,6 +105,32 @@ export async function updateRecord(table: string, id: string, data: unknown) {
   return json.data
 }
 
+export async function getCombinedProgramsData() {
+  const res = await fetch(`${API_BASE}/programs-data`)
+  if (res.status === 401) {
+    handleSessionExpired()
+    return null
+  }
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error || 'Request failed')
+  return json.data
+}
+
+export async function batchUpdateProgramCourses(programId: string, courseIds: string[]) {
+  const res = await fetch(`${API_BASE}/program-courses`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ program_id: programId, course_ids: courseIds }),
+  })
+  if (res.status === 401) {
+    handleSessionExpired()
+    return null
+  }
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error || 'Request failed')
+  return json
+}
+
 export async function deleteRecord(table: string, id: string) {
   const res = await fetch(`${API_BASE}?table=${table}&id=${id}`, {
     method: 'DELETE',

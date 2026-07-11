@@ -200,19 +200,18 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             <div className="md:col-span-7 p-8 md:p-10 bg-white tonal-card rounded-2xl flex flex-col justify-between">
               <div>
                 <h2 className="font-headline-lg text-headline-lg mb-6 text-primary">About This Course</h2>
-                <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                <div className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed whitespace-pre-wrap">
                   {aboutDescription}
-                </p>
+                </div>
               </div>
 
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-border-subtle">
-                {featuresList.map((item) => (
-                  <div key={item} className="flex items-center gap-3 text-on-surface">
-                    <span className="w-2 h-2 bg-secondary rounded-sm shrink-0"></span>
-                    <span className="font-body-md">{item}</span>
+              {featuresList.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-border-subtle">
+                  <div className="font-body-md text-on-surface-variant whitespace-pre-wrap">
+                    {featuresList.join('\n')}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-5 bg-primary-container text-white p-8 md:p-10 rounded-2xl flex flex-col justify-center">

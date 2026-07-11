@@ -3,8 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Search, Plus, Edit, Trash2, Loader2, AlertCircle, Star, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { Search, Plus, Edit, Trash2, Loader2, AlertCircle, Star, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react'
+import { getRecords, createRecord, updateRecord, deleteRecord, getCombinedProgramsData, batchUpdateProgramCourses } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 import type { TrainingProgram, ProgramCourse, Branch, Course } from '@/types'
 import dynamic from 'next/dynamic'
@@ -87,22 +87,20 @@ export default function AdminProgramsPage() {
     setLoading(true)
     setError(null)
     try {
-      const [programsData, branchesData, coursesData, pcData] = await Promise.all([
-        getRecords('training_programs', undefined, undefined, '*,branches(name)'),
-        getRecords('branches'),
-        getRecords('courses'),
-        getRecords('program_courses'),
-      ])
+      const data = await getCombinedProgramsData()
+      if (!data) throw new Error('Session expired')
 
-      const sortedPrograms = (programsData || []).sort((a: TrainingProgram, b: TrainingProgram) =>
+      const sortedPrograms = (data.programs || []).sort((a: TrainingProgram, b: TrainingProgram) =>
         (a.created_at || '').localeCompare(b.created_at || '')
       )
       setPrograms(sortedPrograms)
-      setBranches((branchesData || []).filter((b: Branch) => b.is_active !== false))
-      setCourses(coursesData || [])
+      setBranches((data.branches || []).filter((b: Branch) => b.is_active !== false))
+      setCourses(data.courses || [])
 
       const pcMap: Record<string, string[]> = {}
-      const rawPc: ProgramCourse[] = pcData || []
+      const rawPc: ProgramCourse[] = (data.programCourses || []).sort(
+        (a: ProgramCourse, b: ProgramCourse) => (a.order_index || 0) - (b.order_index || 0)
+      )
       for (const pc of rawPc) {
         if (!pcMap[pc.program_id]) pcMap[pc.program_id] = []
         pcMap[pc.program_id].push(pc.course_id)
@@ -150,45 +148,57 @@ export default function AdminProgramsPage() {
       }
 
       let programId: string
+      let updatedProgram: TrainingProgram
 
       if (editingProgram) {
         const updated = await updateRecord('training_programs', editingProgram.id, body)
         programId = updated.id || editingProgram.id
+        updatedProgram = updated
 
-        const existingCourses = programCourses[editingProgram.id] || []
-        const toAdd = selectedCourses.filter((c) => !existingCourses.includes(c))
-        const toRemove = existingCourses.filter((c) => !selectedCourses.includes(c))
+        const oldCourseIds = allProgramCourses
+          .filter((pc) => pc.program_id === programId)
+          .map((pc) => pc.course_id)
 
-        for (const courseId of toAdd) {
-          await createRecord('program_courses', { program_id: programId, course_id: courseId })
-        }
-        for (const courseId of toRemove) {
-          const pcRecord = allProgramCourses.find(
-            (pc) => pc.program_id === programId && pc.course_id === courseId
-          )
-          if (pcRecord) {
-            await deleteRecord('program_courses', pcRecord.id)
-          }
+        const changed = oldCourseIds.length !== selectedCourses.length ||
+          !oldCourseIds.every((id, i) => id === selectedCourses[i])
+
+        if (changed) {
+          await batchUpdateProgramCourses(programId, selectedCourses)
         }
 
         notify.courseUpdated()
       } else {
         const created = await createRecord('training_programs', body)
         programId = created.id
+        updatedProgram = created
 
-        for (const courseId of selectedCourses) {
-          await createRecord('program_courses', { program_id: programId, course_id: courseId })
+        if (selectedCourses.length > 0) {
+          await batchUpdateProgramCourses(programId, selectedCourses)
         }
 
         notify.courseCreated()
       }
 
+      setPrograms((prev) => {
+        const idx = prev.findIndex((p) => p.id === programId)
+        const updated = { ...body, id: programId, branches: null } as unknown as TrainingProgram
+        if (idx >= 0) {
+          const copy = [...prev]
+          copy[idx] = { ...copy[idx], ...updated }
+          return copy
+        }
+        return [updated, ...prev]
+      })
+
+      setProgramCourses((prev) => ({ ...prev, [programId]: selectedCourses }))
+
       setShowForm(false)
       setEditingProgram(null)
       resetForm()
-      fetchData()
     } catch (err) {
       notify.genericError(err instanceof Error ? err.message : 'Failed to save program')
+      setPrograms((prev) => [...prev])
+      setProgramCourses((prev) => ({ ...prev }))
     } finally {
       setSubmitting(false)
     }
@@ -201,13 +211,15 @@ export default function AdminProgramsPage() {
 
   async function confirmDelete() {
     if (!deletingProgram) return
+    const deletedId = deletingProgram.id
     try {
-      await deleteRecord('training_programs', deletingProgram.id)
-      notify.courseDeleted()
+      setPrograms((prev) => prev.filter((p) => p.id !== deletedId))
       setShowDeleteConfirm(false)
       setDeletingProgram(null)
-      fetchData()
+      await deleteRecord('training_programs', deletedId)
+      notify.courseDeleted()
     } catch (err) {
+      fetchData()
       notify.genericError(err instanceof Error ? err.message : 'Failed to delete program')
     }
   }
@@ -247,6 +259,16 @@ export default function AdminProgramsPage() {
     setSelectedCourses((prev) =>
       prev.includes(courseId) ? prev.filter((c) => c !== courseId) : [...prev, courseId]
     )
+  }
+
+  function moveCourse(index: number, direction: 'up' | 'down') {
+    setSelectedCourses((prev) => {
+      const arr = [...prev]
+      const swapIndex = direction === 'up' ? index - 1 : index + 1
+      if (swapIndex < 0 || swapIndex >= arr.length) return prev
+      ;[arr[index], arr[swapIndex]] = [arr[swapIndex], arr[index]]
+      return arr
+    })
   }
 
   async function toggleFeatured(program: TrainingProgram) {
@@ -304,6 +326,7 @@ export default function AdminProgramsPage() {
         onFeaturesChange={setFeaturesText}
         selectedCourses={selectedCourses}
         onToggleCourse={toggleCourse}
+        onMoveCourse={moveCourse}
         submitting={submitting}
         editingProgram={editingProgram}
         branches={branches}

@@ -78,12 +78,12 @@ export default async function Home() {
 
       <FeaturedPrograms programs={featuredPrograms} />
 
-      <JobCoursesSection
+      {/* <JobCoursesSection
         civilList={civilList}
         mechanicalList={mechanicalList}
         electricalList={electricalList}
         softSkillsList={softSkillsList}
-      />
+      /> */}
 
       <MeetMentors />
 

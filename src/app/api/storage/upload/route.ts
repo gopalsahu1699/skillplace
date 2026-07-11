@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
+      console.error('[upload] Supabase upload error:', uploadError.message, { bucket: BUCKET, path })
       return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 

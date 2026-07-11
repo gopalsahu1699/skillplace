@@ -10,7 +10,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-import { Search, Plus, Edit, Trash2 } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, RotateCw } from 'lucide-react'
+import { slugify } from '@/lib/utils'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { SafeImg } from '@/components/ui/safe-image'
 import ImageUpload from '@/components/ui/image-upload'
@@ -239,7 +240,14 @@ export default function AdminCoursesPage() {
               <label className="text-sm font-medium text-slate-700">Title *</label>
               <textarea
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) => {
+                  const title = e.target.value
+                  setFormData(prev => ({
+                    ...prev,
+                    title,
+                    slug: slugify(title),
+                  }))
+                }}
                 onInput={(e) => autoResize(e.currentTarget)}
                 rows={1}
                 className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
@@ -248,14 +256,26 @@ export default function AdminCoursesPage() {
             </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700">Slug *</label>
-              <textarea
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                onInput={(e) => autoResize(e.currentTarget)}
-                rows={1}
-                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
-                required
-              />
+              <div className="flex gap-2">
+                <textarea
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  onInput={(e) => autoResize(e.currentTarget)}
+                  rows={1}
+                  className="flex-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-hidden"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setFormData(prev => ({ ...prev, slug: slugify(prev.title) }))}
+                  className="shrink-0 border-slate-300 self-start mt-0.5"
+                  title="Regenerate slug from title"
+                >
+                  <RotateCw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700">Description</label>

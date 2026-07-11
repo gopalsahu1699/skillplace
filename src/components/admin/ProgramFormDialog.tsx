@@ -1,8 +1,9 @@
 'use client'
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, ChevronUp, ChevronDown, Search } from 'lucide-react'
 import type { TrainingProgram, Branch, Course } from '@/types'
 
 interface ProgramFormData {
@@ -33,6 +34,7 @@ interface ProgramFormDialogProps {
   onFeaturesChange: (text: string) => void
   selectedCourses: string[]
   onToggleCourse: (courseId: string) => void
+  onMoveCourse: (index: number, direction: 'up' | 'down') => void
   submitting: boolean
   editingProgram: TrainingProgram | null
   branches: Branch[]
@@ -49,13 +51,23 @@ export default function ProgramFormDialog({
   onFeaturesChange,
   selectedCourses,
   onToggleCourse,
+  onMoveCourse,
   submitting,
   editingProgram,
   branches,
   courses,
   onSubmit,
 }: ProgramFormDialogProps) {
+  const [courseSearch, setCourseSearch] = useState('')
+  const [branchFilter, setBranchFilter] = useState('')
+
   if (!open) return null
+
+  const filteredCourses = courses.filter((c) => {
+    const matchesSearch = (c.title || '').toLowerCase().includes(courseSearch.toLowerCase())
+    const matchesBranch = !branchFilter || c.branch_id === branchFilter
+    return matchesSearch && matchesBranch
+  })
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
@@ -247,12 +259,76 @@ export default function ProgramFormDialog({
         </div>
         <div className="sm:col-span-2">
           <label className="text-sm font-medium text-slate-700 mb-2 block">Link Courses to Program</label>
-          <div className="border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto">
-            {courses.length === 0 ? (
-              <p className="text-sm text-slate-400">No courses available</p>
+          {selectedCourses.length > 0 && (
+            <div className="mb-3 border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200 flex items-center justify-between">
+                <span>Course Order</span>
+                <span className="text-xs text-slate-400">{selectedCourses.length} selected</span>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                {selectedCourses.map((courseId, index) => {
+                  const course = courses.find((c) => c.id === courseId)
+                  return (
+                    <div key={courseId} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-medium text-slate-400 w-5 shrink-0">{index + 1}.</span>
+                        <span className="text-sm text-slate-700 truncate">{course?.title || 'Unknown'}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => onMoveCourse(index, 'up')}
+                          disabled={index === 0}
+                          className="p-1 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move up"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onMoveCourse(index, 'down')}
+                          disabled={index === selectedCourses.length - 1}
+                          className="p-1 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move down"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          <div className="border border-slate-200 rounded-lg">
+            <div className="flex items-center gap-2 p-2 border-b border-slate-200">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={courseSearch}
+                  onChange={(e) => setCourseSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <select
+                value={branchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
+                className="text-sm border border-slate-300 rounded-md px-2 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              >
+                <option value="">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="p-3 max-h-48 overflow-y-auto">
+            {filteredCourses.length === 0 ? (
+              <p className="text-sm text-slate-400">{courseSearch ? 'No courses match your search.' : 'No courses available'}</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {courses.map((course) => (
+                {[...filteredCourses].sort((a, b) => (a.title || '').localeCompare(b.title || '')).map((course) => (
                   <label
                     key={course.id}
                     className="flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-50 p-1.5 rounded cursor-pointer"
@@ -269,6 +345,7 @@ export default function ProgramFormDialog({
               </div>
             )}
           </div>
+        </div>
         </div>
         <div className="sm:col-span-2 flex justify-end gap-3">
           <Button

@@ -3,6 +3,9 @@ import { useState, useRef, useEffect } from 'react'
 import SectionReveal from './SectionReveal'
 import { SafeImg } from '@/components/ui/safe-image'
 import { supabase } from '@/lib/supabase/client'
+import { isNetworkError, withRetry } from '@/lib/network'
+import { useOnlineStatus } from '@/context/OnlineStatusContext'
+import { WifiOff, RefreshCw } from 'lucide-react'
 
 interface Partner {
   id: string
@@ -36,24 +39,39 @@ function PartnerLogo({ partner }: { partner: Partner }) {
 export default function IndustryPartners() {
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
+  const [networkError, setNetworkError] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { isOnline } = useOnlineStatus()
 
-  useEffect(() => {
-    async function fetchPartners() {
-      const { data, error } = await supabase
+  const fetchPartners = async () => {
+    setLoading(true)
+    setNetworkError(false)
+
+    const { data: response, error } = await withRetry(() =>
+      supabase
         .from('partners')
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true })
-      if (error) {
+    )
+    if (error) {
+      if (isNetworkError(error)) {
+        setNetworkError(true)
+      } else {
         console.error('Error fetching partners:', error)
       }
-      if (data) {
-        setPartners(data)
-      }
       setLoading(false)
+      return
     }
+    const data = response?.data as Partner[] | undefined
+    if (data && data.length > 0) {
+      setPartners(data)
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
     fetchPartners()
   }, [])
 
@@ -86,7 +104,24 @@ export default function IndustryPartners() {
           </p>
         </SectionReveal>
 
-        {loading ? (
+        {networkError ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+              <WifiOff className="w-6 h-6 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Unable to load partners</h3>
+            <p className="text-sm text-slate-500 mb-6 max-w-sm">
+              {isOnline ? 'Something went wrong. Please try again.' : 'You appear to be offline. Connect to the internet and retry.'}
+            </p>
+            <button
+              onClick={fetchPartners}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary text-white text-sm font-bold hover:bg-secondary/90 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try Again
+            </button>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin" />
           </div>

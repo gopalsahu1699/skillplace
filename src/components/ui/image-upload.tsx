@@ -1,9 +1,10 @@
 'use client'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X, FolderOpen, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ImageFolder } from '@/lib/supabase/storage'
 import ImagePicker from './image-picker'
+import { toast } from 'sonner'
 
 interface ImageUploadProps {
   value: string
@@ -19,6 +20,10 @@ export default function ImageUpload({ value, onChange, folder, className }: Imag
   const [progress, setProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+
+  useEffect(() => {
+    setPreview(value || '')
+  }, [value])
 
   const uploadFile = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) return
@@ -61,7 +66,9 @@ export default function ImageUpload({ value, onChange, folder, className }: Imag
       })
 
       onChange(result)
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed'
+      toast.error(message)
       setPreview(value || '')
     } finally {
       setUploading(false)

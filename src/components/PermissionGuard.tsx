@@ -19,6 +19,8 @@ const PERMISSION_MAP: Record<string, string> = {
   '/admin-place/notifications': 'can_manage_notifications',
   '/admin-place/payments': 'can_manage_payments',
   '/admin-place/certificates': 'can_manage_certificates',
+  '/admin-place/faqs': 'can_manage_faqs',
+  '/admin-place/mentors': 'can_manage_mentors',
 }
 
 interface PermissionGuardProps {

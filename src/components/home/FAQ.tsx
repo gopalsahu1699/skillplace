@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import SectionReveal from './SectionReveal'
 import { supabase } from '@/lib/supabase/client'
+import { isNetworkError, withRetry } from '@/lib/network'
+import { useOnlineStatus } from '@/context/OnlineStatusContext'
+import { WifiOff, RefreshCw } from 'lucide-react'
 
 interface FaqItem {
   id: string
@@ -15,17 +18,35 @@ interface FaqItem {
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [faqItems, setFaqItems] = useState<FaqItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [networkError, setNetworkError] = useState(false)
+  const { isOnline } = useOnlineStatus()
 
-  useEffect(() => {
-    async function fetchFaqs() {
-      const { data } = await supabase
+  const fetchFaqs = async () => {
+    setLoading(true)
+    setNetworkError(false)
+
+    const { data: response, error } = await withRetry(() =>
+      supabase
         .from('faqs')
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true })
         .order('created_at', { ascending: true })
-      if (data) setFaqItems(data)
+    )
+    const data = response?.data as FaqItem[] | undefined
+    if (error) {
+      if (isNetworkError(error)) {
+        setNetworkError(true)
+      }
+      setLoading(false)
+      return
     }
+    if (data) setFaqItems(data)
+    setLoading(false)
+  }
+
+  useEffect(() => {
     fetchFaqs()
   }, [])
 
@@ -49,6 +70,32 @@ export default function FAQ() {
         </SectionReveal>
 
         <SectionReveal>
+          {networkError ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-border-subtle">
+              <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                <WifiOff className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">Unable to load FAQs</h3>
+              <p className="text-sm text-slate-500 mb-6 max-w-sm">
+                {isOnline ? 'Something went wrong. Please try again.' : 'You appear to be offline. Connect to the internet and retry.'}
+              </p>
+              <button
+                onClick={fetchFaqs}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary text-white text-sm font-bold hover:bg-secondary/90 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Try Again
+              </button>
+            </div>
+          ) : loading ? (
+            <div className="flex justify-center py-16 bg-white rounded-2xl border border-border-subtle">
+              <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin" />
+            </div>
+          ) : faqItems.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-2xl border border-border-subtle">
+              <p className="text-slate-500">No FAQs available.</p>
+            </div>
+          ) : (
           <div className="bg-white rounded-2xl border border-border-subtle overflow-hidden card-shadow" role="region" aria-label="Frequently asked questions">
             {faqItems.map((item, idx) => (
               <div key={item.id} className="faq-accordion-item">
@@ -82,6 +129,7 @@ export default function FAQ() {
               </div>
             ))}
           </div>
+          )}
         </SectionReveal>
 
         <SectionReveal>

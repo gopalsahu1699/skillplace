@@ -237,7 +237,7 @@ export default function ContactPage() {
                   <p className="text-[12px] text-on-surface-variant">Bilaspur, Chhattisgarh</p>
                 </div>
                 <a
-                  href="https://maps.app.goo.gl/Vc4F1FaXwHD1dAn87"
+                  href="https://maps.app.goo.gl/ZW8SiXbEzH7UGnTK8"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-all"
@@ -247,14 +247,14 @@ export default function ContactPage() {
               </div>
               <div className="h-64 relative bg-surface-container-highest group">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.5!2d82.1642!3d22.0775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDA0JzM5LjAiTiA4MsKwMDknNTEuMSJF!5e0!3m2!1sen!2sin!4v1"
+                  src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d3719.5!2d82.1642259!3d22.0775402!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cffe62ff011544d%3A0x787a0f1b094f38d4!2sSkillplace+Academy!5e0!3m2!1sen!2sin!4v1!5m2!1sen!2sin"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  className="grayscale group-hover:grayscale-0 transition-all duration-700"
+                  className=""
                   title="Skillplace Academy Location"
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

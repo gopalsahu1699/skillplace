@@ -110,6 +110,23 @@ export interface Purchase {
   profiles?: Profile
 }
 
+export interface Mentor {
+  id: string
+  name: string
+  position: string
+  company: string
+  expertise: string
+  experience: string
+  bio: string
+  initials: string
+  gradient: string
+  image: string | null
+  linkedin_url: string | null
+  display_order: number
+  is_active: boolean
+  created_at: string
+}
+
 export interface Testimonial {
   id: string
   student_name: string
@@ -292,4 +309,5 @@ export interface EmployeePermission {
   can_manage_video_security: boolean
   can_manage_certificates: boolean
   can_manage_faqs: boolean
+  can_manage_mentors: boolean
 }

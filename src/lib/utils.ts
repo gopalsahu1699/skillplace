@@ -16,6 +16,16 @@ export function getSupabaseImageUrl(filename: string): string {
  * Returns the program/course image URL for a given branch slug.
  * Falls back to the civil engineering image for unknown branches.
  */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 export function getProgramImage(branchSlug: string): string {
   switch (branchSlug) {
     case 'civil':

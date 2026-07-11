@@ -1,4 +1,5 @@
 import { adminSupabase } from './admin'
+import { isNetworkError } from '@/lib/network'
 
 export async function getBranches() {
   const { data, error } = await adminSupabase

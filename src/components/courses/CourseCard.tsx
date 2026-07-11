@@ -35,15 +35,12 @@ export default function CourseCard({ course }: CourseCardProps) {
           <Badge variant="secondary" className={`${levelColors[course.level]} border-0`}>
             {course.level}
           </Badge>
-          {course.branches && (
-            <Badge variant="outline" className="border-slate-200 text-slate-600">{course.branches.name}</Badge>
-          )}
         </div>
         <h3 className="font-bold text-slate-900 mb-1.5 line-clamp-1 group-hover:text-blue-600 transition-colors">{course.title}</h3>
         <p className="text-sm text-slate-500 mb-4 line-clamp-2">
           {course.short_description || course.description}
         </p>
-        <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
+        {/* <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
           {course.duration_hours && (
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-slate-400" /> {course.duration_hours}h
@@ -52,7 +49,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           <span className="flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5 text-slate-400" /> {course.level}
           </span>
-        </div>
+        </div> */}
         <div className="flex items-center justify-between pt-3 border-t border-slate-100">
           <div>
             {course.discount_price ? (

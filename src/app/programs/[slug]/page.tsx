@@ -28,6 +28,8 @@ interface Course {
   id: string
   title: string
   slug: string
+  description: string | null
+  short_description: string | null
   duration_hours: number
   level: string
 }
@@ -75,7 +77,7 @@ export default function ProgramDetailPage() {
       if (courseIds.length > 0) {
         const { data: coursesData } = await supabase
           .from('courses')
-          .select('id, title, slug, duration_hours, level')
+          .select('id, title, slug, description, short_description, duration_hours, level')
           .in('id', courseIds)
 
         const courseMap = new Map((coursesData || []).map((c) => [c.id, c]))
@@ -326,7 +328,7 @@ export default function ProgramDetailPage() {
                 <h2 className="font-headline-lg text-headline-lg text-on-surface">Bridging the Industry Gap</h2>
                 <div className="w-20 h-1 bg-secondary rounded-full"></div>
                 <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-                  {program.description || 'Our program is meticulously designed to transform graduates into industry-ready professionals. We address the critical disconnect between academic syllabus and real-world project execution through our Academic Precision curriculum.'}
+                  {program.short_description  || 'Our program is meticulously designed to transform graduates into industry-ready professionals. We address the critical disconnect between academic syllabus and real-world project execution through our Academic Precision curriculum.'}
                 </p>
               </div>
 
@@ -376,13 +378,13 @@ export default function ProgramDetailPage() {
                 </div>
               </div>
 
-              <div className="bento-card bg-surface-container-lowest p-8 rounded-3xl border border-border-subtle flex flex-col justify-between min-h-[220px]">
+              {/* <div className="bento-card bg-surface-container-lowest p-8 rounded-3xl border border-border-subtle flex flex-col justify-between min-h-[220px]">
                 <span className="material-symbols-outlined text-secondary text-4xl">domain</span>
                 <div>
                   <h3 className="font-bold text-on-surface mb-2 text-body-md">Site Visits</h3>
                   <p className="text-on-surface-variant text-caption">Regular educational visits to active industrial project sites.</p>
                 </div>
-              </div>
+              </div> */}
 
               <div className="bento-card bg-surface-container-lowest p-8 rounded-3xl border border-border-subtle flex flex-col justify-between min-h-[220px]">
                 <span className="material-symbols-outlined text-secondary text-4xl">groups</span>
@@ -392,13 +394,13 @@ export default function ProgramDetailPage() {
                 </div>
               </div>
 
-              <div className="md:col-span-2 bento-card bg-primary-container p-8 rounded-3xl border border-border-subtle flex items-center gap-8 text-on-primary min-h-[220px] overflow-hidden relative">
+              <div className="md:col-span-2 bento-card bg-surface-container-lowest p-8 rounded-3xl border border-border-subtle flex items-center gap-8 min-h-[220px] overflow-hidden relative">
                 <div className="relative z-10">
-                  <h3 className="font-headline-md text-headline-md mb-2 text-white">Hands-on Practical</h3>
-                  <p className="text-on-primary-container text-body-md">Work on actual industry projects and case studies using the latest technology stack.</p>
+                  <h3 className="font-headline-md text-headline-md mb-2 text-on-surface">Hands-on Practical</h3>
+                  <p className="text-on-surface-variant text-body-md">Work on actual industry projects and case studies using the latest technology stack.</p>
                 </div>
-                <div className="hidden sm:block absolute right-0 bottom-0 opacity-20 transform translate-x-1/4 translate-y-1/4 pointer-events-none">
-                  <span className="material-symbols-outlined text-[180px]" style={{ fontVariationSettings: "'FILL' 1" }}>architecture</span>
+                <div className="hidden sm:block absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4 pointer-events-none">
+                  <span className="material-symbols-outlined text-[180px] text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>architecture</span>
                 </div>
               </div>
 
@@ -446,17 +448,19 @@ export default function ProgramDetailPage() {
                   courses.map((c, idx) => (
                     <Link
                       key={c.id}
-                      href={`/courses/${c.slug}`}
+                      href={`#`}
+                      // href={`/courses/${c.slug}`}
                       className="bg-surface-container-low p-6 rounded-2xl border-l-4 border-secondary flex items-center justify-between group hover:bg-surface-container transition-colors block"
                     >
                       <div className="flex items-center gap-6">
                         <span className="text-headline-md font-bold text-outline">0{idx + 1}</span>
                         <div>
                           <h4 className="font-bold text-on-surface text-body-md group-hover:text-secondary transition-colors">{c.title}</h4>
-                          <p className="text-caption text-on-surface-variant mt-0.5">{c.duration_hours} Hours &middot; {c.level} level</p>
+                          {/* <p className="text-caption text-on-surface-variant mt-0.5">{c.duration_hours} Hours &middot; {c.level} level</p> */}
+                          <p className="text-caption text-on-surface-variant mt-0.5">  {c.short_description || c.description} </p>
                         </div>
                       </div>
-                      <span className="material-symbols-outlined text-on-surface-variant group-hover:translate-x-2 transition-transform">arrow_forward</span>
+                      {/* <span className="material-symbols-outlined text-on-surface-variant group-hover:translate-x-2 transition-transform">arrow_forward</span> */}
                     </Link>
                   ))
                 ) : (
