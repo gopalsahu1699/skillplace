@@ -506,66 +506,7 @@ export default function ProgramDetailPage() {
           </div>
         </section>
 
-        <section id="admission-inquiry" className="py-section-gap bg-surface-container-high relative overflow-hidden">
-          <div className="absolute -right-24 top-0 opacity-10 pointer-events-none">
-            <span className="material-symbols-outlined text-[400px]">edit_note</span>
-          </div>
-          <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-            <div className="bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border border-white flex flex-col md:flex-row items-center justify-between gap-12">
-              <div className="space-y-6 flex-1">
-                <div className="inline-block px-4 py-1 rounded-full bg-error-container text-on-error-container font-bold text-caption uppercase tracking-wider">LIMITED SEATS ONLY</div>
-                <h2 className="font-headline-lg text-headline-lg text-on-surface">Admissions Open for New Batch</h2>
-                <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl">Take the first step towards a stable career. Join a community of achievers and builders.</p>
-
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-success-green text-xl">check_circle</span>
-                    <span className="font-body-md text-on-surface">Direct Interaction with Faculty</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-success-green text-xl">check_circle</span>
-                    <span className="font-body-md text-on-surface">EMI Facility Available</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-surface-container-low p-8 rounded-3xl border border-border-subtle w-full max-w-md shrink-0">
-                {inquireSubmitted ? (
-                  <div className="text-center py-6">
-                    <span className="material-symbols-outlined text-5xl text-success-green mb-3">task_alt</span>
-                    <h4 className="font-bold text-headline-md text-on-surface mb-2">Inquiry Sent!</h4>
-                    <p className="text-on-surface-variant text-sm">Our admissions counselor will call you shortly.</p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleInquire} className="space-y-4">
-                    <div>
-                      <label className="block text-caption font-bold mb-2 text-on-surface">Full Name</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="John Doe"
-                        value={inquireName}
-                        onChange={(e) => setInquireName(e.target.value)}
-                        className="w-full bg-white border border-border-subtle rounded-lg px-4 py-3 focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-body-md"
-                      />
-                    </div>
-                    <div>
-                    
-                      <PhoneInput
-                        value={inquirePhone}
-                        onChange={setInquirePhone}
-                        required
-                      />
-                    </div>
-                    <button type="submit" className="w-full bg-primary text-on-primary font-label-md py-4 rounded-xl hover:bg-opacity-90 active:scale-95 transition-all mt-4">
-                      Inquire Now
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+      
 
         <section className="py-section-gap bg-surface">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
