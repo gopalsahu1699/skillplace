@@ -81,3 +81,15 @@ CREATE POLICY "Users can manage own projects" ON public.student_projects FOR ALL
 CREATE POLICY "Admins can manage all projects" ON public.student_projects FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
+
+-- FAQS: Anyone can read active FAQs, admins manage
+CREATE POLICY "Anyone can view active faqs" ON public.faqs FOR SELECT USING (is_active = true);
+CREATE POLICY "Admins can manage faqs" ON public.faqs FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- CAREER DISCIPLINES: Anyone can read active disciplines, admins manage
+CREATE POLICY "Anyone can view active career disciplines" ON public.career_disciplines FOR SELECT USING (is_active = true);
+CREATE POLICY "Admins can manage career disciplines" ON public.career_disciplines FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);

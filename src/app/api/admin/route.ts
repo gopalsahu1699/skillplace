@@ -41,6 +41,7 @@ const ALLOWED_TABLES = new Set([
   'test_attempts',
   'faqs',
   'mentors',
+  'career_disciplines',
 ])
 
 const READ_ONLY_TABLES = new Set([

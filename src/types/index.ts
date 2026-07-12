@@ -276,6 +276,25 @@ export interface StudentProject {
   created_at: string
 }
 
+export interface CareerDiscipline {
+  id: string
+  name: string
+  slug: string
+  color: string
+  gradient_from: string
+  gradient_to: string
+  roles: string[]
+  skills: string[]
+  demand: string
+  salary: string
+  growth: string
+  popular: boolean
+  display_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface Employee {
   id: string
   name: string
@@ -310,4 +329,5 @@ export interface EmployeePermission {
   can_manage_certificates: boolean
   can_manage_faqs: boolean
   can_manage_mentors: boolean
+  can_manage_careers: boolean
 }

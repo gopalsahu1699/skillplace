@@ -21,6 +21,7 @@ const PERMISSION_MAP: PermissionMap = {
   '/admin-place/notifications': 'can_manage_notifications',
   '/admin-place/payments': 'can_manage_payments',
   '/admin-place/certificates': 'can_manage_certificates',
+  '/admin-place/careers': 'can_manage_careers',
 }
 
 import type { EmployeePermission } from '@/types'

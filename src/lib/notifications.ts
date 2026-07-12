@@ -70,6 +70,10 @@ export const notify = {
   faqUpdated: () => toast.success('FAQ updated!'),
   faqDeleted: () => toast.success('FAQ deleted.'),
 
+  careerCreated: () => toast.success('Career discipline created!'),
+  careerUpdated: () => toast.success('Career discipline updated!'),
+  careerDeleted: () => toast.success('Career discipline deleted.'),
+
   comingSoon: () => toast.info('Coming soon!'),
   copied: () => toast.success('Copied to clipboard!'),
 

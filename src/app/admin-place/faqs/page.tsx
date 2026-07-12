@@ -23,6 +23,7 @@ interface Faq {
   answer: string
   display_order: number
   is_active: boolean
+  is_featured: boolean
   created_at: string
 }
 
@@ -39,6 +40,7 @@ export default function AdminFaqsPage() {
     answer: '',
     display_order: 0,
     is_active: true,
+    is_featured: false,
   })
 
   const fetchData = useCallback(async () => {
@@ -68,6 +70,7 @@ export default function AdminFaqsPage() {
       answer: '',
       display_order: faqs.length + 1,
       is_active: true,
+      is_featured: false,
     })
     setShowForm(true)
   }
@@ -79,6 +82,7 @@ export default function AdminFaqsPage() {
       answer: faq.answer,
       display_order: faq.display_order ?? 0,
       is_active: faq.is_active !== false,
+      is_featured: faq.is_featured ?? false,
     })
     setShowForm(true)
   }
@@ -94,6 +98,7 @@ export default function AdminFaqsPage() {
         answer: formData.answer.trim(),
         display_order: formData.display_order,
         is_active: formData.is_active,
+        is_featured: formData.is_featured,
       }
 
       if (editingFaq) {
@@ -130,6 +135,15 @@ export default function AdminFaqsPage() {
   async function toggleActive(id: string, currentValue: boolean) {
     try {
       await updateRecord('faqs', id, { is_active: !currentValue })
+      fetchData()
+    } catch {
+      // handled silently
+    }
+  }
+
+  async function toggleFeatured(id: string, currentValue: boolean) {
+    try {
+      await updateRecord('faqs', id, { is_featured: !currentValue })
       fetchData()
     } catch {
       // handled silently
@@ -215,6 +229,11 @@ export default function AdminFaqsPage() {
                       <span className="text-xs text-slate-400 font-mono">
                         #{faq.display_order}
                       </span>
+                      {faq.is_featured && (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                          Home
+                        </span>
+                      )}
                       {!faq.is_active && (
                         <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500">
                           Hidden
@@ -242,6 +261,17 @@ export default function AdminFaqsPage() {
                       }`}
                     >
                       {faq.is_active ? 'Hide' : 'Show'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleFeatured(faq.id, faq.is_featured)}
+                      className={`font-medium px-2 py-1 rounded text-xs ${
+                        faq.is_featured
+                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                          : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                      }`}
+                    >
+                      {faq.is_featured ? 'Home' : 'Set Home'}
                     </button>
                     <button
                       type="button"
@@ -319,7 +349,7 @@ export default function AdminFaqsPage() {
                 required
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
@@ -330,6 +360,17 @@ export default function AdminFaqsPage() {
                   className="rounded"
                 />
                 Active
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={formData.is_featured}
+                  onChange={(e) =>
+                    setFormData({ ...formData, is_featured: e.target.checked })
+                  }
+                  className="rounded"
+                />
+                Show on Home
               </label>
             </div>
             <DialogFooter>

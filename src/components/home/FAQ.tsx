@@ -31,10 +31,14 @@ export default function FAQ() {
         .from('faqs')
         .select('*')
         .eq('is_active', true)
+        .eq('is_featured', true)
         .order('display_order', { ascending: true })
         .order('created_at', { ascending: true })
+        .limit(5)
     )
-    const data = response?.data as FaqItem[] | undefined
+
+    let data = response?.data as FaqItem[] | undefined
+
     if (error) {
       if (isNetworkError(error)) {
         setNetworkError(true)
@@ -42,6 +46,18 @@ export default function FAQ() {
       setLoading(false)
       return
     }
+
+    if (!data || data.length === 0) {
+      const { data: fallback } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true })
+        .limit(5)
+      data = fallback as FaqItem[] | undefined
+    }
+
     if (data) setFaqItems(data)
     setLoading(false)
   }

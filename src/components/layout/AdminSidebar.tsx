@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog, Tag, Bell, Calendar, ShieldAlert, HelpCircle, Award } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog, Tag, Bell, Calendar, ShieldAlert, HelpCircle, Award, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EmployeePermission } from '@/types'
 
@@ -31,6 +31,7 @@ const links: NavLink[] = [
   { href: '/admin-place/certificates', label: 'Certificates', icon: FileText, permissionKey: 'can_manage_certificates' },
   { href: '/admin-place/faqs', label: 'FAQs', icon: HelpCircle, permissionKey: 'can_manage_faqs' },
   { href: '/admin-place/mentors', label: 'Mentors', icon: Award, permissionKey: 'can_manage_mentors' },
+  { href: '/admin-place/careers', label: 'Careers', icon: TrendingUp, permissionKey: 'can_manage_careers' },
 ]
 
 interface AdminSidebarProps {

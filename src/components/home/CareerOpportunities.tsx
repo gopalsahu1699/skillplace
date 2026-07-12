@@ -1,77 +1,52 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SectionReveal from './SectionReveal'
-
-interface CareerDiscipline {
-  name: string
-  slug: string
-  color: string
-  gradientFrom: string
-  gradientTo: string
-  roles: string[]
-  skills: string[]
-  demand: string
-  salary: string
-  growth: string
-  popular?: boolean
-}
-
-const disciplines: CareerDiscipline[] = [
-  {
-    name: 'Civil Engineering',
-    slug: 'civil',
-    color: 'border-blue-500',
-    gradientFrom: 'from-blue-500',
-    gradientTo: 'to-indigo-600',
-    roles: ['Site Engineer', 'Quantity Surveyor', 'Billing Engineer', 'Planning Engineer', 'Estimation Engineer', 'Freelancer', 'Contractor'],
-    skills: ['AutoCAD', 'Revit', 'Staad Pro', 'Quantity Estimation', 'BOQ', 'Site Management'],
-    demand: 'High — Infrastructure boom across India',
-    salary: '₹3.5L – ₹12L / year',
-    growth: '15% annual growth',
-    popular: true,
-  },
-  {
-    name: 'Mechanical Engineering',
-    slug: 'mechanical',
-    color: 'border-violet-500',
-    gradientFrom: 'from-violet-500',
-    gradientTo: 'to-purple-600',
-    roles: ['Design Engineer', 'CAD Engineer', 'Production Engineer', 'Quality Engineer', 'Maintenance Engineer'],
-    skills: ['SolidWorks', 'AutoCAD Mechanical', 'GD&T', 'Manufacturing Drawing', 'CNC Programming'],
-    demand: 'Very High — Manufacturing & automation surge',
-    salary: '₹3L – ₹15L / year',
-    growth: '18% annual growth',
-  },
-  {
-    name: 'Electrical Engineering',
-    slug: 'electrical',
-    color: 'border-amber-500',
-    gradientFrom: 'from-amber-500',
-    gradientTo: 'to-orange-600',
-    roles: ['Electrical Design Engineer', 'Automation Engineer', 'Solar Engineer', 'Site Engineer', 'Maintenance Engineer'],
-    skills: ['LT/HT Systems', 'Panel Design', 'PLC', 'SCADA', 'Solar Design', 'VFD'],
-    demand: 'Very High — Energy sector & automation growth',
-    salary: '₹3L – ₹14L / year',
-    growth: '20% annual growth',
-  },
-  // {
-  //   name: 'Electronics & Automation',
-  //   slug: 'electronics',
-  //   color: 'border-emerald-500',
-  //   gradientFrom: 'from-emerald-500',
-  //   gradientTo: 'to-teal-600',
-  //   roles: ['PLC Programmer', 'SCADA Engineer', 'Automation Engineer', 'IoT Specialist', 'Control Systems Engineer'],
-  //   skills: ['PLC Programming', 'SCADA', 'HMI', 'VFD', 'Industrial Sensors', 'Industrial IoT'],
-  //   demand: 'Very High — Industry 4.0 driving massive demand',
-  //   salary: '₹4L – ₹16L / year',
-  //   growth: '25% annual growth',
-  //   popular: true,
-  // },
-]
+import { supabase } from '@/lib/supabase/client'
+import type { CareerDiscipline } from '@/types'
 
 export default function CareerOpportunities() {
+  const [disciplines, setDisciplines] = useState<CareerDiscipline[]>([])
   const [active, setActive] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const { data } = await supabase
+          .from('career_disciplines')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+        if (data) {
+          setDisciplines(data as CareerDiscipline[])
+        }
+      } catch {
+        setDisciplines([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="relative py-section-gap px-margin-mobile md:px-margin-desktop bg-surface-container-low overflow-hidden">
+        <div className="absolute inset-0 grid-pattern opacity-30" />
+        <div className="relative max-w-container-max mx-auto text-center py-20">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 w-24 bg-slate-200 rounded-full mx-auto" />
+            <div className="h-8 w-96 bg-slate-200 rounded-lg mx-auto" />
+            <div className="h-4 w-64 bg-slate-200 rounded-lg mx-auto" />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (disciplines.length === 0) return null
+
   const current = disciplines[active]
 
   return (
@@ -94,11 +69,11 @@ export default function CareerOpportunities() {
         <div className="flex justify-center gap-3 mb-10 flex-wrap">
           {disciplines.map((d, idx) => (
             <button
-              key={idx}
+              key={d.id}
               onClick={() => setActive(idx)}
               className={`relative px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 border-2 ${
                 active === idx
-                  ? `bg-gradient-to-r ${d.gradientFrom} ${d.gradientTo} text-white border-transparent shadow-lg`
+                  ? `bg-gradient-to-r ${d.gradient_from} ${d.gradient_to} text-white border-transparent shadow-lg`
                   : 'border-border-subtle bg-white text-on-surface hover:border-secondary/30 hover:shadow-md'
               }`}
             >
@@ -114,7 +89,7 @@ export default function CareerOpportunities() {
 
         {/* Content */}
         <div className="bg-white rounded-2xl border border-border-subtle shadow-xl overflow-hidden">
-          <div className={`bg-gradient-to-r ${current.gradientFrom} ${current.gradientTo} p-6 md:p-8`}>
+          <div className={`bg-gradient-to-r ${current.gradient_from} ${current.gradient_to} p-6 md:p-8`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-bold text-white mb-2">{current.name}</h3>
