@@ -293,7 +293,7 @@ export default function ProgramDetailPage() {
 
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
                 {renderEnrollButton()}
-                <a href="#admission-inquiry" className="border border-outline-variant text-on-primary px-8 py-4 rounded-xl font-label-md hover:bg-white/5 transition-all flex items-center justify-center gap-2 text-center w-full sm:w-auto">
+                <a href="/contact" className="border border-outline-variant text-on-primary px-8 py-4 rounded-xl font-label-md hover:bg-white/5 transition-all flex items-center justify-center gap-2 text-center w-full sm:w-auto">
                   <span className="material-symbols-outlined text-xl">edit_note</span>
                   Inquire Now
                 </a>

@@ -297,7 +297,7 @@ export default function ProgramsPage() {
                         ))}
                         {(program.features || []).length > 4 && (
                           <li className="text-sm text-secondary font-medium">
-                            + {(program.features || []).length - 4} more features
+                            + {(program.features || []).length - 4} more features 
                           </li>
                         )}
                       </ul>
