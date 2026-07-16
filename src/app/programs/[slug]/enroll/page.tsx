@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Check, ChevronRight, ChevronLeft, Loader2, CreditCard, Shield, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,15 @@ import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
 
 const PUBLIC_API_BASE = '/api/public'
 
+interface ProgramFee {
+  id: string
+  program_id: string
+  program_type: string
+  price: number
+  discount_price: number | null
+  is_active: boolean
+}
+
 interface ProgramInfo {
   id: string
   name: string
@@ -24,6 +33,7 @@ interface ProgramInfo {
   duration_weeks: number
   features: string[]
   program_type: string
+  program_fees?: ProgramFee[]
 }
 
 interface CouponData {
@@ -53,19 +63,22 @@ interface FormData {
   acceptTerms: boolean
 }
 
-type Step = 'info' | 'payment' | 'success' | 'failure'
+type Step = 'mode' | 'info' | 'payment' | 'success' | 'failure'
 
 export default function EnrollPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const slug = params.slug as string
   const [program, setProgram] = useState<ProgramInfo | null>(null)
+  const [fees, setFees] = useState<ProgramFee[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
-  const [step, setStep] = useState<Step>('info')
+  const [step, setStep] = useState<Step>('mode')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [phoneValid, setPhoneValid] = useState<boolean>(true)
+  const [selectedMode, setSelectedMode] = useState<string>('')
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -121,7 +134,18 @@ export default function EnrollPage() {
         return
       }
       const prog = programs[0]
-      setProgram(prog)
+
+      const feesRes = await fetch(`${PUBLIC_API_BASE}?table=program_fees&filter=program_id&value=${prog.id}`)
+      const feesData = await feesRes.json()
+      const activeFees: ProgramFee[] = (feesData.data || []).filter((f: ProgramFee) => f.is_active)
+
+      setProgram({ ...prog, program_fees: activeFees })
+      setFees(activeFees)
+
+      const modeFromUrl = searchParams.get('mode')
+      if (modeFromUrl && activeFees.some((f: ProgramFee) => f.program_type === modeFromUrl)) {
+        setSelectedMode(modeFromUrl)
+      }
 
       try {
         const coursesRes = await fetch(`${PUBLIC_API_BASE}?table=program_courses&filter=program_id&value=${prog.id}&join=courses(id,title)`)
@@ -138,9 +162,22 @@ export default function EnrollPage() {
     setLoading(false)
   }
 
+  function getSelectedFee(): { price: number; discount_price: number | null } | null {
+    if (!selectedMode || fees.length === 0) return null
+    const fee = fees.find((f) => f.program_type === selectedMode)
+    return fee || null
+  }
+
+  function getBasePrice(): number {
+    const fee = getSelectedFee()
+    if (fee) return fee.discount_price || fee.price
+    if (program) return program.discount_price || program.price
+    return 0
+  }
+
   function getCouponDiscount(): number {
     if (!appliedCoupon || !program) return 0
-    const basePrice = program.discount_price || program.price
+    const basePrice = getBasePrice()
     if (appliedCoupon.discount_type === 'percent') {
       return Math.round(basePrice * appliedCoupon.discount_rate / 100)
     }
@@ -149,7 +186,7 @@ export default function EnrollPage() {
 
   function getFinalPrice(): number {
     if (!program) return 0
-    const basePrice = program.discount_price || program.price
+    const basePrice = getBasePrice()
     const discount = getCouponDiscount()
     return Math.max(basePrice - discount, 0)
   }
@@ -172,7 +209,7 @@ export default function EnrollPage() {
     setAppliedCoupon(null)
 
     try {
-      const basePrice = program.discount_price || program.price
+      const basePrice = getBasePrice()
       const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -215,6 +252,7 @@ export default function EnrollPage() {
           email: formData.email,
           phone: sanitizePhone(formData.phoneNumber),
           couponCode: appliedCoupon?.code || null,
+          selectedMode: selectedMode || null,
         }),
       })
 
@@ -243,13 +281,14 @@ export default function EnrollPage() {
   const canProceed = formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phoneNumber.trim() !== '' && phoneValid
 
   const stepConfig = {
-    info: { index: 0, label: 'Personal Info' },
-    payment: { index: 1, label: 'Payment' },
-    success: { index: 2, label: 'Complete' },
-    failure: { index: 2, label: 'Complete' },
+    mode: { index: 0, label: 'Mode' },
+    info: { index: 1, label: 'Personal Info' },
+    payment: { index: 2, label: 'Payment' },
+    success: { index: 3, label: 'Complete' },
+    failure: { index: 3, label: 'Complete' },
   }
 
-  const steps = ['Personal Info', 'Payment', 'Complete']
+  const steps = ['Mode', 'Personal Info', 'Payment', 'Complete']
   const currentStepIndex = stepConfig[step].index
 
   if (loading) {
@@ -273,7 +312,7 @@ export default function EnrollPage() {
     )
   }
 
-  const originalPrice = program.discount_price || program.price
+  const originalPrice = getBasePrice()
 
   return (
     <div className="bg-slate-50 min-h-screen pb-24 md:pb-0">
@@ -313,7 +352,12 @@ export default function EnrollPage() {
                   </div>
                 ))}
               </div>
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              {selectedMode && (
+                <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold capitalize bg-blue-100 text-blue-700">
+                  {selectedMode} Mode
+                </div>
+              )}
+              {/* <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                 <p className="text-xs text-blue-800 font-medium mb-1">Enrollment Fee</p>
                 {appliedCoupon && getCouponDiscount() > 0 && (
                   <p className="text-sm text-slate-400 line-through">₹{originalPrice.toLocaleString()}</p>
@@ -322,8 +366,78 @@ export default function EnrollPage() {
                 {appliedCoupon && getCouponDiscount() > 0 && (
                   <p className="text-xs text-green-600 font-medium mt-1">You save ₹{getCouponDiscount().toLocaleString()} with {appliedCoupon.code}</p>
                 )}
-              </div>
-            </div>
+              </div> */}
+
+<div className="bg-blue-50 rounded-xl border border-blue-100 p-5 space-y-4">
+
+  {/* Course Fee */}
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-blue-800">
+        Course Fee
+      </p>
+      <p className="text-xs text-slate-500">
+        Total training program fee
+      </p>
+    </div>
+
+    <div className="text-right">
+      <p className="text-sm text-slate-400 line-through">
+        ₹40,000
+      </p>
+      <p className="text-2xl font-bold text-slate-900">
+        ₹29,999
+      </p>
+    </div>
+  </div>
+
+  {/* Enrollment Fee */}
+  <div className="border-t border-blue-200 pt-4 flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-blue-800">
+        Enrollment Fee
+      </p>
+      <p className="text-xs text-slate-500">
+        Pay now to reserve your seat
+      </p>
+    </div>
+
+    <span className="rounded-lg bg-green-600 px-4 py-2 text-2xl font-bold text-white shadow">
+      ₹999
+    </span>
+  </div>
+
+  {/* Savings */}
+  <div className="rounded-lg bg-green-100 border border-green-200 p-3 flex items-center justify-between">
+    <span className="text-sm font-semibold text-green-700">
+      Course Discount
+    </span>
+
+    <span className="text-lg font-bold text-green-700">
+      Save ₹10,001
+    </span>
+  </div>
+
+  {/* Coupon */}
+  {appliedCoupon && getCouponDiscount() > 0 && (
+    <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3">
+      <p className="text-sm font-semibold text-yellow-700">
+        🎉 Coupon Applied: {appliedCoupon.code}
+      </p>
+      <p className="text-xs text-yellow-700 mt-1">
+        Extra savings of ₹{getCouponDiscount().toLocaleString()} on the enrollment fee.
+      </p>
+    </div>
+  )}
+
+  {/* Note */}
+  <div className="rounded-lg bg-slate-100 p-3">
+    <p className="text-xs text-slate-600 leading-5">
+      <strong>Note:</strong> You only need to pay the <strong>₹999 Enrollment Fee</strong> today to confirm your admission. The discounted course fee is <strong>₹29,999</strong> (Regular Fee: ₹40,000).
+    </p>
+  </div>
+
+</div>    </div>
           </div>
 
           <div className="lg:col-span-3">
@@ -360,6 +474,80 @@ export default function EnrollPage() {
               {error && step !== 'failure' && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
                   <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
+
+              {step === 'mode' && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold text-slate-900">Choose Your Learning Mode</h3>
+                  <p className="text-sm text-slate-500">Select the mode that best fits your schedule. Fees vary by mode.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {fees.map((fee) => {
+                      const modeConfig: Record<string, { icon: string; label: string; desc: string; features: string[] }> = {
+                        online: {
+                          icon: 'online_prediction',
+                          label: 'Online',
+                          desc: 'Learn from anywhere',
+                          features: ['Recorded lectures', 'Live Q&A', 'Digital material'],
+                        },
+                        offline: {
+                          icon: 'groups',
+                          label: 'Offline',
+                          desc: 'In-person classroom',
+                          features: ['Classroom lectures', 'Hands-on labs', 'On-campus'],
+                        },
+                        hybrid: {
+                          icon: 'layers',
+                          label: 'Hybrid',
+                          desc: 'Blended learning',
+                          features: ['Recorded + labs', 'Flexible schedule', 'Campus access'],
+                        },
+                      }
+                      const cfg = modeConfig[fee.program_type] || { icon: 'school', label: fee.program_type, desc: '', features: [] }
+                      const isSelected = selectedMode === fee.program_type
+                      return (
+                        <button
+                          key={fee.id}
+                          type="button"
+                          onClick={() => setSelectedMode(fee.program_type)}
+                          className={`relative text-left border-2 rounded-xl p-4 transition-all ${
+                            isSelected
+                              ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-3">
+                            <span className="material-symbols-outlined text-white text-xl">{cfg.icon}</span>
+                          </div>
+                          <h4 className="font-bold text-slate-900 text-sm mb-1">{cfg.label}</h4>
+                          <p className="text-xs text-slate-500 mb-3">{cfg.desc}</p>
+                          <ul className="space-y-1 mb-3">
+                            {cfg.features.map((f) => (
+                              <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                <Check className="h-3 w-3 text-blue-600 mt-0.5 shrink-0" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                          <div>
+                            {fee.discount_price && fee.discount_price < fee.price ? (
+                              <>
+                                <span className="text-xs text-slate-400 line-through">₹{fee.price.toLocaleString()}</span>
+                                <span className="text-lg font-bold text-slate-900 block">₹{fee.discount_price.toLocaleString()}</span>
+                              </>
+                            ) : (
+                              <span className="text-lg font-bold text-slate-900">₹{fee.price.toLocaleString()}</span>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center">
+                              <Check className="h-3.5 w-3.5 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -572,17 +760,30 @@ export default function EnrollPage() {
                 </div>
               )}
 
-              {(step === 'info' || step === 'payment') && (
+              {(step === 'mode' || step === 'info' || step === 'payment') && (
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
                   <Button
                     variant="ghost"
-                    onClick={() => step === 'payment' ? setStep('info') : router.back()}
+                    onClick={() => {
+                      if (step === 'payment') setStep('info')
+                      else if (step === 'info') setStep('mode')
+                      else router.back()
+                    }}
                     className="gap-1"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    {step === 'payment' ? 'Back' : 'Cancel'}
+                    {step === 'mode' ? 'Cancel' : 'Back'}
                   </Button>
-                  {step === 'info' ? (
+                  {step === 'mode' ? (
+                    <Button
+                      onClick={() => setStep('info')}
+                      disabled={!selectedMode}
+                      className="bg-blue-600 hover:bg-blue-700 gap-1"
+                    >
+                      Continue
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  ) : step === 'info' ? (
                     displayPrice > 0 ? (
                       <Button
                         onClick={() => setStep('payment')}

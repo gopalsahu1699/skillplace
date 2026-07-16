@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existingPayment } = await adminSupabase
       .from('payments')
-      .select('id, status, coupon_id, user_id, course_id, program_id')
+      .select('id, status, coupon_id, user_id, course_id, program_id, program_type')
       .eq('order_id', orderId)
       .maybeSingle()
 
@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
                 user_id: profileId,
                 program_id: existingPayment.program_id,
                 status: 'active',
+                selected_mode: existingPayment.program_type || null,
               })
 
             if (enrollError) {

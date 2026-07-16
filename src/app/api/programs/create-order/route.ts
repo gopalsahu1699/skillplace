@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { programId, studentName, email, phone, couponCode } = await request.json()
+    const { programId, studentName, email, phone, couponCode, selectedMode } = await request.json()
 
     if (!programId || !studentName || !email || !phone) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     const { data: program } = await adminSupabase
       .from('training_programs')
-      .select('price, discount_price, name, slug')
+      .select('price, discount_price, name, slug, id')
       .eq('id', programId)
       .single()
 
@@ -50,7 +50,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Program not found' }, { status: 404 })
     }
 
-    let amount = (program.discount_price || program.price)
+    let amount: number
+    let selectedProgramType: string | null = null
+
+    if (selectedMode) {
+      const { data: fee } = await adminSupabase
+        .from('program_fees')
+        .select('price, discount_price')
+        .eq('program_id', programId)
+        .eq('program_type', selectedMode)
+        .eq('is_active', true)
+        .single()
+
+      if (fee) {
+        amount = fee.discount_price || fee.price
+        selectedProgramType = selectedMode
+      } else {
+        amount = program.discount_price || program.price
+      }
+    } else {
+      amount = program.discount_price || program.price
+    }
     let couponId: string | null = null
 
     if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
@@ -142,6 +162,7 @@ export async function POST(request: Request) {
             program_id: programId,
             status: 'active',
             notes: null,
+            selected_mode: selectedMode || null,
           })
 
         if (enrollmentError) {
@@ -160,6 +181,7 @@ export async function POST(request: Request) {
           order_id: freeOrderId,
           cf_order_id: freeOrderId,
           status: 'completed',
+          program_type: selectedProgramType,
         })
 
         await adminSupabase.rpc('increment_coupon_usage', { p_coupon_id: coupon.id })
@@ -223,6 +245,7 @@ export async function POST(request: Request) {
       cf_order_id: cfOrder.cfOrderId,
       cf_payment_session_id: cfOrder.paymentSessionId,
       status: 'pending',
+      program_type: selectedProgramType,
     })
 
     if (insertError) {

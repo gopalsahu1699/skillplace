@@ -16,6 +16,7 @@ interface Enrollment {
   status: string
   notes: string | null
   enrolled_at: string
+  selected_mode: string | null
   profiles: { full_name: string; email: string; phone: string } | null
   training_programs: { name: string; program_type: string } | null
   branches: { name: string } | null
@@ -48,13 +49,14 @@ export default function AdminEnrollmentsPage() {
   }
 
   function exportToCSV() {
-    const headers = ['Name', 'Email', 'Phone', 'Program', 'Type', 'Branch', 'Status', 'Date']
+    const headers = ['Name', 'Email', 'Phone', 'Program', 'Type', 'Mode', 'Branch', 'Status', 'Date']
     const rows = filteredEnrollments.map((e) => [
       e.profiles?.full_name || '',
       e.profiles?.email || '',
       e.profiles?.phone || '',
       e.training_programs?.name || '',
       e.training_programs?.program_type || '',
+      e.selected_mode || '',
       e.branches?.name || '',
       e.status,
       new Date(e.enrolled_at).toLocaleDateString(),
@@ -143,6 +145,7 @@ export default function AdminEnrollmentsPage() {
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Student</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Program</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Type</th>
+                <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Mode</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Branch</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Status</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Date</th>
@@ -152,11 +155,11 @@ export default function AdminEnrollmentsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-slate-500">Loading...</td>
+                  <td colSpan={8} className="px-5 py-12 text-center text-slate-500">Loading...</td>
                 </tr>
               ) : filteredEnrollments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-slate-500">No enrollments found.</td>
+                  <td colSpan={8} className="px-5 py-12 text-center text-slate-500">No enrollments found.</td>
                 </tr>
               ) : (
                 filteredEnrollments.map((enrollment) => (
@@ -177,6 +180,19 @@ export default function AdminEnrollmentsPage() {
                         }>
                           {enrollment.training_programs?.program_type || 'N/A'}
                         </Badge>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {enrollment.selected_mode ? (
+                          <Badge className={
+                            enrollment.selected_mode === 'offline' ? 'bg-blue-100 text-blue-700 border-0' :
+                            enrollment.selected_mode === 'online' ? 'bg-purple-100 text-purple-700 border-0' :
+                            'bg-amber-100 text-amber-700 border-0'
+                          }>
+                            {enrollment.selected_mode}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-slate-400">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-600">{enrollment.branches?.name || 'N/A'}</td>
                       <td className="px-5 py-3.5">

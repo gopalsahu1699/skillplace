@@ -56,7 +56,7 @@ export async function getTrainingPrograms() {
   if (error) {
     return []
   }
-  return data || []
+  return attachProgramFees(data || [])
 }
 
 export async function getFeaturedTrainingPrograms() {
@@ -73,7 +73,7 @@ export async function getFeaturedTrainingPrograms() {
   }
 
   if (data && data.length > 0) {
-    return data
+    return attachProgramFees(data)
   }
 
   const { data: fallbackData } = await adminSupabase
@@ -84,7 +84,28 @@ export async function getFeaturedTrainingPrograms() {
     .order('created_at', { ascending: true })
     .limit(6)
 
-  return fallbackData || []
+  return attachProgramFees(fallbackData || [])
+}
+
+async function attachProgramFees(programs: any[]) {
+  if (programs.length === 0) return programs
+  const programIds = programs.map((p) => p.id)
+  const { data: allFees } = await adminSupabase
+    .from('program_fees')
+    .select('*')
+    .eq('is_active', true)
+    .in('program_id', programIds)
+
+  const feesByProgram: Record<string, any[]> = {}
+  for (const fee of allFees || []) {
+    if (!feesByProgram[fee.program_id]) feesByProgram[fee.program_id] = []
+    feesByProgram[fee.program_id].push(fee)
+  }
+
+  return programs.map((p: any) => ({
+    ...p,
+    program_fees: feesByProgram[p.id] || [],
+  }))
 }
 
 export async function getProgramCourses(programId: string) {

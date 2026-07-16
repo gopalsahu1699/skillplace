@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { full_name, email, phone, program_id, notes } = body
+    const { full_name, email, phone, program_id, notes, selected_mode } = body
 
     if (!full_name || !email || !phone || !program_id) {
       return NextResponse.json(
@@ -107,6 +107,7 @@ export async function POST(request: Request) {
         program_id,
         status: 'pending',
         notes: notes || null,
+        selected_mode: selected_mode || null,
       })
       .select('id')
       .single()

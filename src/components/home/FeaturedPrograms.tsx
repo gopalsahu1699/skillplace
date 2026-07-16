@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getProgramImage } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
 import type { TrainingProgram } from '@/types'
@@ -9,23 +10,7 @@ interface FeaturedProgramsProps {
   programs: TrainingProgram[]
 }
 
-function ProgramTypeBadge({ type }: { type: string }) {
-  const styles: Record<string, string> = {
-    online: 'bg-secondary/10 text-secondary border border-secondary/20',
-    offline: 'bg-secondary text-white',
-    hybrid: 'bg-emerald-600 text-white',
-  }
-  const labels: Record<string, string> = {
-    online: 'Online',
-    offline: 'Offline',
-    hybrid: 'Hybrid',
-  }
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${styles[type] || styles.online}`}>
-      {labels[type] || type}
-    </span>
-  )
-}
+
 
 function SkillLevelBadge({ level }: { level: string | null }) {
   if (!level) return null
@@ -61,6 +46,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function FeaturedCard({ program }: { program: TrainingProgram }) {
+  const router = useRouter()
   return (
     <Link
       href={`/programs/${program.slug}`}
@@ -74,17 +60,7 @@ function FeaturedCard({ program }: { program: TrainingProgram }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
-        <div className="absolute top-3 left-3 flex items-center gap-2">
-          <ProgramTypeBadge type={program.program_type} />
-          {program.is_featured && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400 text-white text-xs font-bold uppercase tracking-wider">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              Featured
-            </span>
-          )}
-        </div>
+    
 
         <div className="absolute top-3 right-3">
           {program.rating > 0 && (
@@ -100,8 +76,7 @@ function FeaturedCard({ program }: { program: TrainingProgram }) {
 
       <div className="flex flex-col flex-grow p-5">
         <div className="flex items-center gap-2 mb-2">
-          <SkillLevelBadge level={program.skill_level} />
-          {program.student_count > 0 && (
+            {program.student_count > 0 && (
             <span className="flex items-center gap-1 text-xs text-on-surface-variant">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -134,35 +109,54 @@ function FeaturedCard({ program }: { program: TrainingProgram }) {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {program.duration_weeks} weeks
+              {program.duration_weeks} weeks Training Program
             </div>
           )}
-          <div className="flex items-center gap-1.5 text-xs text-on-surface-variant capitalize">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            {program.program_type}
-          </div>
+     
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-3">
-          <div>
-            <span className="text-headline-sm font-bold text-primary">
-              &#8377;{program.discount_price?.toLocaleString() || program.price?.toLocaleString()}
-            </span>
-            {program.discount_price && program.discount_price < program.price && (
-              <span className="ml-2 text-xs text-on-surface-variant line-through">
-                &#8377;{program.price?.toLocaleString()}
-              </span>
-            )}
+        {program.program_fees && program.program_fees.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-border-subtle">
+            <div className="grid grid-cols-3 gap-1.5">
+              {program.program_fees.map((fee) => {
+                const cfg: Record<string, { label: string; gradient: string }> = {
+                  online: { label: 'Online', gradient: 'from-purple-500 to-purple-600' },
+                  offline: { label: 'Offline', gradient: 'from-blue-500 to-blue-600' },
+                  hybrid: { label: 'Hybrid', gradient: 'from-amber-500 to-amber-600' },
+                }
+                const c = cfg[fee.program_type] || { label: fee.program_type, gradient: 'from-slate-500 to-slate-600' }
+                return (
+                  <div
+                    key={fee.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      router.push(`/programs/${program.slug}/enroll?mode=${fee.program_type}`)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        router.push(`/programs/${program.slug}/enroll?mode=${fee.program_type}`)
+                      }
+                    }}
+                    className={`flex flex-col items-center p-1.5 rounded-lg border transition-all hover:shadow-sm cursor-pointer ${
+                      fee.program_type === program.program_type
+                        ? 'border-secondary bg-secondary/5'
+                        : 'border-transparent bg-slate-50 hover:border-slate-200'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-md bg-gradient-to-br ${c.gradient} flex items-center justify-center mb-0.5`}>
+                      <span className="material-symbols-outlined text-white text-[10px]">{cfg[fee.program_type]?.label === 'Online' ? 'online_prediction' : fee.program_type === 'hybrid' ? 'layers' : 'groups'}</span>
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-on-surface">{c.label}</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-          <span className="inline-flex items-center gap-1 text-sm font-bold text-secondary group-hover:gap-2 transition-all">
-            Enroll Now
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </span>
-        </div>
+        )}
       </div>
     </Link>
   )

@@ -12,6 +12,7 @@ const PUBLIC_TABLES = new Set([
   'branches',
   'program_courses',
   'testimonials',
+  'program_fees',
 ])
 
 export async function GET(request: NextRequest) {

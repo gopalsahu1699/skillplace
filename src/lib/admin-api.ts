@@ -87,7 +87,7 @@ export async function createRecord(table: string, data: unknown) {
   }
   const json = await res.json()
   if (!res.ok) throw new Error(json.error || 'Request failed')
-  return json.data
+  return Array.isArray(json.data) ? json.data[0] : json.data
 }
 
 export async function updateRecord(table: string, id: string, data: unknown) {
@@ -102,7 +102,7 @@ export async function updateRecord(table: string, id: string, data: unknown) {
   }
   const json = await res.json()
   if (!res.ok) throw new Error(json.error || 'Request failed')
-  return json.data
+  return Array.isArray(json.data) ? json.data[0] : json.data
 }
 
 export async function getCombinedProgramsData() {

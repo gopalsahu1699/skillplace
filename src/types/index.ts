@@ -40,6 +40,18 @@ export interface Course {
   branches?: Branch
 }
 
+export interface ProgramFee {
+  id: string
+  program_id: string
+  program_type: 'online' | 'offline' | 'hybrid'
+  price: number
+  discount_price: number | null
+  is_active: boolean
+  is_popular: boolean
+  display_order: number
+  created_at: string
+}
+
 export interface TrainingProgram {
   id: string
   name: string
@@ -62,6 +74,7 @@ export interface TrainingProgram {
   created_at: string
   updated_at: string
   branches?: Branch
+  program_fees?: ProgramFee[]
 }
 
 export interface ProgramCourse {
@@ -82,6 +95,7 @@ export interface Enrollment {
   notes: string | null
   enrolled_at: string
   completed_at: string | null
+  selected_mode: 'online' | 'offline' | 'hybrid' | null
   training_programs?: TrainingProgram
   branches?: Branch
   profiles?: Profile

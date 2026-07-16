@@ -9,6 +9,17 @@ import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone } from '@/lib/validation/phone'
 import { SafeImg } from '@/components/ui/safe-image'
 
+interface ProgramFee {
+  id: string
+  program_id: string
+  program_type: string
+  price: number
+  discount_price: number | null
+  is_active: boolean
+  is_popular: boolean
+  display_order: number
+}
+
 interface ProgramDetail {
   id: string
   name: string
@@ -22,6 +33,7 @@ interface ProgramDetail {
   duration_weeks: number
   features: string[]
   branches: { name: string; slug: string } | null
+  program_fees?: ProgramFee[]
 }
 
 interface Course {
@@ -65,7 +77,14 @@ export default function ProgramDetailPage() {
         .single()
 
       if (!programs) { setLoading(false); return }
-      setProgram(programs)
+
+      const { data: fees } = await supabase
+        .from('program_fees')
+        .select('*')
+        .eq('program_id', programs.id)
+        .eq('is_active', true)
+
+      setProgram({ ...programs, program_fees: fees || [] })
 
       const { data: programCourses } = await supabase
         .from('program_courses')
@@ -219,7 +238,10 @@ export default function ProgramDetailPage() {
     )
   }
 
-  const renderEnrollButton = () => {
+  const renderEnrollButton = (mode?: string) => {
+    const enrollPath = mode
+      ? `/programs/${program.slug}/enroll?mode=${mode}`
+      : `/programs/${program.slug}/enroll`
     if (user && enrollment?.status === 'active') {
       return (
         <Link href={`/programs/${program.slug}/learn`} className="bg-success-green text-white px-10 py-4 rounded-xl font-label-md hover:bg-opacity-90 transition-all shadow-lg text-center block w-full sm:w-auto">
@@ -236,13 +258,13 @@ export default function ProgramDetailPage() {
     }
     if (user) {
       return (
-        <Link href={`/programs/${program.slug}/enroll`} className="bg-secondary text-white px-10 py-4 rounded-xl font-label-md hover:bg-secondary-container transition-all shadow-lg text-center block w-full sm:w-auto">
+        <Link href={enrollPath} className="bg-secondary text-white px-10 py-4 rounded-xl font-label-md hover:bg-secondary-container transition-all shadow-lg text-center block w-full sm:w-auto">
           Enroll Now
         </Link>
       )
     }
     return (
-      <Link href={`/login?redirectedFrom=/programs/${program.slug}/enroll`} className="bg-secondary text-white px-10 py-4 rounded-xl font-label-md hover:bg-secondary-container transition-all shadow-lg text-center block w-full sm:w-auto">
+      <Link href={`/login?redirectedFrom=${encodeURIComponent(enrollPath)}`} className="bg-secondary text-white px-10 py-4 rounded-xl font-label-md hover:bg-secondary-container transition-all shadow-lg text-center block w-full sm:w-auto">
         Enroll Now
       </Link>
     )
@@ -263,10 +285,7 @@ export default function ProgramDetailPage() {
                 <span className="text-white">{program.name}</span>
               </nav>
 
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary-container/20 border border-secondary/30 text-secondary-fixed text-caption font-bold uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-success-green animate-pulse"></span>
-                {program.program_type} LEARNING PROGRAM
-              </div>
+          
 
               <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-on-primary leading-tight">
                 {program.name}
@@ -282,13 +301,10 @@ export default function ProgramDetailPage() {
                   <span className="text-on-primary font-bold text-headline-md">{program.duration_weeks} Weeks</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-on-primary-container text-caption font-semibold">PLACEMENT</span>
+                  <span className="text-on-primary-container text-caption font-semibold">PLACEMENT ASSISTANCE</span>
                   <span className="text-on-primary font-bold text-headline-md">100%</span>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-on-primary-container text-caption font-semibold">MODE</span>
-                  <span className="text-on-primary font-bold text-headline-md capitalize">{program.program_type}</span>
-                </div>
+             
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
@@ -481,6 +497,127 @@ export default function ProgramDetailPage() {
             </div>
           </div>
         </section>
+
+        {program.program_fees && program.program_fees.length > 0 && (
+          <section className="py-section-gap bg-surface">
+            <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+              <div className="text-center mb-16">
+                <h2 className="font-headline-lg text-headline-lg text-on-surface">Choose Your Learning Mode</h2>
+                <p className="text-on-surface-variant max-w-2xl mx-auto font-body-md mt-4">
+                  Select the mode that best fits your schedule and learning style. Fees vary by mode.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[...program.program_fees]
+                  .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                  .map((fee) => {
+                  const modeConfig = {
+                    online: {
+                      icon: 'online_prediction',
+                      label: 'Online',
+                      desc: 'Learn from anywhere with live recorded sessions',
+                      features: ['Recorded lectures', 'Live Q&A sessions', 'Digital study material', 'Online assessments', 'Remote mentor support'],
+                      gradient: 'from-purple-500 to-purple-700',
+                    },
+                    offline: {
+                      icon: 'groups',
+                      label: 'Offline',
+                      desc: 'In-person classroom training at our campus',
+                      features: ['Classroom lectures', 'Hands-on labs', 'In-person mentorship', 'On-campus facilities', 'Networking events'],
+                      gradient: 'from-blue-500 to-blue-700',
+                    },
+                    hybrid: {
+                      icon: 'layers',
+                      label: 'Hybrid',
+                      desc: 'Blend of online flexibility with offline practice',
+                      features: ['Recorded lectures + labs', 'Flexible schedule', 'In-person workshops', 'Campus access', 'Hybrid mentor support'],
+                      gradient: 'from-amber-500 to-amber-700',
+                    },
+                  }[fee.program_type] || { icon: 'school', label: fee.program_type, desc: '', features: [], gradient: 'from-slate-500 to-slate-700' }
+
+                  return (
+                    <div
+                      key={fee.id}
+                      className={`relative bg-white border-2 rounded-3xl p-6 flex flex-col transition-all hover:shadow-xl ${
+                        fee.is_popular ? 'border-secondary shadow-lg ring-2 ring-secondary/20' : 'border-border-subtle'
+                      }`}
+                    >
+                      {fee.is_popular && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary text-on-primary text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">
+                          Popular
+                        </div>
+                      )}
+                      <div className={`w-14 h-14 bg-gradient-to-br ${modeConfig.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-md`}>
+                        <span className="material-symbols-outlined text-white text-2xl">{modeConfig.icon}</span>
+                      </div>
+                      <h3 className="font-headline-md text-headline-md text-on-surface mb-1">{modeConfig.label}</h3>
+                      <p className="text-on-surface-variant text-sm mb-4">{modeConfig.desc}</p>
+                      {/* <div className="mb-6">
+                        {fee.discount_price && fee.discount_price < fee.price ? (
+                          <>
+                            <p className="text-sm text-on-surface-variant line-through">₹{fee.price.toLocaleString()}</p>
+                            <p className="text-3xl font-bold text-on-surface">₹{fee.discount_price.toLocaleString()}</p>
+                            <p className="text-xs text-success-green font-medium mt-1">Save ₹{(fee.price - fee.discount_price).toLocaleString()}</p>
+                          </>
+                        ) : (
+                          <p className="text-3xl font-bold text-on-surface">₹{fee.price.toLocaleString()}</p>
+                        )}
+                        {fee.price > 0 && <p className="text-xs text-on-surface-variant mt-1">Including applicable taxes</p>}
+                     
+                      </div> */}
+                   <div className="mb-6">
+  <div className="flex items-center gap-3">
+    <p className="text-4xl font-extrabold text-primary">
+      ₹29,000
+    </p>
+
+    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+      28% OFF
+    </span>
+  </div>
+
+  <div className="mt-2 flex items-center gap-2">
+    <p className="text-lg text-on-surface-variant line-through">
+      ₹40,000
+    </p>
+
+    <span className="text-sm font-medium text-green-600">
+      You Save ₹11,000
+    </span>
+  </div>
+</div>
+                      <ul className="space-y-3 mb-8 flex-grow">
+                        {modeConfig.features.map((f) => (
+                          <li key={f} className="flex items-start gap-3 text-sm text-on-surface-variant">
+                            <span className="material-symbols-outlined text-secondary text-lg shrink-0">check_circle</span>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-auto">
+                        {user && enrollment?.status === 'active' ? (
+                          <Link
+                            href={`/programs/${program.slug}/learn`}
+                            className="w-full py-3 rounded-xl font-label-md text-center block bg-success-green text-white hover:bg-opacity-90 transition-all"
+                          >
+                            Go to Program
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/programs/${program.slug}/enroll?mode=${fee.program_type}`}
+                            className="w-full py-3 rounded-xl font-label-md text-center block bg-secondary text-white hover:bg-secondary/90 transition-all shadow-md"
+                          >
+                            Enroll Now — ₹{(fee.discount_price || fee.price).toLocaleString()}
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="py-section-gap bg-surface-container-lowest">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">

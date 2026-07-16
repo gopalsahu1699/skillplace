@@ -13,8 +13,6 @@ interface ProgramFormData {
   short_description: string
   program_type: string
   branch_id: string
-  price: number
-  discount_price: number
   duration_weeks: number
   is_featured: boolean
   skill_level: string
@@ -40,6 +38,8 @@ interface ProgramFormDialogProps {
   branches: Branch[]
   courses: Course[]
   onSubmit: (e: React.FormEvent) => void
+  feeData: Record<string, { price: number; discount_price: number; is_active: boolean; is_popular: boolean; display_order: number }>
+  onFeeChange: (data: Record<string, { price: number; discount_price: number; is_active: boolean; is_popular: boolean; display_order: number }>) => void
 }
 
 export default function ProgramFormDialog({
@@ -57,6 +57,8 @@ export default function ProgramFormDialog({
   branches,
   courses,
   onSubmit,
+  feeData,
+  onFeeChange,
 }: ProgramFormDialogProps) {
   const [courseSearch, setCourseSearch] = useState('')
   const [branchFilter, setBranchFilter] = useState('')
@@ -116,19 +118,6 @@ export default function ProgramFormDialog({
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 mb-1 block">Program Type *</label>
-          <select
-            value={formData.program_type}
-            onChange={(e) => onChange({ ...formData, program_type: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          >
-            <option value="online">Online</option>
-            <option value="offline">Offline</option>
-            <option value="hybrid">Hybrid</option>
-          </select>
-        </div>
-        <div>
           <label className="text-sm font-medium text-slate-700 mb-1 block">Branch</label>
           <select
             value={formData.branch_id}
@@ -140,27 +129,6 @@ export default function ProgramFormDialog({
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-1 block">Price *</label>
-          <Input
-            type="number"
-            value={formData.price}
-            onChange={(e) => onChange({ ...formData, price: Number(e.target.value) })}
-            className="border-slate-300"
-            required
-            min={0}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-1 block">Discount Price</label>
-          <Input
-            type="number"
-            value={formData.discount_price}
-            onChange={(e) => onChange({ ...formData, discount_price: Number(e.target.value) })}
-            className="border-slate-300"
-            min={0}
-          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-1 block">Duration (weeks)</label>
@@ -193,6 +161,104 @@ export default function ProgramFormDialog({
             />
             <span className="text-sm font-medium text-slate-700">Featured on Homepage</span>
           </label>
+        </div>
+        <div className="sm:col-span-2 border border-slate-200 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-slate-900 mb-3">Fee Structure by Mode</h3>
+          <div className="space-y-4">
+            {['online', 'offline', 'hybrid'].map((mode) => {
+              const labels: Record<string, string> = { online: 'Online', offline: 'Offline', hybrid: 'Hybrid' }
+              return (
+                <div key={mode} className="border border-slate-100 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={feeData[mode]?.is_active || false}
+                        onChange={(e) =>
+                          onFeeChange({
+                            ...feeData,
+                            [mode]: { ...feeData[mode], is_active: e.target.checked },
+                          })
+                        }
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-semibold text-slate-700">{labels[mode] || mode}</span>
+                    </label>
+                    {feeData[mode]?.is_active && (
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                        <input
+                          type="radio"
+                          name="popular_mode"
+                          checked={feeData[mode]?.is_popular || false}
+                          onChange={() =>
+                            onFeeChange(
+                              Object.fromEntries(
+                                Object.entries(feeData).map(([key, val]) => [
+                                  key,
+                                  { ...val, is_popular: key === mode },
+                                ])
+                              )
+                            )
+                          }
+                          className="h-3.5 w-3.5 border-slate-300 text-amber-500 focus:ring-amber-500"
+                        />
+                        <span className="font-medium text-amber-600">Popular</span>
+                      </label>
+                    )}
+                  </div>
+                  {feeData[mode]?.is_active && (
+                    <div className="grid grid-cols-3 gap-3 ml-6">
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 mb-0.5 block">Price (₹)</label>
+                        <Input
+                          type="number"
+                          value={feeData[mode]?.price || 0}
+                          onChange={(e) =>
+                            onFeeChange({
+                              ...feeData,
+                              [mode]: { ...feeData[mode], price: Number(e.target.value) },
+                            })
+                          }
+                          className="border-slate-300 h-8 text-sm"
+                          min={0}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 mb-0.5 block">Discount Price (₹)</label>
+                        <Input
+                          type="number"
+                          value={feeData[mode]?.discount_price || 0}
+                          onChange={(e) =>
+                            onFeeChange({
+                              ...feeData,
+                              [mode]: { ...feeData[mode], discount_price: Number(e.target.value) },
+                            })
+                          }
+                          className="border-slate-300 h-8 text-sm"
+                          min={0}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 mb-0.5 block">Display Order</label>
+                        <Input
+                          type="number"
+                          value={feeData[mode]?.display_order ?? 0}
+                          onChange={(e) =>
+                            onFeeChange({
+                              ...feeData,
+                              [mode]: { ...feeData[mode], display_order: Number(e.target.value) },
+                            })
+                          }
+                          className="border-slate-300 h-8 text-sm"
+                          min={0}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-1 block">Skill Level</label>

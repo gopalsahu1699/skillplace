@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Edit, Trash2, Loader2, AlertCircle, Star, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord, getCombinedProgramsData, batchUpdateProgramCourses } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
-import type { TrainingProgram, ProgramCourse, Branch, Course } from '@/types'
+import type { TrainingProgram, ProgramCourse, Branch, Course, ProgramFee } from '@/types'
 import dynamic from 'next/dynamic'
 
 const ProgramFormDialog = dynamic(() => import('@/components/admin/ProgramFormDialog'), { ssr: false })
@@ -19,8 +19,6 @@ interface ProgramFormData {
   short_description: string
   program_type: string
   branch_id: string
-  price: number
-  discount_price: number
   duration_weeks: number
   is_featured: boolean
   skill_level: string
@@ -38,8 +36,6 @@ const INITIAL_FORM_DATA: ProgramFormData = {
   short_description: '',
   program_type: 'offline',
   branch_id: '',
-  price: 0,
-  discount_price: 0,
   duration_weeks: 0,
   is_featured: false,
   skill_level: '',
@@ -68,6 +64,12 @@ export default function AdminProgramsPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [programCourses, setProgramCourses] = useState<Record<string, string[]>>({})
   const [allProgramCourses, setAllProgramCourses] = useState<ProgramCourse[]>([])
+  const [programFees, setProgramFees] = useState<Record<string, ProgramFee[]>>({})
+  const [feeData, setFeeData] = useState<Record<string, { price: number; discount_price: number; is_active: boolean; is_popular: boolean; display_order: number }>>({
+    online: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+    offline: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+    hybrid: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+  })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -107,6 +109,13 @@ export default function AdminProgramsPage() {
       }
       setProgramCourses(pcMap)
       setAllProgramCourses(rawPc)
+
+      const feesMap: Record<string, ProgramFee[]> = {}
+      for (const fee of (data.programFees || []) as ProgramFee[]) {
+        if (!feesMap[fee.program_id]) feesMap[fee.program_id] = []
+        feesMap[fee.program_id].push(fee)
+      }
+      setProgramFees(feesMap)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load programs')
     } finally {
@@ -118,6 +127,35 @@ export default function AdminProgramsPage() {
     Promise.resolve().then(() => fetchData())
   }, [fetchData])
 
+  async function saveProgramFees(programId: string) {
+    for (const [mode, data] of Object.entries(feeData)) {
+      if (!data.is_active) {
+        const existing = programFees[programId]?.find((f) => f.program_type === mode)
+        if (existing) {
+          await updateRecord('program_fees', existing.id, { is_active: false })
+        }
+        continue
+      }
+
+      const existing = programFees[programId]?.find((f) => f.program_type === mode)
+      const payload = {
+        program_id: programId,
+        program_type: mode,
+        price: data.price,
+        discount_price: data.discount_price || null,
+        is_active: true,
+        is_popular: data.is_popular ?? false,
+        display_order: data.display_order ?? 0,
+      }
+
+      if (existing) {
+        await updateRecord('program_fees', existing.id, payload)
+      } else {
+        await createRecord('program_fees', payload)
+      }
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
@@ -127,15 +165,14 @@ export default function AdminProgramsPage() {
         .map((f) => f.trim())
         .filter(Boolean)
 
+      const activeModes = Object.entries(feeData).filter(([, d]) => d.is_active).map(([mode]) => mode)
       const body = {
         name: formData.name,
         slug: formData.slug,
         description: formData.description || null,
         short_description: formData.short_description || null,
-        program_type: formData.program_type,
+        program_type: activeModes.length > 0 ? activeModes[0] : 'offline',
         branch_id: formData.branch_id || null,
-        price: formData.price,
-        discount_price: formData.discount_price || null,
         duration_weeks: formData.duration_weeks || null,
         features,
         is_featured: formData.is_featured,
@@ -178,6 +215,8 @@ export default function AdminProgramsPage() {
 
         notify.courseCreated()
       }
+
+      await saveProgramFees(programId)
 
       setPrograms((prev) => {
         const idx = prev.findIndex((p) => p.id === programId)
@@ -233,8 +272,6 @@ export default function AdminProgramsPage() {
       short_description: program.short_description || '',
       program_type: program.program_type || 'offline',
       branch_id: program.branch_id || '',
-      price: program.price || 0,
-      discount_price: program.discount_price || 0,
       duration_weeks: program.duration_weeks || 0,
       is_featured: program.is_featured ?? false,
       skill_level: program.skill_level || '',
@@ -246,6 +283,25 @@ export default function AdminProgramsPage() {
     })
     setFeaturesText((program.features || []).join(', '))
     setSelectedCourses(programCourses[program.id] || [])
+
+    const existingFees = programFees[program.id] || []
+    const newFeeData: Record<string, { price: number; discount_price: number; is_active: boolean; is_popular: boolean; display_order: number }> = {
+      online: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+      offline: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+      hybrid: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+    }
+    for (const fee of existingFees) {
+      if (newFeeData[fee.program_type]) {
+        newFeeData[fee.program_type] = {
+          price: fee.price,
+          discount_price: fee.discount_price || 0,
+          is_active: fee.is_active,
+          is_popular: fee.is_popular ?? false,
+          display_order: fee.display_order ?? 0,
+        }
+      }
+    }
+    setFeeData(newFeeData)
     setShowForm(true)
   }
 
@@ -253,6 +309,11 @@ export default function AdminProgramsPage() {
     setFormData(INITIAL_FORM_DATA)
     setFeaturesText('')
     setSelectedCourses([])
+    setFeeData({
+      online: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+      offline: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+      hybrid: { price: 0, discount_price: 0, is_active: false, is_popular: false, display_order: 0 },
+    })
   }
 
   function toggleCourse(courseId: string) {
@@ -332,6 +393,8 @@ export default function AdminProgramsPage() {
         branches={branches}
         courses={courses}
         onSubmit={handleSubmit}
+        feeData={feeData}
+        onFeeChange={setFeeData}
       />
 
       <div className="flex items-center gap-4 mb-6">
@@ -391,8 +454,23 @@ export default function AdminProgramsPage() {
                     <td className="px-5 py-3.5 text-sm text-slate-600">
                       {program.branches?.name || 'N/A'}
                     </td>
-                    <td className="px-5 py-3.5 text-sm font-medium text-slate-900">
-                      ₹{(program.price || 0).toLocaleString()}
+                    <td className="px-5 py-3.5 text-sm">
+                      <div className="flex flex-wrap gap-1">
+                        {(programFees[program.id] || []).filter(f => f.is_active).length > 0
+                          ? (programFees[program.id] || []).filter(f => f.is_active).map(f => (
+                              <span key={f.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                style={{
+                                  backgroundColor: f.program_type === 'online' ? '#f3e8ff' : f.program_type === 'offline' ? '#dbeafe' : '#fef3c7',
+                                  color: f.program_type === 'online' ? '#7c3aed' : f.program_type === 'offline' ? '#2563eb' : '#d97706',
+                                }}
+                              >
+                                {f.program_type === 'online' ? 'Online' : f.program_type === 'offline' ? 'Offline' : 'Hybrid'}
+                                : ₹{(f.discount_price || f.price).toLocaleString()}
+                              </span>
+                            ))
+                          : <span className="text-slate-400">—</span>
+                        }
+                      </div>
                     </td>
                     <td className="px-5 py-3.5 text-sm text-slate-600">
                       {program.duration_weeks ? `${program.duration_weeks}w` : 'N/A'}

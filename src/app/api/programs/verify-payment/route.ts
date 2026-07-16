@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/enroll/success', request.url))
     }
 
-    if (payment.program_id) {
+      if (payment.program_id) {
       let profileId = payment.user_id
 
       if (!profileId) {
@@ -147,6 +147,7 @@ export async function GET(request: NextRequest) {
             user_id: profileId,
             program_id: payment.program_id,
             status: 'active',
+            selected_mode: payment.program_type || null,
           })
           if (enrollError) {
             console.error('[verify-payment] Failed to create enrollment:', enrollError)
@@ -307,6 +308,7 @@ export async function POST(request: NextRequest) {
           status: 'active',
           location: location || null,
           notes: notes || null,
+          selected_mode: payment.program_type || null,
         })
       }
     }

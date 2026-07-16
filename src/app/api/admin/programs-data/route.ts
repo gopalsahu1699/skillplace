@@ -36,11 +36,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [programsRes, branchesRes, coursesRes, pcRes] = await Promise.all([
+    const [programsRes, branchesRes, coursesRes, pcRes, feesRes] = await Promise.all([
       adminSupabase.from('training_programs').select('*,branches(name)').order('created_at', { ascending: false }),
       adminSupabase.from('branches').select('*').order('name'),
       adminSupabase.from('courses').select('*').order('created_at'),
       adminSupabase.from('program_courses').select('*').order('order_index'),
+      adminSupabase.from('program_fees').select('*'),
     ])
 
     return NextResponse.json({
@@ -49,6 +50,7 @@ export async function GET(request: NextRequest) {
         branches: branchesRes.data || [],
         courses: coursesRes.data || [],
         programCourses: pcRes.data || [],
+        programFees: feesRes.data || [],
       },
     }, { headers: rateLimitHeaders })
   } catch (err: unknown) {

@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getProgramImage } from '@/lib/utils'
 import { SafeImg } from '@/components/ui/safe-image'
 import type { TrainingProgram } from '@/types'
@@ -77,6 +78,7 @@ function ProgramCardFallback({ title, type, imageKey, features, price, duration 
 }
 
 export default function OurTrainingProgram({ trainingPrograms }: { trainingPrograms: TrainingProgram[] }) {
+  const router = useRouter()
   const programs = trainingPrograms.length > 0 ? trainingPrograms.slice(0, 6) : null
 
   return (
@@ -121,15 +123,51 @@ export default function OurTrainingProgram({ trainingPrograms }: { trainingProgr
                     ))}
                   </ul>
                 </div>
-                <div className="flex items-center justify-between border-t border-border-subtle pt-6 mt-auto">
-                  <div>
-                    <span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span>
-                    <span className="text-headline-md font-bold text-primary">&#8377;{p.price?.toLocaleString()}</span>
-                  </div>
-                  <div className="text-right">
+                <div className="border-t border-border-subtle pt-4 mt-auto">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="block text-caption text-on-surface-variant uppercase font-semibold">Duration</span>
-                    <span className="font-bold">{p.duration_weeks} weeks</span>
+                    <span className="font-bold text-sm">{p.duration_weeks} weeks</span>
                   </div>
+                  {p.program_fees && p.program_fees.length > 0 && (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {p.program_fees.map((fee) => {
+                        const cfg: Record<string, { label: string; gradient: string }> = {
+                          online: { label: 'Online', gradient: 'from-purple-500 to-purple-600' },
+                          offline: { label: 'Offline', gradient: 'from-blue-500 to-blue-600' },
+                          hybrid: { label: 'Hybrid', gradient: 'from-amber-500 to-amber-600' },
+                        }
+                        const c = cfg[fee.program_type] || { label: fee.program_type, gradient: 'from-slate-500 to-slate-600' }
+                        return (
+                          <div
+                            key={fee.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              router.push(`/programs/${p.slug}/enroll?mode=${fee.program_type}`)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                router.push(`/programs/${p.slug}/enroll?mode=${fee.program_type}`)
+                              }
+                            }}
+                            className={`flex flex-col items-center p-1.5 rounded-lg border transition-all hover:shadow-sm cursor-pointer ${
+                              fee.program_type === p.program_type
+                                ? 'border-secondary bg-secondary/5'
+                                : 'border-transparent bg-slate-50 hover:border-slate-200'
+                            }`}
+                          >
+                            <div className={`w-6 h-6 rounded-md bg-gradient-to-br ${c.gradient} flex items-center justify-center mb-0.5`}>
+                              <span className="material-symbols-outlined text-white text-[10px]">{fee.program_type === 'online' ? 'online_prediction' : fee.program_type === 'hybrid' ? 'layers' : 'groups'}</span>
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-on-surface">{c.label}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </Link>

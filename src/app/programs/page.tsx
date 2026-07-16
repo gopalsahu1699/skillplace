@@ -12,6 +12,15 @@ interface Branch {
   icon: string
 }
 
+interface ProgramFee {
+  id: string
+  program_id: string
+  program_type: string
+  price: number
+  discount_price: number | null
+  is_active: boolean
+}
+
 interface TrainingProgram {
   id: string
   name: string
@@ -25,6 +34,7 @@ interface TrainingProgram {
   duration_weeks: number
   features: string[]
   branches: { name: string; slug: string } | null
+  program_fees?: ProgramFee[]
 }
 
 interface Enrollment {
@@ -127,7 +137,24 @@ export default function ProgramsPage() {
         .eq('is_active', true)
         .order('created_at', { ascending: true })
       if (error) throw error
-      setPrograms(data || [])
+
+      const { data: allFees } = await supabase
+        .from('program_fees')
+        .select('*')
+        .eq('is_active', true)
+
+      const feesByProgram: Record<string, ProgramFee[]> = {}
+      for (const fee of allFees || []) {
+        if (!feesByProgram[fee.program_id]) feesByProgram[fee.program_id] = []
+        feesByProgram[fee.program_id].push(fee)
+      }
+
+      const programsWithFees = (data || []).map((p: TrainingProgram) => ({
+        ...p,
+        program_fees: feesByProgram[p.id] || [],
+      }))
+
+      setPrograms(programsWithFees)
     } catch (err) {
       console.error('Failed to fetch programs:', err)
       setError('Failed to load programs. Please try again.')
@@ -149,7 +176,7 @@ export default function ProgramsPage() {
           <span className="text-secondary font-label-md tracking-widest uppercase mb-4 block">Industry-Led Excellence</span>
           <h1 className="font-display-lg text-display-lg mb-6 max-w-3xl mx-auto">Job-Oriented Training Programs</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
-            Choose your branch and program type. Each program is designed by industry experts with placement assistance to bridge the gap between academia and professional precision.
+            Choose your branch and preferred learning mode — Online, Offline, or Hybrid. Each program is designed by industry experts with placement assistance to bridge the gap between academia and professional precision.
           </p>
         </div>
       </section>
@@ -261,56 +288,80 @@ export default function ProgramsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-              {filteredPrograms.map((program) => (
+              {filteredPrograms.map((program) => {
+                const fees = program.program_fees || []
+                return (
                 <div key={program.id} className="program-card bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden flex flex-col">
-                  <div className="relative h-56 w-full">
-                    <div
-                      className="bg-cover bg-center w-full h-full"
-                      style={{ backgroundImage: `url('${getProgramImage(program.branches?.slug || '')}')` }}
-                    />
-                    {renderProgramBadge(program.program_type)}
-                  </div>
-                  <div className="p-6 flex-grow flex flex-col">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="bg-surface-container-high text-on-surface font-label-md text-[10px] uppercase px-2 py-0.5 rounded">
+                  <div
+                    className="relative h-44 w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url('${getProgramImage(program.branches?.slug || '')}')` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                      <span className="bg-surface-container-high text-on-surface text-[10px] font-bold uppercase px-2 py-0.5 rounded">
                         {program.branches?.name}
                       </span>
+                      {program.duration_weeks && (
+                        <span className="bg-black/50 text-white text-[10px] font-semibold px-2 py-0.5 rounded backdrop-blur-sm">
+                          {program.duration_weeks} Weeks
+                        </span>
+                      )}
                     </div>
-                    <h3 className="font-headline-md text-headline-md mb-2 line-clamp-2">{program.name}</h3>
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="flex items-center gap-1 text-on-surface-variant">
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule</span>
-                        <span className="font-body-md text-sm">{program.duration_weeks} Weeks</span>
+                  </div>
+                  <div className="p-5 flex-grow flex flex-col">
+                    <h3 className="font-headline-md text-headline-md mb-3 line-clamp-1">{program.name}</h3>
+
+                    {fees.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        {fees.map((fee) => {
+                          const config: Record<string, { icon: string; label: string; gradient: string }> = {
+                            online: { icon: 'online_prediction', label: 'Online', gradient: 'from-purple-500 to-purple-600' },
+                            offline: { icon: 'groups', label: 'Offline', gradient: 'from-blue-500 to-blue-600' },
+                            hybrid: { icon: 'layers', label: 'Hybrid', gradient: 'from-amber-500 to-amber-600' },
+                          }
+                          const c = config[fee.program_type] || { icon: 'school', label: fee.program_type, gradient: 'from-slate-500 to-slate-600' }
+                          return (
+                            <Link
+                              key={fee.id}
+                              href={`/programs/${program.slug}/enroll?mode=${fee.program_type}`}
+                              className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all hover:shadow-md group ${
+                                fee.program_type === program.program_type
+                                  ? 'border-secondary bg-secondary/5'
+                                  : 'border-transparent bg-surface-container-high/50 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${c.gradient} flex items-center justify-center`}>
+                                <span className="material-symbols-outlined text-white text-lg">{c.icon}</span>
+                              </div>
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface">{c.label}</span>
+                            </Link>
+                          )
+                        })}
                       </div>
-                      <div className="font-headline-md text-secondary text-lg">
-                        <span>₹29,999</span>
-                        <span className="text-on-surface-variant line-through text-sm font-normal ml-1">₹40,000</span>
-                      </div>
-                    </div>
-                    <Link href={`/programs/${program.slug}`} className="block">
-                      <ul className="space-y-3 mb-8 flex-grow">
-                        {(program.features || []).slice(0, 4).map((feature, i) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <span className="w-2 h-2 mt-2 bg-secondary rounded-sm shrink-0"></span>
-                            <span className="text-on-surface-variant text-sm">{feature}</span>
-                          </li>
-                        ))}
-                        {(program.features || []).length > 4 && (
-                          <li className="text-sm text-secondary font-medium">
-                            + {(program.features || []).length - 4} more features 
-                          </li>
-                        )}
-                      </ul>
-                    </Link>
+                    )}
+
+                    <ul className="space-y-2 mb-6 flex-grow">
+                      {(program.features || []).slice(0, 3).map((feature, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                          <span className="w-1.5 h-1.5 mt-1.5 bg-secondary rounded-sm shrink-0"></span>
+                          <span className="text-on-surface-variant text-xs leading-relaxed">{feature}</span>
+                        </li>
+                      ))}
+                      {(program.features || []).length > 3 && (
+                        <li className="text-xs text-secondary font-medium">+ {(program.features || []).length - 3} more</li>
+                      )}
+                    </ul>
+
                     <Link
                       href={`/programs/${program.slug}`}
-                      className="w-full py-4 border-2 border-secondary text-secondary font-label-md rounded-lg hover:bg-secondary hover:text-on-primary transition-all text-center block mt-auto"
+                      className="w-full py-3 border-2 border-secondary text-secondary font-label-md rounded-xl hover:bg-secondary hover:text-on-primary transition-all text-center block mt-auto text-sm"
                     >
-                      View Details
+                      View Full Details
                     </Link>
                   </div>
                 </div>
-              ))}
+                )
+              })}
 
               <div className="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-12 text-center bg-surface-container-low/30">
                 <span className="material-symbols-outlined text-4xl text-outline mb-4">school</span>
