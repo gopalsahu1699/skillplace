@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = JSON.parse(rawBody)
-    const event = payload.type || payload.event
+    const eventType = payload.type || payload.event || ''
 
     const data = payload.data || payload
     const orderId = data.order?.order_id || data.order_id
-    const paymentStatus = data.payment?.payment_status || data.payment_status || data.order_status
+    const paymentStatus = data.payment?.payment_status || data.payment_status || data.order_status || ''
 
     if (!orderId) {
-      return NextResponse.json({ error: 'Missing order_id' }, { status: 400 })
+      return NextResponse.json({ received: true, info: 'Missing order_id' })
     }
 
     const { data: existingPayment } = await adminSupabase
@@ -31,15 +31,14 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (!existingPayment) {
-      console.error(`Webhook: Order ${orderId} not found in database`)
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+      return NextResponse.json({ received: true, info: `Order ${orderId} not found in database`, event: eventType })
     }
 
     if (existingPayment.status === 'completed') {
       return NextResponse.json({ received: true, duplicate: true })
     }
 
-    if (event === 'PAYMENT_SUCCESS_WEBHOOK' && paymentStatus === 'SUCCESS') {
+    if (eventType === 'PAYMENT_SUCCESS_WEBHOOK' && paymentStatus === 'SUCCESS') {
       const paymentId = data.payment?.cf_payment_id || data.cf_payment_id
 
       const updateData: Record<string, unknown> = {
@@ -185,7 +184,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, status: 'completed' })
     }
 
-    if (paymentStatus === 'FAILED' || event === 'PAYMENT_FAILED_WEBHOOK') {
+    if (paymentStatus === 'FAILED' || eventType === 'PAYMENT_FAILED_WEBHOOK') {
       const { error: updateError } = await adminSupabase
         .from('payments')
         .update({

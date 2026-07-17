@@ -417,21 +417,7 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      <section className="py-section-gap px-margin-mobile md:px-margin-desktop">
-        <div className="max-w-container-max mx-auto bg-secondary rounded-[2rem] p-12 md:p-24 relative overflow-hidden text-center">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 to-transparent opacity-50"></div>
-          <div className="relative z-10">
-            <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-white mb-6">Ready to Start Your Career?</h2>
-            <p className="font-body-lg text-body-lg text-white mb-10 max-w-2xl mx-auto">
-              Join thousands of students who have transformed their careers with Skillplace Academy. The best time to start was yesterday. The next best time is now.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link className="bg-white text-secondary px-10 py-4 rounded-xl font-bold text-label-md hover:bg-white/90 transition-all shadow-xl text-center" href="/courses">Browse Courses</Link>
-              <Link className="border border-white text-white px-8 py-4 rounded-lg font-label-md text-label-md font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all" href="/contact">Contact Us</Link>
-            </div>
-          </div>
-        </div>
-      </section>
+  
 
     </div>
   )

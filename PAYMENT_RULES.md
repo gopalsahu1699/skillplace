@@ -1,36 +1,37 @@
 # Payment Rules — Skillplace Academy
 
-## Payment Provider: Razorpay
+## Payment Provider: Cashfree
 
 ### Environment
-- Test mode for development
-- Live mode for production
-- Webhook endpoint: `/api/payments/webhook`
+- Test mode for development (SANDBOX)
+- Live mode for production (PRODUCTION)
+- Toggle via `NEXT_PUBLIC_CASHFREE_ENV` env var
+- Webhook endpoint: `/api/payment/webhook`
 
 ### Flow: Individual Course Purchase
 ```
 1. Client: POST /api/payments/create-order { courseId, couponCode? }
 2. Server: Validate course exists, apply coupon, calculate final amount
-3. Server: Create Razorpay order (amount in paise)
-4. Client: Open Razorpay checkout (razorpay.razorpay.razorpay.razorpay.open())
-5. Razorpay: Sends webhook to /api/payments/webhook
-6. Server: Verify signature, update payment status
-7. Server: Create enrollment record
-8. Client: Redirect to learn page
+3. Server: Create Cashfree order via cashfree-pg SDK
+4. Server: Save payment record (status: pending)
+5. Client: Open Cashfree checkout (paymentSessionId)
+6. Cashfree: Sends webhook to /api/payment/webhook
+7. Server: Verify signature (x-webhook-signature + x-webhook-timestamp), update payment status, create enrollment
+8. Client: Redirect to /api/payments/verify?order_id=... (GET) as fallback
 ```
 
 ### Flow: Program Enrollment
 ```
-1. Client: POST /api/programs/create-order { programId, couponCode? }
-2. Server: Validate program, apply coupon, create Razorpay order
-3. Client: Complete payment
-4. Webhook: Verify, update status
-5. Server: Create enrollment (program_id, not course_id)
-6. Client: Redirect to program learn page
+1. Client: POST /api/programs/create-order { programId, studentName, email, phone, couponCode?, selectedMode }
+2. Server: Validate fields, find/create profile by email, apply coupon
+3. Server: Create Cashfree order, save payment (status: pending)
+4. Cashfree: Sends webhook to /api/payment/webhook
+5. Webhook: Handle profile creation if needed, create enrollment
+6. Client: Redirect to /api/programs/verify-payment?order_id=... (GET) as fallback
 ```
 
 ## Pricing Rules
-1. Amount stored in **paise** (₹100 = 10000 paise)
+1. Amount stored in **rupees** (integer, not paise)
 2. Server-side price calculation ONLY (never trust client)
 3. Coupons can be amount-based or percentage-based
 4. Minimum order amount configurable per coupon
@@ -55,42 +56,52 @@ pending → completed
 ```
 
 ## Webhook Events
-- `payment.captured`: Successful payment → create enrollment
-- `payment.failed`: Failed payment → log, notify user
-- `refund.created`: Refund initiated → update status, revoke access
+- `PAYMENT_SUCCESS_WEBHOOK`: Successful payment → create enrollment
+- `PAYMENT_FAILED_WEBHOOK`: Failed payment → log, notify user
 
 ## Security Rules
-1. Always verify webhook signature server-side
-2. Never expose Razorpay Key Secret in client code
+1. Always verify webhook signature server-side (x-webhook-signature + x-webhook-timestamp)
+2. Never expose Cashfree Secret Key in client code
 3. Log all webhook attempts
-4. Idempotency: check if payment already processed
+4. Idempotency: check if payment already processed (atomic .eq('status', 'pending'))
 5. Amount verification: compare webhook amount with expected
+6. Rate-limit all payment API routes
 
 ## Database Tables
 
 ### payments
-- `user_id`: UUID (buyer)
+- `user_id`: UUID (buyer, nullable for guest program purchases)
 - `course_id`: UUID (nullable for program purchases)
-- `amount`: INTEGER (in paise)
-- `razorpay_order_id`: TEXT
-- `razorpay_payment_id`: TEXT
-- `razorpay_signature`: TEXT
+- `program_id`: UUID (nullable for course purchases)
+- `amount`: INTEGER (in rupees)
+- `order_id`: TEXT (custom order ID)
+- `cf_order_id`: TEXT (Cashfree order ID)
+- `cf_payment_session_id`: TEXT (Cashfree payment session)
+- `cf_payment_id`: TEXT (Cashfree payment ID)
+- `payment_method`: TEXT (upi/card/netbanking/etc)
 - `status`: TEXT (pending/completed/failed/refunded)
 - `created_at`, `updated_at`: TIMESTAMPTZ
 
-### enrollments
+### course_enrollments
 - `user_id`: UUID
-- `program_id`: UUID (for program enrollment)
-- `branch_id`: UUID
+- `course_id`: UUID
 - `status`: TEXT (active/completed/pending/expired)
+- `created_at`: TIMESTAMPTZ
+
+### enrollments (program enrollments)
+- `user_id`: UUID
+- `program_id`: UUID
+- `branch_id`: UUID (nullable)
+- `status`: TEXT (active/completed/pending/cancelled/expired)
+- `selected_mode`: TEXT (online/offline/hybrid)
 - `enrolled_at`, `completed_at`: TIMESTAMPTZ
-- `program_type`: TEXT (online/offline/hybrid)
 
 ### coupons
-- `code`: TEXT (unique)
+- `code`: TEXT (unique, uppercase)
 - `discount_type`: TEXT (amount/percent)
 - `discount_rate`: INTEGER
-- `min_order_amount`: INTEGER
+- `max_discount_amount`: INTEGER (nullable)
+- `min_order_amount`: INTEGER (nullable)
 - `max_uses`, `used_count`: INTEGER
 - `valid_from`, `valid_until`: TIMESTAMPTZ
 - `is_active`: BOOLEAN

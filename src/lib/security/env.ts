@@ -6,8 +6,6 @@ const REQUIRED_SERVER_ENV_VARS = [
   'R2_BUCKET_NAME',
   'CLOUDFLARE_API_TOKEN',
   'VIDEO_SECRET',
-  'RAZORPAY_KEY_SECRET',
-  'RAZORPAY_WEBHOOK_SECRET',
   'CRON_SECRET',
   'CSRF_SECRET',
 ] as const
@@ -16,7 +14,6 @@ const REQUIRED_PUBLIC_ENV_VARS = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'NEXT_PUBLIC_SITE_URL',
-  'RAZORPAY_KEY_ID',
 ] as const
 
 export function validateEnvironment(): string[] {
@@ -47,8 +44,6 @@ export function validateNextPublicEnv(): void {
         'SUPABASE_SERVICE_ROLE_KEY',
         'VIDEO_SECRET',
         'CRON_SECRET',
-        'RAZORPAY_KEY_SECRET',
-        'RAZORPAY_WEBHOOK_SECRET',
         'CSRF_SECRET',
         'CLOUDFLARE_API_TOKEN',
         'R2_SECRET_ACCESS_KEY',

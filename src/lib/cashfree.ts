@@ -139,8 +139,7 @@ export function verifyWebhookSignature(rawBody: string, signature: string, times
   if (timestamp) {
     const client = getCashfreeClient()
     try {
-      const isValid = client.PGVerifyWebhookSignature(signature, rawBody, timestamp)
-      if (typeof isValid === 'boolean') return isValid
+      client.PGVerifyWebhookSignature(signature, rawBody, timestamp)
       return true
     } catch {
       return false
