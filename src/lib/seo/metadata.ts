@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-const BASE_URL = 'https://skillplaceacademy.com'
+const BASE_URL = 'https://www.skillplace.in'
 export const SITE_NAME = 'Skillplace Academy'
 export const SITE_DESCRIPTION = 'India\'s leading engineering skill development academy. Learn AutoCAD, Revit, SolidWorks, PLC programming and more with practical training and 100% placement assistance in Bilaspur, Chhattisgarh.'
 export const SITE_KEYWORDS = [

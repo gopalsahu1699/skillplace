@@ -12,7 +12,7 @@ import { organizationSchema, websiteSchema, localBusinessSchema } from "@/lib/se
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" })
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], display: "swap", variable: "--font-plus-jakarta", weight: ["400", "500", "600", "700", "800"] })
 
-const BASE_URL = "https://skillplaceacademy.com"
+const BASE_URL = "https://www.skillplace.in"
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} - Build Skills. Build Career.`,
@@ -107,6 +107,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-IN" dir="ltr" className={`${inter.variable} ${jakarta.variable}`}>
       <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-CWL8C5JYT5"></script>
+        <script dangerouslySetInnerHTML={{
+          __html: `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-CWL8C5JYT5');`,
+        }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=swap" />
@@ -124,6 +128,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="author" content={SITE_NAME} />
         <meta name="rating" content="General" />
         <meta name="revisit-after" content="7 days" />
+        <meta name="target" content="all" />
+        <meta name="audience" content="all" />
+        <meta name="category" content="education" />
+        <meta name="coverage" content="India" />
+        <meta name="distribution" content="global" />
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         <meta property="og:locale:alternate" content="hi_IN" />
         <link rel="alternate" hrefLang="en-IN" href={BASE_URL} />
         <link rel="alternate" hrefLang="hi" href={BASE_URL} />

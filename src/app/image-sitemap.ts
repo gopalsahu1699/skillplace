@@ -1,6 +1,6 @@
 import { adminSupabase } from '@/lib/supabase/admin'
 
-const BASE_URL = 'https://skillplaceacademy.com'
+const BASE_URL = 'https://www.skillplace.in'
 const IMAGE_BASE = 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images'
 
 const staticImages = [

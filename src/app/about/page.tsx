@@ -5,7 +5,7 @@ import { SafeImg } from '@/components/ui/safe-image'
 import { getMentors, getPartners } from '@/lib/supabase/queries'
 import JsonLd from '@/components/seo/JsonLd'
 import { createMetadata } from '@/lib/seo/metadata'
-import { breadcrumbSchema, pageSchema, personSchema } from '@/lib/seo/json-ld'
+import { breadcrumbSchema, pageSchema, personSchema, aboutPageSchema } from '@/lib/seo/json-ld'
 
 export const metadata: Metadata = createMetadata({
   title: 'About Skillplace Academy | India\'s Premier Engineering Skill Development Academy',
@@ -36,6 +36,7 @@ export default async function AboutPage() {
         { name: 'About', url: '/about' },
       ])} />
       <JsonLd data={pageSchema('/about', 'About Skillplace Academy | India\'s Premier Engineering Skill Development Academy', 'Learn about Skillplace Academy\'s mission to bridge the gap between academic knowledge and industry requirements.')} />
+      <JsonLd data={aboutPageSchema()} />
       {teamMembers.map((member: { name: string; position: string; image?: string }) => (
         <JsonLd key={member.name} data={personSchema({
           name: member.name,

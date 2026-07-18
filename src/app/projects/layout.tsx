@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { createMetadata } from '@/lib/seo/metadata'
+import JsonLd from '@/components/seo/JsonLd'
+import { breadcrumbSchema, pageSchema } from '@/lib/seo/json-ld'
 
 export const metadata: Metadata = createMetadata({
   title: 'Student Projects | Skillplace Academy',
@@ -9,5 +11,18 @@ export const metadata: Metadata = createMetadata({
 })
 
 export default function ProjectsLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <>
+      <JsonLd data={breadcrumbSchema([
+        { name: 'Home', url: '/' },
+        { name: 'Projects', url: '/projects' },
+      ])} />
+      <JsonLd data={pageSchema(
+        '/projects',
+        'Student Projects | Skillplace Academy',
+        'Explore real-world engineering projects by Skillplace Academy students.'
+      )} />
+      {children}
+    </>
+  )
 }

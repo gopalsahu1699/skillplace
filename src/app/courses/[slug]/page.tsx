@@ -6,7 +6,7 @@ import EnrollButton from '@/components/courses/EnrollButton'
 import Link from 'next/link'
 import { getSupabaseImageUrl } from '@/lib/utils'
 import JsonLd from '@/components/seo/JsonLd'
-import { courseSchema, breadcrumbSchema, courseInstanceSchema, learningResourceSchema, pageSchema } from '@/lib/seo/json-ld'
+import { courseSchema, breadcrumbSchema, courseInstanceSchema, learningResourceSchema, pageSchema, faqSchema, productSchema } from '@/lib/seo/json-ld'
 import { createMetadata } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
@@ -90,6 +90,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
       })} />
       <JsonLd data={courseInstanceSchema(course)} />
       <JsonLd data={learningResourceSchema(course)} />
+      <JsonLd data={productSchema(course)} />
+      {faqs.length > 0 && <JsonLd data={faqSchema(faqs.map(f => ({ q: f.question, a: f.answer })))} />}
       <JsonLd data={pageSchema(
         `/courses/${course.slug}`,
         `${course.title} - ${branchName} Course | Skillplace Academy`,

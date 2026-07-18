@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getCourses, getTestimonials, getFeaturedTrainingPrograms } from '@/lib/supabase/queries'
+import { getCourses, getTestimonials, getFeaturedTrainingPrograms, getFaqs } from '@/lib/supabase/queries'
 import ScrollProgress from '@/components/home/ScrollProgress'
 import HeroSection from '@/components/home/HeroSection'
 import WhyChooseUs from '@/components/home/WhyChooseUs'
@@ -15,7 +15,7 @@ import FAQ from '@/components/home/FAQ'
 import FinalCTA from '@/components/home/FinalCTA'
 import JsonLd from '@/components/seo/JsonLd'
 import { createMetadata } from '@/lib/seo/metadata'
-import { breadcrumbSchema, speakableSchema, howToSchema, pageSchema } from '@/lib/seo/json-ld'
+import { breadcrumbSchema, speakableSchema, howToSchema, pageSchema, faqSchema } from '@/lib/seo/json-ld'
 
 export const metadata: Metadata = createMetadata({
   title: 'Skillplace Academy - Build Skills. Build Career. | Engineering Training in Bilaspur',
@@ -37,9 +37,10 @@ const getCoursesList = (dbCourses: string[], fallbacks: string[]) => {
 }
 
 export default async function Home() {
-  const [courses, featuredPrograms] = await Promise.all([
+  const [courses, featuredPrograms, faqItems] = await Promise.all([
     getCourses(),
     getFeaturedTrainingPrograms(),
+    getFaqs(),
   ])
 
   const civilCoursesFromDb = courses.filter((c: { branches?: { slug: string } }) => c.branches?.slug === 'civil').slice(0, 6).map((c: { title: string }) => c.title)
@@ -63,6 +64,7 @@ export default async function Home() {
         { name: 'Get Placed', text: 'Receive 100% placement assistance with 200+ hiring partners.' },
       ])} />
       <JsonLd data={pageSchema('/', 'Skillplace Academy - Build Skills. Build Career. | Engineering Training in Bilaspur', 'India\'s leading engineering skill development academy in Bilaspur, Chhattisgarh.')} />
+      {faqItems.length > 0 && <JsonLd data={faqSchema(faqItems.map(f => ({ q: f.question, a: f.answer })))} />}
 
       <ScrollProgress />
 

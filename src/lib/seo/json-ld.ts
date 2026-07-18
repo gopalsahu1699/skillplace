@@ -1,4 +1,4 @@
-const BASE_URL = 'https://skillplaceacademy.com'
+const BASE_URL = 'https://www.skillplace.in'
 const ORG_NAME = 'Skillplace Academy'
 const ORG_DESCRIPTION = 'Industry-leading engineering skill development academy offering practical training in Civil, Mechanical, Electrical, and Electronics engineering with 100% placement assistance.'
 const LOGO_URL = 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/skillplace_logo.jpg'
@@ -35,7 +35,11 @@ export function organizationSchema() {
       availableLanguage: ['English', 'Hindi'],
     },
     sameAs: [
-      'https://skillplaceacademy.com',
+      'https://www.skillplace.in',
+      'https://www.facebook.com/skillplaceacademy',
+      'https://www.instagram.com/skillplace.academy',
+      'https://www.linkedin.com/company/skillplace-academy',
+      'https://www.youtube.com/@skillplaceacademy',
     ],
     knowsAbout: [
       'Civil Engineering',
@@ -344,6 +348,63 @@ export function educationalOccupationalProgramSchema(program: {
       availability: 'https://schema.org/InStock',
     },
     occupationalCredentialAwarded: 'Professional Certificate',
+  }
+}
+
+export function productSchema(course: {
+  title: string
+  slug: string
+  description?: string | null
+  price: number
+  discount_price?: number | null
+  thumbnail_url?: string | null
+  branches?: { name: string } | null
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${BASE_URL}/courses/${course.slug}#product`,
+    name: course.title,
+    description: course.description || `${course.title} - Engineering Course at Skillplace Academy`,
+    image: course.thumbnail_url || LOGO_URL,
+    category: course.branches?.name || 'Engineering Training',
+    brand: {
+      '@type': 'Brand',
+      name: ORG_NAME,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: course.discount_price || course.price,
+      priceCurrency: 'INR',
+      availability: 'https://schema.org/InStock',
+      url: `${BASE_URL}/courses/${course.slug}`,
+      priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+    },
+  }
+}
+
+export function aboutPageSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    '@id': `${BASE_URL}/about#aboutpage`,
+    url: `${BASE_URL}/about`,
+    name: 'About Skillplace Academy',
+    description: ORG_DESCRIPTION,
+    isPartOf: { '@id': `${BASE_URL}/#website` },
+    primaryImageOfPage: { '@type': 'ImageObject', url: LOGO_URL },
+  }
+}
+
+export function contactPageSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    '@id': `${BASE_URL}/contact#contactpage`,
+    url: `${BASE_URL}/contact`,
+    name: 'Contact Skillplace Academy',
+    description: 'Contact Skillplace Academy for admissions, career counseling, and program inquiries.',
+    isPartOf: { '@id': `${BASE_URL}/#website` },
   }
 }
 

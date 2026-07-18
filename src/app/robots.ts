@@ -75,7 +75,8 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: [
-      'https://skillplaceacademy.com/sitemap.xml',
+      'https://www.skillplace.in/sitemap.xml',
+      'https://www.skillplace.in/image-sitemap.xml',
     ],
   }
 }
