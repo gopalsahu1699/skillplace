@@ -200,6 +200,9 @@ export default function ContactPage() {
                   <p className="font-body-md text-on-surface-variant leading-relaxed">
                     <a href="mailto:skillplaceacademy@gmail.com" className="hover:text-secondary transition-colors">skillplaceacademy@gmail.com</a><br />
                   </p>
+                  <p className="font-body-md text-on-surface-variant leading-relaxed">
+                    <a href="mailto:support.skillplace@gmail.com" className="hover:text-secondary transition-colors">support.skillplace@gmail.com</a><br />
+                  </p>
                 </div>
               </div>
 
