@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone } from '@/lib/validation/phone'
-import { SafeImg } from '@/components/ui/safe-image'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface ProgramFee {
   id: string
@@ -318,10 +318,12 @@ export default function ProgramDetailPage() {
 
             <div className="hidden lg:block relative">
               <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl rotate-3 border-2 border-white/10">
-                <SafeImg
-                  className="w-full h-full object-cover"
+                <SafeImage
+                  className="object-cover"
                   alt={program.name}
                   src={getProgramImage(program.branches?.slug || '')}
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 40vw"
                 />
               </div>
               <div className="absolute -bottom-8 -left-8 bg-surface-bright p-6 rounded-2xl shadow-xl flex items-center gap-4 -rotate-3 border border-border-subtle">

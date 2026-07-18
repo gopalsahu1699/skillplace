@@ -1,7 +1,15 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import JsonLd from '@/components/seo/JsonLd'
+import { createMetadata } from '@/lib/seo/metadata'
 import { breadcrumbSchema, faqSchema, pageSchema } from '@/lib/seo/json-ld'
 import { getFaqs } from '@/lib/supabase/queries'
+
+export const metadata: Metadata = createMetadata({
+  title: 'FAQ - Engineering Training Bilaspur | Skillplace Academy',
+  description: 'Find answers about engineering training in Bilaspur at Skillplace Academy — admissions, courses, fees, certifications, placement support, online/offline classes, and career guidance.',
+  path: '/faq',
+})
 
 export const dynamic = 'force-dynamic'
 

@@ -8,10 +8,10 @@ import { createMetadata } from '@/lib/seo/metadata'
 import { breadcrumbSchema, pageSchema, personSchema, aboutPageSchema } from '@/lib/seo/json-ld'
 
 export const metadata: Metadata = createMetadata({
-  title: 'About Skillplace Academy | India\'s Premier Engineering Skill Development Academy',
-  description: 'Learn about Skillplace Academy\'s mission to bridge the gap between academic knowledge and industry requirements. 2000+ students trained, expert mentors, practical-focused curriculum.',
+  title: 'About Skillplace Academy Bilaspur | Best Engineering Training Institute',
+  description: 'Learn about Skillplace Academy Bilaspur - the best engineering training institute bridging the gap between academic knowledge and industry requirements. 2000+ students trained, expert mentors.',
   path: '/about',
-  keywords: ['about engineering academy', 'skillplace team', 'engineering mentors India', 'skill development mission', 'academy Bilaspur'],
+  keywords: ['SkillPlace Academy Bilaspur', 'Engineering Institute Bilaspur', 'Best Engineering Institute in Bilaspur', 'about engineering academy', 'skillplace team', 'engineering mentors India', 'skill development mission'],
 })
 
 const whyChooseUs = [

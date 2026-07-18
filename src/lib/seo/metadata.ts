@@ -5,7 +5,18 @@ export const SITE_NAME = 'Skillplace Academy'
 export const SITE_DESCRIPTION = 'India\'s leading engineering skill development academy. Learn AutoCAD, Revit, SolidWorks, PLC programming and more with practical training and 100% placement assistance in Bilaspur, Chhattisgarh.'
 export const SITE_KEYWORDS = [
   'skillplace academy',
-  'engineering courses Bilaspur',
+  'SkillPlace Academy Bilaspur',
+  'Engineering Training Bilaspur',
+  'Engineering Institute Bilaspur',
+  'Placement Training Bilaspur',
+  'Best Engineering Institute in Bilaspur',
+  'Civil Engineering Training Bilaspur',
+  'Electrical Engineering Training Bilaspur',
+  'Mechanical Engineering Training Bilaspur',
+  'Skill Development Institute Bilaspur',
+  'Engineering Coaching Bilaspur',
+  'Engineering Placement Assistance',
+  'Engineering Academy Chhattisgarh',
   'AutoCAD training',
   'Revit architecture course',
   'SolidWorks training',
@@ -14,7 +25,6 @@ export const SITE_KEYWORDS = [
   'mechanical engineering courses',
   'electrical engineering training',
   'electronics automation course',
-  'engineering placement assistance',
   'skill development India',
   'CAD training center',
   'BIM modeling course',
@@ -23,6 +33,26 @@ export const SITE_KEYWORDS = [
   'job oriented courses',
   'engineering certification',
   'Chhattisgarh skill training',
+  'Job Oriented Engineering Course',
+  'Technical Training Institute',
+  'Industry Ready Engineers',
+  'Core Engineering Jobs',
+  'Engineering Skill Development',
+  'Engineering Career Guidance',
+  'Engineering Interview Preparation',
+  'Engineering Soft Skills',
+  'Live Engineering Projects',
+  'Engineering Training with Placement',
+  'Bilaspur Chhattisgarh',
+  'Korba',
+  'Raigarh',
+  'Janjgir Champa',
+  'Mungeli',
+  'Raipur',
+  'Balodabazar',
+  'Bhatapara',
+  'Champa',
+  'Ratanpur',
 ]
 
 export function createMetadata(overrides: {
@@ -102,50 +132,55 @@ export const homepageMetadata = {
   path: '/',
   keywords: [
     'best engineering academy Bilaspur',
+    'SkillPlace Academy Bilaspur',
+    'Engineering Training Bilaspur',
+    'Placement Training Bilaspur',
+    'Best Engineering Institute in Bilaspur',
     'skill development center Chhattisgarh',
     'job oriented training programs',
     'engineering practical training',
     'placement assistance Bilaspur',
+    'Engineering Coaching Bilaspur',
   ],
 }
 
 export const coursesMetadata = {
-  title: 'Engineering Courses - AutoCAD, Revit, SolidWorks, PLC | Skillplace Academy',
-  description: 'Browse 30+ industry-relevant engineering courses including AutoCAD, Revit Architecture, SolidWorks, PLC Programming, and more. Live projects, expert mentors, certification included.',
+  title: 'Engineering Courses in Bilaspur - AutoCAD, Revit, SolidWorks, PLC | Skillplace Academy',
+  description: 'Explore 30+ engineering courses in Bilaspur including AutoCAD, Revit Architecture, SolidWorks, PLC Programming, and more. Practical training with live projects, expert mentors, and certification.',
   path: '/courses',
-  keywords: ['CAD courses', 'BIM training', 'PLC SCADA course', 'engineering software training', 'online engineering classes'],
+  keywords: ['Engineering Training Bilaspur', 'Civil Engineering Training Bilaspur', 'Electrical Engineering Training Bilaspur', 'Mechanical Engineering Training Bilaspur', 'CAD courses', 'BIM training', 'PLC SCADA course', 'engineering software training'],
 }
 
 export const programsMetadata = {
-  title: 'Job-Oriented Engineering Programs | 100% Placement Assistance | Skillplace Academy',
-  description: 'Comprehensive 12-48 week engineering programs in Civil, Mechanical, Electrical & Electronics. Hands-on training, industry certification, and guaranteed placement support.',
+  title: 'Job-Oriented Engineering Programs Bilaspur | 100% Placement Assistance | Skillplace Academy',
+  description: 'Comprehensive 12-48 week engineering programs in Bilaspur for Civil, Mechanical & Electrical. Hands-on training, industry certification, and guaranteed placement support.',
   path: '/programs',
-  keywords: ['engineering training program', 'job guarantee course', 'placement program India', 'engineering upskilling', 'career transition program'],
+  keywords: ['Engineering Training Bilaspur', 'Placement Training Bilaspur', 'Job Oriented Engineering Course', 'engineering training program', 'job guarantee course', 'placement program India', 'engineering upskilling'],
 }
 
 export const aboutMetadata = {
-  title: 'About Skillplace Academy | India\'s Premier Engineering Skill Development Academy',
-  description: 'Learn about Skillplace Academy\'s mission to bridge the gap between academic knowledge and industry requirements. 2000+ students trained, expert mentors, practical-focused curriculum.',
+  title: 'About Skillplace Academy Bilaspur | Best Engineering Training Institute',
+  description: 'Learn about Skillplace Academy Bilaspur - the best engineering training institute bridging the gap between academic knowledge and industry requirements. 2000+ students trained, expert mentors.',
   path: '/about',
-  keywords: ['about engineering academy', 'skillplace team', 'engineering mentors India', 'skill development mission', 'academy Bilaspur'],
+  keywords: ['SkillPlace Academy Bilaspur', 'Engineering Institute Bilaspur', 'Best Engineering Institute in Bilaspur', 'about engineering academy', 'skillplace team', 'engineering mentors India', 'skill development mission'],
 }
 
 export const contactMetadata = {
-  title: 'Contact Skillplace Academy | Admissions & Career Counseling | Bilaspur',
-  description: 'Get in touch with Skillplace Academy. Visit our campus in Bilaspur, call +91 79878 14261, or email skillplaceacademy@gmail.com. Free career counseling available.',
+  title: 'Contact Skillplace Academy | Best Engineering Institute in Bilaspur',
+  description: 'Contact Skillplace Academy Bilaspur for admissions, career counseling & demo class booking. Call +91 79878 14261. Civil, Electrical & Mechanical engineering training with placement.',
   path: '/contact',
 }
 
 export const placementsMetadata = {
-  title: 'Placement Assistance | 95% Placement Rate | Skillplace Academy',
-  description: 'Skillplace Academy\'s dedicated placement cell helps you land your dream engineering job. 200+ hiring partners, mock interviews, resume building, and career guidance included.',
+  title: 'Placement Assistance Bilaspur | Engineering Placement Training | Skillplace Academy',
+  description: 'Skillplace Academy Bilaspur offers engineering placement assistance with 200+ hiring partners. Placement training, mock interviews, resume building, and career guidance for civil, electrical & mechanical engineers.',
   path: '/placements',
-  keywords: ['engineering placements', 'job assistance program', 'campus placement', 'interview preparation', 'hiring partners India'],
+  keywords: ['Placement Training Bilaspur', 'Engineering Placement Assistance', 'engineering placements', 'job assistance program', 'campus placement', 'interview preparation', 'hiring partners India'],
 }
 
 export const faqMetadata = {
-  title: 'Frequently Asked Questions | Skillplace Academy',
-  description: 'Find answers to common questions about admissions, courses, fees, certifications, placement support, online/offline classes, and career guidance at Skillplace Academy.',
+  title: 'FAQ - Engineering Training Bilaspur | Skillplace Academy',
+  description: 'Find answers about engineering training in Bilaspur at Skillplace Academy — admissions, courses, fees, certifications, placement support, online/offline classes, and career guidance.',
   path: '/faq',
 }
 

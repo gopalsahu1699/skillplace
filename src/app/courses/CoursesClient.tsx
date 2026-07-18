@@ -5,7 +5,7 @@ import Link from 'next/link'
 import type { Course } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { getSupabaseImageUrl } from '@/lib/utils'
-import { SafeImg } from '@/components/ui/safe-image'
+import { SafeImg, SafeImage } from '@/components/ui/safe-image'
 
 interface Branch {
   id: string
@@ -127,7 +127,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                 <div key={course.id} className="tonal-card rounded-xl overflow-hidden flex flex-col group border-2 border-secondary/20">
                   <div className="h-48 bg-surface-container overflow-hidden relative">
                     {course.thumbnail_url ? (
-                      <SafeImg src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <SafeImage src={course.thumbnail_url} alt={course.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="material-symbols-outlined text-5xl text-on-surface-variant/30" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -251,10 +251,12 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                     {/* Thumbnail */}
                     <div className="h-48 bg-surface-container overflow-hidden relative">
                       {course.thumbnail_url ? (
-                        <SafeImg
+                        <SafeImage
                           src={course.thumbnail_url}
                           alt={course.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">

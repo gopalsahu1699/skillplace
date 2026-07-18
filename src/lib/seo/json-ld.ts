@@ -58,6 +58,19 @@ export function organizationSchema() {
       bestRating: '5',
       ratingCount: '500+',
     },
+    areaServed: [
+      { '@type': 'City', name: 'Bilaspur' },
+      { '@type': 'City', name: 'Korba' },
+      { '@type': 'City', name: 'Raigarh' },
+      { '@type': 'City', name: 'Janjgir Champa' },
+      { '@type': 'City', name: 'Mungeli' },
+      { '@type': 'City', name: 'Raipur' },
+      { '@type': 'City', name: 'Balodabazar' },
+      { '@type': 'City', name: 'Bhatapara' },
+      { '@type': 'City', name: 'Champa' },
+      { '@type': 'City', name: 'Ratanpur' },
+      { '@type': 'State', name: 'Chhattisgarh' },
+    ],
   }
 }
 
@@ -310,7 +323,7 @@ export function localBusinessSchema() {
       },
     ],
     priceRange: '₹5000 - ₹40000',
-    areaServed: ['Bilaspur', 'Chhattisgarh', 'India'],
+    areaServed: ['Bilaspur', 'Korba', 'Raigarh', 'Janjgir Champa', 'Mungeli', 'Raipur', 'Balodabazar', 'Bhatapara', 'Champa', 'Ratanpur', 'Chhattisgarh', 'India'],
     hasMap: 'https://maps.app.goo.gl/Vc4F1FaXwHD1dAn87',
   }
 }

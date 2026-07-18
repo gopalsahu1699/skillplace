@@ -19,9 +19,11 @@ import { breadcrumbSchema, speakableSchema, howToSchema, pageSchema, faqSchema }
 
 export const metadata: Metadata = createMetadata({
   title: 'Skillplace Academy - Build Skills. Build Career. | Engineering Training in Bilaspur',
-  description: 'India\'s leading engineering skill development academy. Learn AutoCAD, Revit, SolidWorks, PLC programming and more with practical training and 100% placement assistance in Bilaspur, Chhattisgarh.',
+  description: 'Skillplace Academy is the best engineering institute in Bilaspur, Chhattisgarh offering Civil, Electrical & Mechanical engineering training with 100% placement assistance. Learn AutoCAD, Revit, SolidWorks, PLC and more.',
   path: '/',
   keywords: [
+    'SkillPlace Academy Bilaspur',
+    'Engineering Training Bilaspur',
     'best engineering academy Bilaspur',
     'skill development center Chhattisgarh',
     'job oriented training programs',

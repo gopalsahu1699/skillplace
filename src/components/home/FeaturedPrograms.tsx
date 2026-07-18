@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getProgramImage } from '@/lib/utils'
-import { SafeImg } from '@/components/ui/safe-image'
+import { SafeImage } from '@/components/ui/safe-image'
 import type { TrainingProgram } from '@/types'
 import SectionReveal from './SectionReveal'
 
@@ -53,10 +53,12 @@ function FeaturedCard({ program }: { program: TrainingProgram }) {
       className="group relative flex flex-col h-full bg-white rounded-2xl border border-border-subtle overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,88,190,0.12)] hover:border-secondary/30"
     >
       <div className="relative aspect-[16/10] overflow-hidden">
-        <SafeImg
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        <SafeImage
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           alt={program.name}
           src={getProgramImage(program.branches?.slug ?? 'civil')}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 

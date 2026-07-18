@@ -1,7 +1,16 @@
+import type { Metadata } from 'next'
 import { getCourses } from '@/lib/supabase/queries'
 import CoursesClient from './CoursesClient'
 import JsonLd from '@/components/seo/JsonLd'
+import { createMetadata } from '@/lib/seo/metadata'
 import { breadcrumbSchema, pageSchema, itemListSchema } from '@/lib/seo/json-ld'
+
+export const metadata: Metadata = createMetadata({
+  title: 'Engineering Courses in Bilaspur - AutoCAD, Revit, SolidWorks, PLC | Skillplace Academy',
+  description: 'Explore 30+ engineering courses in Bilaspur including AutoCAD, Revit Architecture, SolidWorks, PLC Programming, and more. Practical training with live projects, expert mentors, and certification.',
+  path: '/courses',
+  keywords: ['Engineering Training Bilaspur', 'Civil Engineering Training Bilaspur', 'Electrical Engineering Training Bilaspur', 'Mechanical Engineering Training Bilaspur', 'CAD courses', 'BIM training', 'PLC SCADA course', 'engineering software training'],
+})
 
 export const dynamic = 'force-dynamic'
 

@@ -14,6 +14,10 @@ type SafeImageProps = Omit<ImageProps, 'onError'> & {
 type SafeImgProps = ImgHTMLAttributes<HTMLImageElement> & {
   /** Optional fallback element shown on error */
   fallback?: React.ReactNode
+  /** Explicit width (required for CLS prevention) */
+  width?: number
+  /** Explicit height (required for CLS prevention) */
+  height?: number
 }
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -203,6 +207,8 @@ export function SafeImg({
   fallback,
   onError,
   onLoad,
+  width,
+  height,
   ...rest
 }: SafeImgProps) {
   const [hasLoadError, setHasLoadError] = useState(false)
@@ -218,7 +224,10 @@ export function SafeImg({
     <img
       src={src as string}
       alt={alt as string}
+      width={width}
+      height={height}
       className={cn('transition-opacity duration-500', className)}
+      loading="lazy"
       onError={(e) => {
         setHasLoadError(true)
         logDevWarning(src as string, 'Failed to load image')
