@@ -62,7 +62,7 @@ export default function AdminNavbar() {
         <div className="flex items-center justify-between h-14">
           {/* Left: Logo */}
           <div className="flex items-center gap-4">
-            <Link href="/admin-place" className="flex items-center gap-2.5 group">
+            <Link href="/" className="flex items-center gap-2.5 group">
               <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center group-hover:bg-slate-800 transition-colors">
                 <Shield className="h-4 w-4 text-white" />
               </div>

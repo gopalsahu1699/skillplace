@@ -643,6 +643,232 @@ export default function ProgramDetailPage() {
           </div>
         </section>
 
+        <section className="py-section-gap bg-surface-container-lowest">
+  <div className="max-w-6xl mx-auto px-margin-mobile md:px-margin-desktop">
+
+    <div className="text-center mb-14">
+      <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4">
+        Your Transformation Journey
+      </h2>
+
+      <p className="max-w-3xl mx-auto text-on-surface-variant text-body-lg">
+        SkillPlace Academy doesn't just teach software—we transform engineering
+        students into confident, industry-ready professionals.
+      </p>
+    </div>
+
+    <div className="grid lg:grid-cols-2 gap-10">
+
+      {/* Before */}
+      <div className="rounded-3xl border border-red-100 bg-red-50 p-10">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="material-symbols-outlined text-red-600 text-3xl">
+              sentiment_dissatisfied
+            </span>
+          </div>
+
+          <div>
+            <p className="text-sm uppercase tracking-wider text-red-600 font-semibold">
+              Before Joining
+            </p>
+            <h3 className="text-3xl font-bold text-on-surface">
+              Limited Industry Exposure
+            </h3>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-500">close</span>
+            <p>Theoretical knowledge with limited practical application.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-500">close</span>
+            <p>Little or no experience with industry-standard software.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-500">close</span>
+            <p>No professional engineering project portfolio.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-500">close</span>
+            <p>Low confidence during technical interviews.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-500">close</span>
+            <p>Uncertain about industry expectations and career direction.</p>
+          </div>
+
+        </div>
+      </div>
+
+      {/* After */}
+      <div className="rounded-3xl border border-green-100 bg-green-50 p-10">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+            <span className="material-symbols-outlined text-green-600 text-3xl">
+              emoji_events
+            </span>
+          </div>
+
+          <div>
+            <p className="text-sm uppercase tracking-wider text-green-600 font-semibold">
+              After Completion
+            </p>
+            <h3 className="text-3xl font-bold text-on-surface">
+              Industry-Ready Engineer
+            </h3>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-green-600">check_circle</span>
+            <p>Hands-on expertise with industry-standard engineering software.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-green-600">check_circle</span>
+            <p>Real-world engineering projects that strengthen your portfolio.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-green-600">check_circle</span>
+            <p>Professional resume, portfolio, and career guidance.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-green-600">check_circle</span>
+            <p>Improved technical and HR interview confidence.</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-green-600">check_circle</span>
+            <p>Industry-recognized certification and job-ready practical skills.</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<section className="py-section-gap bg-surface-container-lowest">
+  <div className="max-w-6xl mx-auto px-margin-mobile md:px-margin-desktop">
+
+    <div className="text-center mb-14">
+      <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4">
+        What You'll Achieve
+      </h2>
+
+      <p className="max-w-3xl mx-auto text-on-surface-variant text-body-lg">
+        By the end of our Job Oriented Training Program, you'll graduate with the
+        practical skills, confidence, and experience needed to start your
+        engineering career.
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border-subtle hover:shadow-lg transition-all">
+        <span className="material-symbols-outlined text-primary text-3xl">
+          verified
+        </span>
+        <div>
+          <h3 className="font-semibold text-lg mb-1">Master Industry Software</h3>
+          <p className="text-sm text-on-surface-variant">
+            Gain hands-on expertise in professional engineering software used by top companies.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border-subtle hover:shadow-lg transition-all">
+        <span className="material-symbols-outlined text-primary text-3xl">
+          engineering
+        </span>
+        <div>
+          <h3 className="font-semibold text-lg mb-1">Build Real Projects</h3>
+          <p className="text-sm text-on-surface-variant">
+            Complete practical industry projects that strengthen your technical portfolio.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border-subtle hover:shadow-lg transition-all">
+        <span className="material-symbols-outlined text-primary text-3xl">
+          description
+        </span>
+        <div>
+          <h3 className="font-semibold text-lg mb-1">Professional Portfolio</h3>
+          <p className="text-sm text-on-surface-variant">
+            Showcase your work with a resume and project portfolio that impress employers.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border-subtle hover:shadow-lg transition-all">
+        <span className="material-symbols-outlined text-primary text-3xl">
+          groups
+        </span>
+        <div>
+          <h3 className="font-semibold text-lg mb-1">Interview Preparation</h3>
+          <p className="text-sm text-on-surface-variant">
+            Prepare with mock interviews, aptitude practice, and HR guidance.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border-subtle hover:shadow-lg transition-all">
+        <span className="material-symbols-outlined text-primary text-3xl">
+          workspace_premium
+        </span>
+        <div>
+          <h3 className="font-semibold text-lg mb-1">Earn Dual Certificates</h3>
+          <p className="text-sm text-on-surface-variant">
+            Receive training and project certificates that validate your practical skills.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border-subtle hover:shadow-lg transition-all">
+        <span className="material-symbols-outlined text-primary text-3xl">
+          work
+        </span>
+        <div>
+          <h3 className="font-semibold text-lg mb-1">Become Job Ready</h3>
+          <p className="text-sm text-on-surface-variant">
+            Graduate with the confidence and practical knowledge employers are looking for.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <div className="mt-14 rounded-3xl bg-gradient-to-r from-primary to-secondary text-white p-10 text-center">
+      <h3 className="text-3xl font-bold mb-4">
+        Your Success is Our Goal
+      </h3>
+
+      <p className="max-w-3xl mx-auto text-lg text-white/90">
+        Every lesson, project, assessment, and mentoring session is designed
+        with one objective—to help you become an industry-ready engineer who can
+        confidently apply for jobs and perform from day one.
+      </p>
+    </div>
+
+  </div>
+</section>
+
       
 
         <section className="py-section-gap bg-surface">
