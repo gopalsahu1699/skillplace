@@ -127,7 +127,7 @@ function commonHead(certNumber: string, theme: ReturnType<typeof getTheme>) {
         pdf.addImage(imgData, 'JPEG', 10, 10, 277, 190);
         pdf.save('certificate-${certNumber}.pdf');
       } catch (err) {
-        alert('Failed to generate PDF. Please try again.');
+        console.error('Failed to generate PDF:', err);
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;

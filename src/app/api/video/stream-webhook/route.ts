@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 
 /**
  * POST /api/video/stream-webhook
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       .eq('video_id', uid)
 
     if (error) {
-      console.error('Stream webhook: failed to update lesson:', error)
+      logger.error('Stream webhook: failed to update lesson:', error)
       return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
     }
 

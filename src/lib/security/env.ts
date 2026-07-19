@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger'
+
 const REQUIRED_SERVER_ENV_VARS = [
   'SUPABASE_SERVICE_ROLE_KEY',
   'CLOUDFLARE_ACCOUNT_ID',
@@ -51,7 +53,7 @@ export function validateNextPublicEnv(): void {
       ]
       if (serverOnlyVars.includes(serverKey)) {
         if (process.env.NODE_ENV === 'production') {
-          console.error(`SECURITY ALERT: Server-only secret ${key} should not be prefixed with NEXT_PUBLIC_`)
+          logger.error(`SECURITY ALERT: Server-only secret ${key} should not be prefixed with NEXT_PUBLIC_`)
         }
       }
     }

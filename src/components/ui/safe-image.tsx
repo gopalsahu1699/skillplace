@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, type ImgHTMLAttributes } from 'react'
 import Image, { type ImageProps } from 'next/image'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 type SafeImageProps = Omit<ImageProps, 'onError'> & {
   /** Optional fallback element shown on error */
@@ -24,7 +25,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 function logDevWarning(src: string | undefined, reason: string) {
   if (isDev && src) {
-    console.warn(`[SafeImage] ${reason}: ${src}`)
+    logger.warn(`[SafeImage] ${reason}: ${src}`)
   }
 }
 

@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getSupabaseUrl, getSupabaseAnonKey } from './supabase/config'
+import { AuthenticationError } from './errors/AuthenticationError'
+import { AuthorizationError } from './errors/AuthorizationError'
+import { logger } from './logger'
 
 export interface AuthenticatedUser {
   id: string
@@ -29,7 +32,9 @@ export async function createServerSupabaseClient() {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options)
           })
-        } catch {}
+        } catch {
+          logger.warn('Failed to set cookies in server client')
+        }
       },
     },
   })
@@ -38,8 +43,8 @@ export async function createServerSupabaseClient() {
 export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
   try {
     const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return null
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -64,7 +69,8 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       fullName: profile.full_name,
       isActive: profile.is_active ?? true,
     }
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to get authenticated user', error)
     return null
   }
 }

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import { logger } from '@/lib/logger'
 
 export default function LoginPage() {
   return (
@@ -63,7 +64,7 @@ function LoginForm() {
       })
       if (!loginRes.ok) {
         const err = await loginRes.json().catch(() => ({ error: 'Unknown error' }))
-        console.warn('Login API warning:', err.error)
+        logger.warn('Login API warning:', err.error)
       }
 
       const { data: profile } = await supabase

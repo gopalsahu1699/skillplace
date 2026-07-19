@@ -1,8 +1,9 @@
 import { supabase } from './supabase/client'
+import { safeAsync, handleError } from './errors/ErrorHandler'
+import { logger } from './logger'
 import {
   validateSession,
-  revokeSession,
-  ValidatedSession,
+  type ValidatedSession,
 } from './supabase/client'
 
 export interface PasswordValidation {
@@ -32,68 +33,72 @@ export function validatePasswordStrength(password: string): PasswordValidation {
   return { valid: errors.length === 0, errors }
 }
 
-export async function signUp(
-  email: string,
-  password: string,
-  fullName: string,
-  phone: string
-) {
+export async function signUp(email: string, password: string, fullName: string, phone: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { full_name: fullName, phone },
-    },
+    options: { data: { full_name: fullName, phone } },
   })
-  if (error) throw error
+  if (error) {
+    const appError = handleError(error, { route: 'auth.signUp' })
+    throw appError
+  }
   if (data.user) {
-    await supabase.from('profiles').insert({
+    const { error: profileError } = await supabase.from('profiles').insert({
       id: data.user.id,
       email,
       full_name: fullName,
       phone,
       role: 'student',
     })
+    if (profileError) {
+      logger.warn('Profile creation failed after signup', profileError)
+    }
   }
   return data
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  if (error) throw error
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) {
+    const appError = handleError(error, { route: 'auth.signIn' })
+    throw appError
+  }
   return data
 }
 
 export async function signOut() {
-  await supabase.auth.signOut()
+  await safeAsync(async () => {
+    await supabase.auth.signOut()
+  }, { route: 'auth.signOut' })
 }
 
 export async function getCurrentSession(): Promise<ValidatedSession | null> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const result = await safeAsync(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const { data: session } = await supabase
-    .from('user_sessions')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .eq('is_revoked', false)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    const { data: session, error: sessionError } = await supabase
+      .from('user_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .eq('is_revoked', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-  if (!session) return null
+    if (sessionError || !session) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
 
-  session.profiles = profile || null
-  return session as ValidatedSession
+    session.profiles = profile || null
+    return session as ValidatedSession
+  }, { route: 'auth.getCurrentSession' })
+
+  return result.success ? result.data : null
 }
-

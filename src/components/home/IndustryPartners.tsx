@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 import { isNetworkError, withRetry } from '@/lib/network'
 import { useOnlineStatus } from '@/context/OnlineStatusContext'
 import { WifiOff, RefreshCw } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface Partner {
   id: string
@@ -59,7 +60,7 @@ export default function IndustryPartners() {
       if (isNetworkError(error)) {
         setNetworkError(true)
       } else {
-        console.error('Error fetching partners:', error)
+        logger.error('Error fetching partners:', error)
       }
       setLoading(false)
       return

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Search, Loader2, Trash2 } from 'lucide-react'
 import type { ImageFolder } from '@/lib/supabase/storage'
+import { notify } from '@/lib/notification'
 
 interface ImageItem {
   name: string
@@ -49,7 +50,7 @@ export default function ImagePicker({ open, onOpenChange, folder, onSelect }: Im
       if (!res.ok) throw new Error()
       setImages((prev) => prev.filter((img) => img.name !== name))
     } catch {
-      alert('Failed to delete image')
+      notify.error('Failed to delete image. Please try again.')
     } finally {
       setDeleting(null)
     }

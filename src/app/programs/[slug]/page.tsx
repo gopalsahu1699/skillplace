@@ -513,6 +513,12 @@ export default function ProgramDetailPage() {
                 {[...program.program_fees]
                   .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
                   .map((fee) => {
+                  const modePricing: Record<string, { price: number; discount_price: number }> = {
+                    online: { price: 25000, discount_price: 19000 },
+                    offline: { price: 40000, discount_price: 29000 },
+                    hybrid: { price: 30000, discount_price: 24000 },
+                  }
+                  const pricing = modePricing[fee.program_type] || { price: 0, discount_price: 0 }
                   const modeConfig = {
                     online: {
                       icon: 'online_prediction',
@@ -554,40 +560,19 @@ export default function ProgramDetailPage() {
                       </div>
                       <h3 className="font-headline-md text-headline-md text-on-surface mb-1">{modeConfig.label}</h3>
                       <p className="text-on-surface-variant text-sm mb-4">{modeConfig.desc}</p>
-                      {/* <div className="mb-6">
-                        {fee.discount_price && fee.discount_price < fee.price ? (
-                          <>
-                            <p className="text-sm text-on-surface-variant line-through">₹{fee.price.toLocaleString()}</p>
-                            <p className="text-3xl font-bold text-on-surface">₹{fee.discount_price.toLocaleString()}</p>
-                            <p className="text-xs text-success-green font-medium mt-1">Save ₹{(fee.price - fee.discount_price).toLocaleString()}</p>
-                          </>
-                        ) : (
-                          <p className="text-3xl font-bold text-on-surface">₹{fee.price.toLocaleString()}</p>
-                        )}
-                        {fee.price > 0 && <p className="text-xs text-on-surface-variant mt-1">Including applicable taxes</p>}
-                     
-                      </div> */}
-                   <div className="mb-6">
-  <div className="flex items-center gap-3">
-    <p className="text-4xl font-extrabold text-primary">
-      ₹29,000
-    </p>
-
-    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-      28% OFF
-    </span>
-  </div>
-
-  <div className="mt-2 flex items-center gap-2">
-    <p className="text-lg text-on-surface-variant line-through">
-      ₹40,000
-    </p>
-
-    <span className="text-sm font-medium text-green-600">
-      You Save ₹11,000
-    </span>
-  </div>
-</div>
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3">
+                          <p className="text-4xl font-extrabold text-primary">₹{pricing.discount_price.toLocaleString()}</p>
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                            {Math.round((1 - pricing.discount_price / pricing.price) * 100)}% OFF
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <p className="text-lg text-on-surface-variant line-through">₹{pricing.price.toLocaleString()}</p>
+                          <span className="text-sm font-medium text-green-600">You Save ₹{(pricing.price - pricing.discount_price).toLocaleString()}</span>
+                        </div>
+                        <p className="text-xs text-on-surface-variant mt-1">Including applicable taxes</p>
+                      </div>
                       <ul className="space-y-3 mb-8 flex-grow">
                         {modeConfig.features.map((f) => (
                           <li key={f} className="flex items-start gap-3 text-sm text-on-surface-variant">

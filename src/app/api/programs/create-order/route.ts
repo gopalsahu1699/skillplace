@@ -3,6 +3,7 @@ import { createCashfreeOrder, getCashfreeEnv } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
+import { logger } from '@/lib/logger'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
@@ -200,10 +201,10 @@ export async function POST(request: Request) {
     const orderId = `prog_${programId.slice(0, 8)}_${Date.now()}`.slice(0, 40)
     const cfCustomerId = `prog_${safePhone}`
 
-    console.log(`[create-order] Creating Cashfree order - orderId: ${orderId}, amount: ${amount}, currency: INR`)
-    console.log(`[create-order] Customer - name: ${studentName}, email: ${email}, phone: ${safePhone}`)
-    console.log(`[create-order] returnUrl: ${BASE_URL}/api/programs/verify-payment?order_id={order_id}`)
-    console.log(`[create-order] notifyUrl: ${BASE_URL}/api/payment/webhook`)
+    logger.info(`[create-order] Creating Cashfree order - orderId: ${orderId}, amount: ${amount}, currency: INR`)
+    logger.info(`[create-order] Customer - name: ${studentName}, email: ${email}, phone: ${safePhone}`)
+    logger.info(`[create-order] returnUrl: ${BASE_URL}/api/programs/verify-payment?order_id={order_id}`)
+    logger.info(`[create-order] notifyUrl: ${BASE_URL}/api/payment/webhook`)
 
     const cfOrder = await createCashfreeOrder({
       orderId,
@@ -217,10 +218,10 @@ export async function POST(request: Request) {
       notifyUrl: `${BASE_URL}/api/payment/webhook`,
     })
 
-    console.log(`[create-order] Cashfree response - cfOrderId: ${cfOrder.cfOrderId}, paymentSessionId: ${cfOrder.paymentSessionId}, orderStatus: ${cfOrder.orderStatus}`)
+    logger.info(`[create-order] Cashfree response - cfOrderId: ${cfOrder.cfOrderId}, paymentSessionId: ${cfOrder.paymentSessionId}, orderStatus: ${cfOrder.orderStatus}`)
 
     if (!cfOrder.paymentSessionId) {
-      console.error('[create-order] Cashfree returned empty paymentSessionId')
+      logger.error('[create-order] Cashfree returned empty paymentSessionId')
       throw new Error('Cashfree failed to generate payment session')
     }
 
@@ -232,7 +233,7 @@ export async function POST(request: Request) {
 
     const profileId = existingProfile?.id || null
 
-    console.log(`[create-order] Saving payment record - profileId: ${profileId}, orderId: ${cfOrder.orderId}`)
+    logger.info(`[create-order] Saving payment record - profileId: ${profileId}, orderId: ${cfOrder.orderId}`)
 
     const { error: insertError } = await adminSupabase.from('payments').insert({
       user_id: profileId,
@@ -249,7 +250,7 @@ export async function POST(request: Request) {
     })
 
     if (insertError) {
-      console.error('[create-order] Failed to save payment record:', insertError)
+      logger.error('[create-order] Failed to save payment record:', insertError)
       throw new Error('Failed to save payment record')
     }
 
@@ -263,7 +264,7 @@ export async function POST(request: Request) {
       slug: program.slug,
     }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
-    console.error('programs/create-order error:', error)
+    logger.error('programs/create-order error:', error)
     const message = error instanceof Error ? error.message : 'Failed to create order'
     return NextResponse.json(
       { error: message },

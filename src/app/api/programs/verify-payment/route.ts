@@ -3,6 +3,7 @@ import { fetchCashfreePayments, fetchCashfreeOrder } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 import { validatePhoneServer } from '@/lib/validation/phone-server'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -14,11 +15,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const orderId = searchParams.get('order_id')
   const paymentSessionId = searchParams.get('payment_session_id')
-  console.log(`[verify-payment] GET called - orderId: ${orderId}, paymentSessionId: ${paymentSessionId}`)
+  logger.info(`[verify-payment] GET called - orderId: ${orderId}, paymentSessionId: ${paymentSessionId}`)
 
   try {
     if (!orderId) {
-      console.error('[verify-payment] Missing order_id parameter')
+      logger.error('[verify-payment] Missing order_id parameter')
       return NextResponse.redirect(new URL('/enroll/error?reason=missing_order', request.url))
     }
 
@@ -29,14 +30,14 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (dbError || !payment) {
-      console.error(`[verify-payment] Payment not found for order ${orderId}:`, dbError)
+      logger.error(`[verify-payment] Payment not found for order ${orderId}:`, dbError)
       return NextResponse.redirect(new URL('/enroll/error?reason=not_found', request.url))
     }
 
-    console.log(`[verify-payment] Payment found - id: ${payment.id}, status: ${payment.status}`)
+    logger.info(`[verify-payment] Payment found - id: ${payment.id}, status: ${payment.status}`)
 
     if (payment.status === 'completed') {
-      console.log(`[verify-payment] Payment ${orderId} already completed`)
+      logger.info(`[verify-payment] Payment ${orderId} already completed`)
       const slug = (payment as any).training_programs?.slug
       if (slug) {
         return NextResponse.redirect(new URL(`/programs/${slug}/learn`, request.url))
@@ -44,19 +45,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/enroll/success', request.url))
     }
 
-    console.log(`[verify-payment] Fetching payments from Cashfree for order ${orderId}`)
+    logger.info(`[verify-payment] Fetching payments from Cashfree for order ${orderId}`)
     const payments = await fetchCashfreePayments(orderId)
-    console.log(`[verify-payment] Cashfree payments response:`, JSON.stringify(payments))
+    logger.info(`[verify-payment] Cashfree payments response:`, JSON.stringify(payments))
 
     const successfulPayment = payments.find((p) => p.paymentStatus === 'SUCCESS')
 
     if (!successfulPayment) {
       const statuses = payments.map((p) => p.paymentStatus).join(', ')
-      console.log(`[verify-payment] No SUCCESS payment found for order ${orderId}. Statuses: [${statuses}]`)
+      logger.info(`[verify-payment] No SUCCESS payment found for order ${orderId}. Statuses: [${statuses}]`)
       return NextResponse.redirect(new URL(`/enroll/status?order_id=${orderId}&status=failed`, request.url))
     }
 
-    console.log(`[verify-payment] SUCCESS payment found - cfPaymentId: ${successfulPayment.cfPaymentId}`)
+    logger.info(`[verify-payment] SUCCESS payment found - cfPaymentId: ${successfulPayment.cfPaymentId}`)
 
     // Atomic transition: only update if still pending (prevents double-run from webhook + return URL)
     const { data: updated, error: updateError } = await adminSupabase
@@ -74,13 +75,13 @@ export async function GET(request: NextRequest) {
       .maybeSingle()
 
     if (updateError) {
-      console.error('[verify-payment] Failed to update payment status:', updateError)
+      logger.error('[verify-payment] Failed to update payment status:', updateError)
       return NextResponse.redirect(new URL('/enroll/error?reason=verification_failed', request.url))
     }
 
     // If null, another process already completed this — just redirect successfully
     if (!updated) {
-      console.log(`[verify-payment] Payment ${orderId} was already completed by another request`)
+      logger.info(`[verify-payment] Payment ${orderId} was already completed by another request`)
       const slug = (payment as any).training_programs?.slug
       if (slug) {
         return NextResponse.redirect(new URL(`/programs/${slug}/learn`, request.url))
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
             }
           }
         } catch (err) {
-          console.error('[verify-payment] Failed to fetch Cashfree order or resolve profile:', err)
+          logger.error('[verify-payment] Failed to fetch Cashfree order or resolve profile:', err)
         }
       }
 
@@ -150,12 +151,12 @@ export async function GET(request: NextRequest) {
             selected_mode: payment.program_type || null,
           })
           if (enrollError) {
-            console.error('[verify-payment] Failed to create enrollment:', enrollError)
+            logger.error('[verify-payment] Failed to create enrollment:', enrollError)
           }
         }
       } else {
         // Profile not found — log for admin to manually handle
-        console.error(`[verify-payment] CRITICAL: Payment ${payment.id} completed but no profile found for enrollment. program_id: ${payment.program_id}`)
+        logger.error(`[verify-payment] CRITICAL: Payment ${payment.id} completed but no profile found for enrollment. program_id: ${payment.program_id}`)
       }
     }
 
@@ -169,7 +170,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.redirect(new URL('/enroll/success', request.url))
   } catch (err) {
-    console.error('programs/verify-payment GET error:', err)
+    logger.error('programs/verify-payment GET error:', err)
     return NextResponse.redirect(new URL('/enroll/error?reason=verification_failed', request.url))
   }
 }
@@ -240,7 +241,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (updateError) {
-      console.error('[verify-payment POST] Failed to update payment status:', updateError)
+      logger.error('[verify-payment POST] Failed to update payment status:', updateError)
       return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
     }
 
@@ -319,7 +320,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, paymentId: successfulPayment.cfPaymentId, redirectUrl: getRedirectUrl() })
   } catch (err) {
-    console.error('programs/verify-payment POST error:', err)
+    logger.error('programs/verify-payment POST error:', err)
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

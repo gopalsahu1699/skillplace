@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 import { isNetworkError, withRetry } from '@/lib/network'
 import { useOnlineStatus } from '@/context/OnlineStatusContext'
 import { WifiOff, RefreshCw } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface Mentor {
   id: string
@@ -72,7 +73,7 @@ export default function MeetMentors() {
       if (isNetworkError(error)) {
         setNetworkError(true)
       } else {
-        console.error('Error fetching mentors:', error)
+        logger.error('Error fetching mentors:', error)
       }
       setLoading(false)
       return

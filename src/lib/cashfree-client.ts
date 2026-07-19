@@ -1,3 +1,7 @@
+import { logger } from './logger'
+import { PaymentError } from './errors/PaymentError'
+import { ErrorCodes } from './errors/ErrorCodes'
+
 function getClientEnv(): 'sandbox' | 'production' {
   const env = (typeof window !== 'undefined'
     ? process.env.NEXT_PUBLIC_CASHFREE_ENV
@@ -36,7 +40,7 @@ export async function redirectToCashfreeCheckout(paymentSessionId: string): Prom
       throw new Error(result.error.message || 'Cashfree checkout failed')
     }
   } catch (err) {
-    console.error('Cashfree SDK checkout failed, falling back to manual redirect:', err)
+    logger.warn('Cashfree SDK checkout failed, falling back to manual redirect', err)
     const checkoutUrl = getRedirectCheckoutUrl(paymentSessionId)
     window.location.href = checkoutUrl
   }

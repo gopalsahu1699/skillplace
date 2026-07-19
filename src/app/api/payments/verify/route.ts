@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fetchCashfreePayments } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle()
 
     if (updateError) {
-      console.error('payments/verify: failed to update payment:', updateError)
+      logger.error('payments/verify: failed to update payment:', updateError)
       return NextResponse.redirect(new URL('/payment/error?reason=verification_failed', request.url))
     }
 
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(new URL(`/courses/${payment.courses?.slug}/learn`, request.url))
   } catch (err) {
-    console.error('payments/verify GET error:', err)
+    logger.error('payments/verify GET error:', err)
     return NextResponse.redirect(new URL('/payment/error?reason=verification_failed', request.url))
   }
 }
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, redirectUrl: `/courses/${courseSlug || payment.courses?.slug}/learn` })
   } catch (err) {
-    console.error('payments/verify POST error:', err)
+    logger.error('payments/verify POST error:', err)
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

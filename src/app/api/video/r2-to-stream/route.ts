@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generatePlaybackUrl } from '@/lib/cloudflare-r2'
 import { importFromR2 } from '@/lib/cloudflare-stream'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       .eq('id', lessonId)
 
     if (updateErr) {
-      console.error('Failed to update lesson:', updateErr)
+      logger.error('Failed to update lesson:', updateErr)
     }
 
     return NextResponse.json({

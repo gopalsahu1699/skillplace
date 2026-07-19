@@ -1,54 +1,90 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Payment Error | Skillplace Academy',
-  description: 'There was an issue processing your payment. Please try again or contact our support team.',
-  robots: { index: false, follow: false },
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const errorMessages: Record<string, { title: string; description: string; action?: { label: string; href: string } }> = {
+  cancelled: {
+    title: 'Payment Cancelled',
+    description: 'Your payment was cancelled. No charges were made.',
+    action: { label: 'Try Again', href: '/programs' },
+  },
+  timeout: {
+    title: 'Payment Timed Out',
+    description: 'The payment session timed out. Please try again.',
+    action: { label: 'Try Again', href: '/programs' },
+  },
+  duplicate: {
+    title: 'Duplicate Payment',
+    description: 'It looks like this payment was already processed. Please check your enrollments.',
+    action: { label: 'View Enrollments', href: '/student/my-programs' },
+  },
+  verification_failed: {
+    title: 'Payment Verification Failed',
+    description: 'We could not verify your payment. Please contact support if you were charged.',
+    action: { label: 'Contact Support', href: '/contact' },
+  },
+  gateway_down: {
+    title: 'Payment Gateway Unavailable',
+    description: 'The payment service is temporarily unavailable. Please try again later.',
+    action: { label: 'Try Again', href: '/programs' },
+  },
+  webhook_pending: {
+    title: 'Payment Processing',
+    description: 'Your payment is being processed. This may take a few moments.',
+  },
+  default: {
+    title: 'Payment Failed',
+    description: 'Something went wrong while processing your payment. Please try again.',
+    action: { label: 'Try Again', href: '/programs' },
+  },
 }
 
-export default async function PaymentErrorPage(props: { searchParams: Promise<{ reason?: string }> }) {
-  const searchParams = await props.searchParams
-  const reason = searchParams.reason
-
-  const errorMessages: Record<string, string> = {
-    rate_limit: 'Too many requests. Please wait a moment and try again.',
-    missing_order: 'No order reference was found. Please try enrolling again.',
-    not_found: 'We couldn\'t find your payment record. Please contact support.',
-    verification_failed: 'Payment verification failed. Your account may not have been credited yet.',
-  }
-
-  const message = reason ? errorMessages[reason] : null
+function ErrorContent() {
+  const searchParams = useSearchParams()
+  const reason = searchParams.get('reason') || 'default'
+  const error = errorMessages[reason] || errorMessages.default
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center px-margin-mobile">
-      <div className="text-center max-w-lg">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+      <div className="text-center max-w-md">
+        <div className="inline-flex h-20 w-20 rounded-2xl items-center justify-center mb-6 bg-red-50">
+          <AlertTriangle className="h-10 w-10 text-red-500" />
         </div>
         <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-4">
-          Payment Error
+          {error.title}
         </h1>
         <p className="font-body-lg text-body-lg text-on-surface-variant mb-8">
-          {message || 'Something went wrong while processing your payment. Please try again or contact support.'}
+          {error.description}
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/courses"
-            className="bg-secondary text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-secondary/90 transition-all shadow-lg"
-          >
-            Browse Courses
-          </Link>
-          <Link
-            href="/contact"
-            className="bg-white border border-border-subtle text-on-surface px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-surface-container-low transition-all"
-          >
-            Contact Support
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {error.action && (
+            <Link href={error.action.href}>
+              <Button className="gap-2 rounded-xl">
+                <RefreshCw className="h-4 w-4" />
+                {error.action.label}
+              </Button>
+            </Link>
+          )}
+          <Link href="/">
+            <Button variant="outline" className="gap-2 rounded-xl border-border-subtle">
+              <Home className="h-4 w-4" />
+              Go Home
+            </Button>
           </Link>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PaymentErrorPage() {
+  return (
+    <Suspense>
+      <ErrorContent />
+    </Suspense>
   )
 }

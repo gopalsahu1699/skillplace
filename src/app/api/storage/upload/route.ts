@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/rest\/v1\/?$/, '')
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      console.error('[upload] Supabase upload error:', uploadError.message, { bucket: BUCKET, path })
+      logger.error('[upload] Supabase upload error', uploadError, { details: { bucket: BUCKET, path } })
       return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 

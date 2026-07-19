@@ -13,6 +13,7 @@ import {
 } from '@aws-sdk/client-s3'
 import type { GetObjectCommandInput } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { logger } from './logger'
 
 const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || ''
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || ''
@@ -46,15 +47,11 @@ export async function ensureBucket(): Promise<void> {
     try {
       await r2Client.send(new CreateBucketCommand({ Bucket: R2_BUCKET_NAME }))
     } catch (err) {
-      console.error('Failed to create R2 bucket:', err)
+      logger.error('Failed to create R2 bucket', err)
     }
   }
 }
 
-/**
- * Configure CORS on the R2 bucket to allow browser-direct uploads.
- * Must be called once. Allows presigned PUT uploads from specified origins.
- */
 export async function configureBucketCors(allowedOrigins: string[] = []): Promise<void> {
   const origins = allowedOrigins.length > 0
     ? allowedOrigins
@@ -104,20 +101,13 @@ export async function generatePlaybackUrl(
   return getSignedUrl(r2Client, command, { expiresIn })
 }
 
-// =============================================
-// MULTIPART UPLOAD FOR LARGE FILES (2GB+)
-// =============================================
-
-const CHUNK_SIZE = 100 * 1024 * 1024 // 100MB per part
+const CHUNK_SIZE = 100 * 1024 * 1024
 
 export interface MultipartUploadInit {
   uploadId: string
   key: string
 }
 
-/**
- * Initiate a multipart upload. Returns uploadId and key.
- */
 export async function initiateMultipartUpload(
   key: string,
   contentType: string = 'video/mp4'
@@ -134,9 +124,6 @@ export async function initiateMultipartUpload(
   }
 }
 
-/**
- * Generate a presigned URL for a specific part upload.
- */
 export async function getPartUploadUrl(
   key: string,
   uploadId: string,
@@ -152,10 +139,6 @@ export async function getPartUploadUrl(
   return getSignedUrl(r2Client, command, { expiresIn })
 }
 
-/**
- * Complete the multipart upload after all parts are uploaded.
- * Returns only the object key, never the public URL.
- */
 export async function completeMultipartUpload(
   key: string,
   uploadId: string,
@@ -173,9 +156,6 @@ export async function completeMultipartUpload(
   return { key }
 }
 
-/**
- * Abort a multipart upload (cleanup on failure).
- */
 export async function abortMultipartUpload(
   key: string,
   uploadId: string
@@ -189,16 +169,10 @@ export async function abortMultipartUpload(
   )
 }
 
-/**
- * Calculate number of parts needed for a file.
- */
 export function getPartCount(fileSize: number): number {
   return Math.ceil(fileSize / CHUNK_SIZE)
 }
 
-/**
- * Get byte range for a specific part.
- */
 export function getPartRange(partNumber: number, fileSize: number): { start: number; end: number } {
   const start = (partNumber - 1) * CHUNK_SIZE
   const end = Math.min(start + CHUNK_SIZE, fileSize)

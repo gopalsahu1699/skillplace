@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase/client'
 import { redirectToCashfreeCheckout } from '@/lib/cashfree-client'
 import PhoneInput from '@/components/ui/phone-input'
 import { sanitizePhone, displayPhone } from '@/lib/validation/phone'
+import { logger } from '@/lib/logger'
 
 const PUBLIC_API_BASE = '/api/public'
 
@@ -152,11 +153,11 @@ export default function EnrollPage() {
         const coursesData = await coursesRes.json()
         setCourses((coursesData.data || []).map((pc: { courses: Course }) => pc.courses).filter(Boolean))
       } catch (err) {
-        console.error('Failed to fetch courses:', err)
+        logger.error('Failed to fetch courses:', err)
         setCourses([])
       }
     } catch (err) {
-      console.error('Failed to fetch program:', err)
+      logger.error('Failed to fetch program:', err)
       setProgram(null)
     }
     setLoading(false)
@@ -368,75 +369,66 @@ export default function EnrollPage() {
                 )}
               </div> */}
 
-<div className="bg-blue-50 rounded-xl border border-blue-100 p-5 space-y-4">
-
-  {/* Course Fee */}
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium text-blue-800">
-        Course Fee
-      </p>
-      <p className="text-xs text-slate-500">
-        Total training program fee
-      </p>
-    </div>
-
-    <div className="text-right">
-      <p className="text-sm text-slate-400 line-through">
-        ₹40,000
-      </p>
-      <p className="text-2xl font-bold text-slate-900">
-        ₹29,999
-      </p>
+<div className="bg-blue-50 rounded-xl border border-blue-100 p-5 space-y-6">
+  <div>
+    <p className="text-lg font-bold text-slate-900">Online</p>
+    <p className="text-xs text-slate-500">Learn from anywhere with live recorded sessions</p>
+    <div className="mt-3 flex items-end justify-between">
+      <p className="text-2xl font-bold text-slate-900">₹19,000</p>
+      <div className="text-right">
+        <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">24% OFF</span>
+        <p className="text-sm text-slate-400 line-through">₹25,000</p>
+        <p className="text-xs font-medium text-green-600">You Save ₹6,000</p>
+      </div>
     </div>
   </div>
 
-  {/* Enrollment Fee */}
+  <div className="border-t border-blue-200 pt-4">
+    <p className="text-lg font-bold text-slate-900">Offline</p>
+    <p className="text-xs text-slate-500">In-person classroom training at our campus</p>
+    <div className="mt-3 flex items-end justify-between">
+      <p className="text-2xl font-bold text-slate-900">₹29,000</p>
+      <div className="text-right">
+        <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">28% OFF</span>
+        <p className="text-sm text-slate-400 line-through">₹40,000</p>
+        <p className="text-xs font-medium text-green-600">You Save ₹11,000</p>
+      </div>
+    </div>
+  </div>
+
+  <div className="border-t border-blue-200 pt-4">
+    <p className="text-lg font-bold text-slate-900">Hybrid</p>
+    <p className="text-xs text-slate-500">Blend of online flexibility with offline practice</p>
+    <div className="mt-3 flex items-end justify-between">
+      <p className="text-2xl font-bold text-slate-900">₹24,000</p>
+      <div className="text-right">
+        <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">20% OFF</span>
+        <p className="text-sm text-slate-400 line-through">₹30,000</p>
+        <p className="text-xs font-medium text-green-600">You Save ₹6,000</p>
+      </div>
+    </div>
+  </div>
+
   <div className="border-t border-blue-200 pt-4 flex items-center justify-between">
     <div>
-      <p className="text-sm font-medium text-blue-800">
-        Enrollment Fee
-      </p>
-      <p className="text-xs text-slate-500">
-        Pay now to reserve your seat
-      </p>
+      <p className="text-sm font-medium text-blue-800">Enrollment Fee</p>
+      <p className="text-xs text-slate-500">Pay now to reserve your seat</p>
     </div>
-
-    <span className="rounded-lg bg-green-600 px-4 py-2 text-2xl font-bold text-white shadow">
-      ₹999
-    </span>
+    <span className="rounded-lg bg-green-600 px-4 py-2 text-2xl font-bold text-white shadow">₹999</span>
   </div>
 
-  {/* Savings */}
-  <div className="rounded-lg bg-green-100 border border-green-200 p-3 flex items-center justify-between">
-    <span className="text-sm font-semibold text-green-700">
-      Course Discount
-    </span>
-
-    <span className="text-lg font-bold text-green-700">
-      Save ₹10,001
-    </span>
-  </div>
-
-  {/* Coupon */}
   {appliedCoupon && getCouponDiscount() > 0 && (
     <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3">
-      <p className="text-sm font-semibold text-yellow-700">
-        🎉 Coupon Applied: {appliedCoupon.code}
-      </p>
-      <p className="text-xs text-yellow-700 mt-1">
-        Extra savings of ₹{getCouponDiscount().toLocaleString()} on the enrollment fee.
-      </p>
+      <p className="text-sm font-semibold text-yellow-700">Coupon Applied: {appliedCoupon.code}</p>
+      <p className="text-xs text-yellow-700 mt-1">Extra savings of ₹{getCouponDiscount().toLocaleString()} on the enrollment fee.</p>
     </div>
   )}
 
-  {/* Note */}
   <div className="rounded-lg bg-slate-100 p-3">
     <p className="text-xs text-slate-600 leading-5">
-      <strong>Note:</strong> You only need to pay the <strong>₹999 Enrollment Fee</strong> today to confirm your admission. The discounted course fee is <strong>₹29,999</strong> (Regular Fee: ₹40,000).
+      <strong>Note:</strong> You only need to pay the <strong>₹999 Enrollment Fee</strong> today to confirm your admission.
     </p>
   </div>
-
 </div>    </div>
           </div>
 

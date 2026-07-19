@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/server-auth'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { analyzeSample, flagSample } from '@/lib/video-forensic-detection'
+import { logger } from '@/lib/logger'
 
 const MAX_IMAGE_SIZE = 500 * 1024
 const MIN_INTERVAL_MS = 30000
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       .then(async (result) => {
         if (result.flagged) {
           await flagSample(inserted.id, result.reason || 'Suspicious pattern detected', result.severity)
-          console.log('[Forensic] Auto-flagged sample ' + inserted.id + ' for user ' + user.id + ': ' + result.reason)
+          logger.info('[Forensic] Auto-flagged sample ' + inserted.id + ' for user ' + user.id + ': ' + result.reason)
         }
       })
       .catch(() => {})

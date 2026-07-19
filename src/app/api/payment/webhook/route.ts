@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/lib/cashfree'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     const timestamp = request.headers.get('x-webhook-timestamp') || ''
 
     if (!verifyWebhookSignature(rawBody, signature, timestamp)) {
-      console.error('Webhook signature verification failed')
+      logger.error('Webhook signature verification failed')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
@@ -61,12 +62,12 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       if (updateError) {
-        console.error('Webhook: Failed to update payment status:', updateError)
+        logger.error('Webhook: Failed to update payment status:', updateError)
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 })
       }
 
       if (!updatedWebhook) {
-        console.log(`Webhook: Payment ${existingPayment.id} already completed by verify route`)
+        logger.info(`Webhook: Payment ${existingPayment.id} already completed by verify route`)
         return NextResponse.json({ received: true, already_processed: true })
       }
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
             })
 
           if (enrollError) {
-            console.error('Webhook: Failed to create course enrollment:', enrollError)
+            logger.error('Webhook: Failed to create course enrollment:', enrollError)
           }
         }
       }
@@ -164,11 +165,11 @@ export async function POST(request: NextRequest) {
               })
 
             if (enrollError) {
-              console.error('Webhook: Failed to create program enrollment:', enrollError)
+              logger.error('Webhook: Failed to create program enrollment:', enrollError)
             }
           }
         } else {
-          console.error(`Webhook: CRITICAL - Payment ${existingPayment.id} completed but no profile found/created for enrollment`)
+          logger.error(`Webhook: CRITICAL - Payment ${existingPayment.id} completed but no profile found/created for enrollment`)
         }
       }
 
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
           .rpc('increment_coupon_usage', { p_coupon_id: existingPayment.coupon_id })
 
         if (couponError) {
-          console.error('Webhook: Failed to increment coupon usage:', couponError)
+          logger.error('Webhook: Failed to increment coupon usage:', couponError)
         }
       }
 
@@ -195,7 +196,7 @@ export async function POST(request: NextRequest) {
         .eq('id', existingPayment.id)
 
       if (updateError) {
-        console.error('Webhook: Failed to update payment as failed:', updateError)
+        logger.error('Webhook: Failed to update payment as failed:', updateError)
       }
 
       return NextResponse.json({ received: true, status: 'failed' })
@@ -203,7 +204,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (err) {
-    console.error('Webhook error:', err)
+    logger.error('Webhook error:', err)
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }

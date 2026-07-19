@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface Branch {
   id: string
@@ -122,7 +123,7 @@ export default function ProgramsPage() {
       if (error) throw error
       setBranches(data || [])
     } catch (err) {
-      console.error('Failed to fetch branches:', err)
+      logger.error('Failed to fetch branches:', err)
       setBranches([])
     }
   }
@@ -156,7 +157,7 @@ export default function ProgramsPage() {
 
       setPrograms(programsWithFees)
     } catch (err) {
-      console.error('Failed to fetch programs:', err)
+      logger.error('Failed to fetch programs:', err)
       setError('Failed to load programs. Please try again.')
       setPrograms([])
     }

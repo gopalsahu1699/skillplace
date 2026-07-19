@@ -1,5 +1,8 @@
 import { Cashfree as CashfreeSDK, CFEnvironment } from 'cashfree-pg'
 import * as crypto from 'crypto'
+import { logger } from './logger'
+import { PaymentError } from './errors/PaymentError'
+import { ErrorCodes } from './errors/ErrorCodes'
 
 const ENV = (process.env.NEXT_PUBLIC_CASHFREE_ENV || process.env.CASHFREE_ENV || 'SANDBOX').toUpperCase() === 'PRODUCTION' ? 'PRODUCTION' : 'SANDBOX'
 
@@ -48,7 +51,10 @@ export interface CashfreeOrderResponse {
 
 export async function createCashfreeOrder(req: CashfreeOrderRequest): Promise<CashfreeOrderResponse> {
   if (!CASHFREE_APP_ID || !CASHFREE_SECRET_KEY) {
-    throw new Error('Cashfree credentials not configured. Please check CASHFREE_APP_ID and CASHFREE_SECRET_KEY.')
+    logger.error('Cashfree credentials not configured')
+    throw new PaymentError('Payment service is not configured. Please try again later.', {
+      code: ErrorCodes.PAYMENT_GATEWAY_DOWN,
+    })
   }
 
   const client = getCashfreeClient()
@@ -65,19 +71,21 @@ export async function createCashfreeOrder(req: CashfreeOrderRequest): Promise<Ca
     },
     order_meta: {
       return_url: req.returnUrl,
-    },
+    } as Record<string, string>,
   }
 
   if (req.notifyUrl) {
-    (request.order_meta as Record<string, string>).notify_url = req.notifyUrl
+    request.order_meta.notify_url = req.notifyUrl
   }
 
   let response
   try {
     response = await client.PGCreateOrder(request)
   } catch (err) {
-    console.error('Cashfree PGCreateOrder failed:', err)
-    throw new Error(`Cashfree order creation failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    logger.error('Cashfree order creation failed', err)
+    throw new PaymentError('Payment could not be initiated. Please try again.', {
+      cause: err,
+    })
   }
 
   return {
@@ -106,8 +114,10 @@ export async function fetchCashfreePayments(orderId: string): Promise<CashfreePa
   try {
     response = await client.PGOrderFetchPayments(orderId)
   } catch (err) {
-    console.error('Cashfree PGOrderFetchPayments failed:', err)
-    throw new Error(`Cashfree payment fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    logger.error('Cashfree payment fetch failed', err)
+    throw new PaymentError('Could not verify payment status. Please contact support.', {
+      cause: err,
+    })
   }
 
   return (response.data || []).map((p) => ({
@@ -127,8 +137,10 @@ export async function fetchCashfreeOrder(orderId: string) {
   try {
     response = await client.PGFetchOrder(orderId)
   } catch (err) {
-    console.error('Cashfree PGFetchOrder failed:', err)
-    throw new Error(`Cashfree order fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    logger.error('Cashfree order fetch failed', err)
+    throw new PaymentError('Could not retrieve payment details. Please contact support.', {
+      cause: err,
+    })
   }
   return response.data
 }
@@ -147,7 +159,7 @@ export function verifyWebhookSignature(rawBody: string, signature: string, times
   }
 
   if (!CASHFREE_WEBHOOK_SECRET) {
-    console.error('CASHFREE_WEBHOOK_SECRET not configured')
+    logger.warn('CASHFREE_WEBHOOK_SECRET not configured, webhook verification may fail')
     return false
   }
   const expectedSignature = crypto

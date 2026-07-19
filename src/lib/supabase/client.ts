@@ -162,6 +162,8 @@ export async function revokeSession(
   return !error
 }
 
+export { safeSupabase } from '@/lib/safe-supabase'
+
 export async function revokeAllSessions(
   userId: string,
   reason: string = 'logout_all'
